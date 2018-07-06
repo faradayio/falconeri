@@ -1,0 +1,7 @@
+[package]
+authors = ["Eric Kidd <git@randomhacks.net>"]
+name = "falconeri"
+version = "0.1.0"
+
+[dependencies]
+falconeri_common = { path = "../falconeri_common" }
