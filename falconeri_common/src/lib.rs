@@ -1,9 +1,18 @@
-extern crate diesel;
+//! Code shared between various Falconeri tools.
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+#![warn(missing_docs)]
+
+extern crate chrono;
+#[macro_use]
+extern crate diesel;
+extern crate failure;
+extern crate uuid;
+
+pub mod models;
+mod schema;
+
+/// Error type for this crate's functions.
+pub type Error = failure::Error;
+
+/// Result type for this crate's functions.
+pub type Result<T> = ::std::result::Result<T, Error>;
