@@ -1,6 +1,7 @@
 use chrono::NaiveDateTime;
 use diesel::{self, PgConnection, prelude::*};
 use failure::ResultExt;
+use serde_json;
 use uuid::Uuid;
 
 use Result;
@@ -18,8 +19,8 @@ pub struct Job {
     pub updated_at: NaiveDateTime,
     /// The current status of this job.
     pub status: Status,
-    /// The input bucket, bucket path or object to process.
-    pub source_uri: String,
+    /// A copy of our original pipeline spec (just for debugging).
+    pub pipeline_spec: serde_json::Value,
     /// The output bucket or bucket path.
     pub destination_uri: String,
 }
@@ -28,8 +29,8 @@ pub struct Job {
 #[derive(Debug, Insertable)]
 #[table_name = "jobs"]
 pub struct NewJob {
-    /// The input bucket, bucket path or object to process.
-    pub source_uri: String,
+    /// A copy of our original pipeline spec (just for debugging).
+    pub pipeline_spec: serde_json::Value,
     /// The output bucket or bucket path.
     pub destination_uri: String,
 }

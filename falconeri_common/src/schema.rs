@@ -22,7 +22,7 @@ table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         status -> Status,
-        source_uri -> Text,
+        pipeline_spec -> Jsonb,
         destination_uri -> Text,
     }
 }

@@ -7,7 +7,7 @@ CREATE TABLE jobs (
     created_at timestamp NOT NULL DEFAULT now(),
     updated_at timestamp NOT NULL DEFAULT now(),
     status status NOT NULL DEFAULT 'creating',
-    source_uri text NOT NULL,
+    pipeline_spec jsonb NOT NULL,
     destination_uri text NOT NULL
 );
 

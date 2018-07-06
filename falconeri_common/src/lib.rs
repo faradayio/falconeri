@@ -4,12 +4,15 @@
 
 extern crate chrono;
 #[macro_use]
-extern crate diesel;
+pub extern crate diesel;
 extern crate failure;
+extern crate serde_json;
 extern crate uuid;
 
+pub mod db;
 pub mod models;
-mod schema;
+#[allow(missing_docs)]
+pub mod schema;
 
 /// Error type for this crate's functions.
 pub type Error = failure::Error;
