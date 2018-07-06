@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 env_logger = "0.5.10"
+failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }
 log = "0.4.3"
 serde = "1.0"

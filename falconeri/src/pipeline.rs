@@ -11,6 +11,7 @@ pub struct PipelineSpec {
     pub pipeline: PipelineInfo,
     pub transform: TransformInfo,
     pub input: InputInfo,
+    pub output: OutputInfo,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -34,6 +35,12 @@ pub enum InputInfo {
     },
 }
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case", deny_unknown_fields)]
+pub struct OutputInfo {
+    pub repo: String,
+}
+
 #[test]
 fn parse_pipeline_spec() {
     use serde_json;
@@ -52,6 +59,9 @@ fn parse_pipeline_spec() {
       "repo": "books",
       "glob": "/*"
     }
+  },
+  "output": {
+    "repo": "myoutput"
   }
 }"#;
 
@@ -64,5 +74,5 @@ fn parse_pipeline_spec() {
         repo: "books".to_owned(),
         glob: "/*".to_owned(),
     });
-
+    assert_eq!(parsed.output.repo, "myoutput");
 }
