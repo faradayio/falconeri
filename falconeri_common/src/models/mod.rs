@@ -4,9 +4,11 @@ use diesel::{deserialize, pg::Pg, serialize};
 use std::io::Write;
 
 mod datum;
+mod file;
 mod job;
 
 pub use self::datum::*;
+pub use self::file::*;
 pub use self::job::*;
 
 /// Custom SQL types.

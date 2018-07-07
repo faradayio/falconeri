@@ -22,7 +22,7 @@ pub struct Job {
     /// A copy of our original pipeline spec (just for debugging).
     pub pipeline_spec: serde_json::Value,
     /// The output bucket or bucket path.
-    pub destination_uri: String,
+    pub output_uri: String,
 }
 
 /// Data required to create a new `Job`.
@@ -32,7 +32,7 @@ pub struct NewJob {
     /// A copy of our original pipeline spec (just for debugging).
     pub pipeline_spec: serde_json::Value,
     /// The output bucket or bucket path.
-    pub destination_uri: String,
+    pub output_uri: String,
 }
 
 impl NewJob {

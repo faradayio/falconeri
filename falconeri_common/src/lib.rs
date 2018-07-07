@@ -11,8 +11,8 @@ extern crate uuid;
 
 pub mod db;
 pub mod models;
-#[allow(missing_docs)]
-pub mod schema;
+#[allow(missing_docs, unused_imports)]
+mod schema;
 
 /// Error type for this crate's functions.
 pub type Error = failure::Error;

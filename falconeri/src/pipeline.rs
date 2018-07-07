@@ -30,6 +30,7 @@ pub struct TransformInfo {
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum InputInfo {
     Atom {
+        uri: String,
         repo: String,
         glob: String,
     },
@@ -38,7 +39,7 @@ pub enum InputInfo {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub struct OutputInfo {
-    pub repo: String,
+    pub uri: String,
 }
 
 #[test]
@@ -56,12 +57,13 @@ fn parse_pipeline_spec() {
   },
   "input": {
     "atom": {
+      "uri": "gs://example-bucket/books/",
       "repo": "books",
       "glob": "/*"
     }
   },
   "output": {
-    "repo": "myoutput"
+    "uri": "gs://example-bucket/words/"
   }
 }"#;
 
@@ -71,8 +73,9 @@ fn parse_pipeline_spec() {
     assert_eq!(parsed.transform.cmd[0], "python3");
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");
     assert_eq!(parsed.input, InputInfo::Atom {
+        uri: "gs://example-bucket/books/".to_owned(),
         repo: "books".to_owned(),
         glob: "/*".to_owned(),
     });
-    assert_eq!(parsed.output.repo, "myoutput");
+    assert_eq!(parsed.output.uri, "gs://example-bucket/words/");
 }

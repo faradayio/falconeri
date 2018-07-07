@@ -1,7 +1,7 @@
 //! The `run` subcommand.
 
 use failure::ResultExt;
-use falconeri_common::{db, diesel::{self, prelude::*}, Error, models::*, schema::jobs, Result};
+use falconeri_common::{db, diesel::prelude::*, Error, models::*, Result};
 use std::{io::BufRead, process::{Command, Stdio}};
 
 use pipeline::*;
@@ -9,7 +9,7 @@ use pipeline::*;
 /// The `run` subcommand.
 pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
     match &pipeline_spec.input {
-        InputInfo::Atom { repo, glob } => {
+        InputInfo::Atom { uri, repo, glob } => {
             // Check to make sure we're using a supported glob mode.
             if glob != "/*" {
                 return Err(format_err!("Glob {} not yet supported", glob));
@@ -18,7 +18,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
             // Shell out to gsutil to list the files we want to process.
             let output = Command::new("gsutil")
                 .arg("ls")
-                .arg(&repo)
+                .arg(&uri)
                 .stderr(Stdio::inherit())
                 .output()
                 .context("error running gsutil")?;
@@ -28,7 +28,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
                 paths.push(line.trim_right().to_owned());
             }
 
-            add_job_to_database(pipeline_spec, &paths)?;
+            add_job_to_database(pipeline_spec, &paths, repo)?;
 
             Ok(())
         }
@@ -36,37 +36,60 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
 }
 
 /// Register a new job in the database.
-pub fn add_job_to_database(
+fn add_job_to_database(
     pipeline_spec: &PipelineSpec,
     inputs: &[String],
+    repo: &str,
 ) -> Result<()> {
     let conn = db::connect()?;
     conn.transaction::<_, Error, _>(|| -> Result<()> {
         // Create our new job.
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
-            destination_uri: pipeline_spec.output.repo.clone(),
+            output_uri: pipeline_spec.output.uri.clone(),
         };
-        let mut job = new_job.insert(&conn)?;
+        let job = new_job.insert(&conn)?;
 
-        // Create a datum for each input file.
+        // Create a datum for each input file. For now, we only handle the
+        // trivial case of one file per datum.
         for input in inputs {
             let new_datum = NewDatum {
                 job_id: job.id,
-                source_uri: input.to_owned(),
             };
-            new_datum.insert(&conn)?;
-        }
+            let datum = new_datum.insert(&conn)?;
 
-        // Update our job status.
-        job = diesel::update(jobs::table.filter(jobs::id.eq(&job.id)))
-            .set(jobs::status.eq(&Status::Running))
-            .get_result(&conn)
-            .context("couldn't set job status")?;
+            let new_file = NewFile {
+                datum_id: datum.id,
+                uri: input.to_owned(),
+                local_path: uri_to_local_path(input, repo)?,
+            };
+            let _file = new_file.insert(&conn)?;
+        }
 
         println!("{}", job.id);
         Ok(())
     })?;
 
     Ok(())
+}
+
+/// Given a URI and a repo name, construct a local path starting with "/pfs"
+/// pointing to where we should download the file.
+///
+/// TODO: This will need to get fancier if we actually implement globs
+/// correctly.
+fn uri_to_local_path(uri: &str, repo: &str) -> Result<String> {
+    let pos = uri.rfind('/').ok_or_else(|| format_err!("No '/' in {:?}", uri))?;
+    let basename = &uri[pos..];
+    if basename.is_empty() {
+        Err(format_err!("{:?} ends with '/'", uri))
+    } else {
+        Ok(format!("/pfs/{}{}", repo, basename))
+    }
+}
+
+#[test]
+fn uri_to_local_path_works() {
+    let path = uri_to_local_path("gs://bucket/path/data1.csv", "myrepo").unwrap();
+    assert_eq!(path, "/pfs/myrepo/data1.csv");
 }
