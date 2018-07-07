@@ -14,13 +14,13 @@ pub use self::job::*;
 /// Custom SQL types.
 pub mod sql_types {
     /// A status enumeration type for use in Diesel's `table!` macro.
-    #[derive(SqlType)]
+    #[derive(QueryId, SqlType)]
     #[postgres(type_name = "status")]
     pub struct Status;
 }
 
 /// Possible status values.
-#[derive(AsExpression, Debug, FromSqlRow)]
+#[derive(AsExpression, Debug, Clone, Copy, Eq, FromSqlRow, PartialEq)]
 #[sql_type = "sql_types::Status"]
 pub enum Status {
     /// This record is still being created, and is not ready to process.

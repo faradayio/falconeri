@@ -164,6 +164,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "falconeri-worker"
+version = "0.1.0"
+dependencies = [
+ "env_logger 0.5.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "falconeri_common 0.1.0",
+ "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "falconeri_common"
 version = "0.1.0"
 dependencies = [

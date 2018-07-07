@@ -1,14 +1,16 @@
 use chrono::NaiveDateTime;
 use diesel::{self, PgConnection, prelude::*};
 use failure::ResultExt;
+use std::fmt::Display;
 use uuid::Uuid;
 
 use Result;
 use schema::*;
-use super::Status;
+use super::{Job, Status};
 
 /// A single chunk of work, consisting of one or more files.
-#[derive(Debug, Queryable)]
+#[derive(Associations, Debug, Identifiable, Queryable)]
+#[belongs_to(Job, foreign_key = "job_id")]
 pub struct Datum {
     /// The unique ID of this datum.
     pub id: Uuid,
@@ -23,6 +25,22 @@ pub struct Datum {
     pub job_id: Uuid,
     /// An error message associated with this datum, if any.
     pub error_message: Option<String>,
+}
+
+impl Datum {
+    /// Mark this datum as having been successfully processed.
+    pub fn mark_as_done(&mut self, conn: &PgConnection) -> Result<()> {
+        unimplemented!()
+    }
+
+    /// Mark this datum as having been unsuccessfully processed.
+    pub fn mark_as_error(
+        &mut self,
+        error_message: &dyn Display,
+        conn: &PgConnection,
+    ) -> Result<()> {
+        unimplemented!()
+    }
 }
 
 /// Data required to create a new `Datum`.

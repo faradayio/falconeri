@@ -1,0 +1,11 @@
+[package]
+name = "falconeri-worker"
+version = "0.1.0"
+authors = ["Eric Kidd <git@randomhacks.net>"]
+
+[dependencies]
+env_logger = "0.5.10"
+failure = "0.1.1"
+falconeri_common = { path = "../falconeri_common" }
+log = "0.4.3"
+uuid = "0.6.5"

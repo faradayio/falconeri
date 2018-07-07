@@ -5,9 +5,11 @@ use uuid::Uuid;
 
 use Result;
 use schema::*;
+use super::Datum;
 
 /// An input file which needs to be downloaded to the worker container.
-#[derive(Debug, Queryable)]
+#[derive(Associations, Debug, Identifiable, Queryable)]
+#[belongs_to(Datum, foreign_key = "datum_id")]
 pub struct File {
     /// The unique ID of this file.
     pub id: Uuid,

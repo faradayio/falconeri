@@ -5,6 +5,7 @@
 extern crate chrono;
 #[macro_use]
 pub extern crate diesel;
+#[macro_use]
 extern crate failure;
 extern crate serde_json;
 extern crate uuid;
