@@ -2,6 +2,7 @@ extern crate env_logger;
 #[macro_use]
 extern crate failure;
 extern crate falconeri_common;
+extern crate glob;
 #[macro_use]
 extern crate log;
 extern crate uuid;
@@ -61,14 +62,15 @@ fn main() -> Result<()> {
 
 /// Process a single datum.
 fn process_datum(
-    _job: &Job,
+    job: &Job,
     datum: &Datum,
     files: &[File],
     cmd: &[String],
 ) -> Result<()> {
-    debug!("Processing datum {}", datum.id);
+    debug!("processing datum {}", datum.id);
 
     // Download each file.
+    reset_work_dir()?;
     for file in files {
         let status = process::Command::new("gsutil")
             .arg("cp")
@@ -87,15 +89,67 @@ fn process_datum(
         return Err(format_err!("could not run {:?}", cmd));
     }
 
-    // Delete input files.
-    //
-    // TODO: Do this even if the command fails, or one of the downloads fails.
-    // Or just clean up `/pfs` completely.
-    for file in files {
-        fs::remove_file(&file.local_path)
-            .with_context(|_| format!("could not delete {:?}", &file.local_path))?;
-    }
-
+    // Finish up.
+    upload_outputs(job, datum)?;
+    reset_work_dir()?;
     Ok(())
 }
 
+/// Restore our `/pfs` directory to its default, clean state.
+fn reset_work_dir() -> Result<()> {
+    let paths = glob::glob("/pfs/*").context("error listing /pfs")?;
+    for path in paths {
+        let path = path.context("error listing /pfs")?;
+        trace!("deleting: {}", path.display());
+        if path.is_dir() {
+            fs::remove_dir_all(&path)
+                .with_context(|_| format!("cannot delete {}", path.display()))?;
+        } else {
+            fs::remove_file(&path)
+                .with_context(|_| format!("cannot delete {}", path.display()))?;
+        }
+    }
+    fs::create_dir("/pfs/out").context("cannot create /pfs/out")?;
+    Ok(())
+}
+
+/// Upload `/pfs/out` to our output bucket.
+fn upload_outputs(job: &Job, _datum: &Datum) -> Result<()> {
+    debug!("uploading outputs");
+    let local_paths = glob::glob("/pfs/out/**/*").context("error listing /pfs/out")?;
+    for local_path in local_paths {
+        let local_path = local_path.context("error listing /pfs/out")?;
+
+        // Skip anything we can't upload.
+        if local_path.is_dir() {
+            continue;
+        } else if !local_path.is_file() {
+            warn!("can't upload special file {}", local_path.display());
+            continue;
+        }
+
+        // Get our local path, and strip the prefix.
+        let rel_path = local_path.strip_prefix("/pfs/out/")?;
+        let rel_path_str = rel_path.to_str()
+            .ok_or_else(|| format_err!("invalid characters in {:?}", rel_path))?;
+
+        // Build the URI we want to upload to.
+        let mut uri = job.output_uri.clone();
+        if !uri.ends_with("/") {
+            uri.push_str("/");
+        }
+        uri.push_str(&rel_path_str);
+
+        // Upload the file.
+        trace!("uploading {} to {}", local_path.display(), uri);
+        let status = process::Command::new("gsutil")
+            .arg("cp")
+            .arg(&local_path)
+            .arg(&uri)
+            .status()?;
+        if !status.success() {
+            return Err(format_err!("could not upload {}", local_path.display()));
+        }
+    }
+    Ok(())
+}
