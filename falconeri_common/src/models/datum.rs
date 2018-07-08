@@ -16,7 +16,6 @@ pub struct Datum {
     pub id: Uuid,
     /// When this datum was created.
     pub created_at: NaiveDateTime,
-    /// When this datum was created.
     /// When this job was last updated.
     pub updated_at: NaiveDateTime,
     /// The current status of this datum.
@@ -30,7 +29,11 @@ pub struct Datum {
 impl Datum {
     /// Mark this datum as having been successfully processed.
     pub fn mark_as_done(&mut self, conn: &PgConnection) -> Result<()> {
-        unimplemented!()
+        *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
+            .set(datums::status.eq(&Status::Done))
+            .get_result(conn)
+            .context("can't mark datum as done")?;
+        Ok(())
     }
 
     /// Mark this datum as having been unsuccessfully processed.
@@ -39,7 +42,14 @@ impl Datum {
         error_message: &dyn Display,
         conn: &PgConnection,
     ) -> Result<()> {
-        unimplemented!()
+        *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
+            .set((
+                datums::status.eq(&Status::Error),
+                datums::error_message.eq(&format!("{}", error_message)),
+            ))
+            .get_result(conn)
+            .context("can't mark datum as having failed")?;
+        Ok(())
     }
 }
 
