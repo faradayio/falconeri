@@ -10,7 +10,7 @@ use super::Datum;
 /// An input file which needs to be downloaded to the worker container.
 #[derive(Associations, Debug, Identifiable, Queryable)]
 #[belongs_to(Datum, foreign_key = "datum_id")]
-pub struct File {
+pub struct InputFile {
     /// The unique ID of this file.
     pub id: Uuid,
     /// When this record was created.
@@ -23,10 +23,10 @@ pub struct File {
     pub local_path: String,
 }
 
-/// Data required to create a new `File`.
+/// Data required to create a new `InputFile`.
 #[derive(Debug, Insertable)]
-#[table_name = "files"]
-pub struct NewFile {
+#[table_name = "input_files"]
+pub struct NewInputFile {
     /// The ID of the datum to which this file belongs.
     pub datum_id: Uuid,
     /// The URI from which this file can be downloaded.
@@ -35,12 +35,12 @@ pub struct NewFile {
     pub local_path: String,
 }
 
-impl NewFile {
+impl NewInputFile {
     /// Insert a new job into the database.
-    pub fn insert(&self, conn: &PgConnection) -> Result<File> {
-        Ok(diesel::insert_into(files::table)
+    pub fn insert(&self, conn: &PgConnection) -> Result<InputFile> {
+        Ok(diesel::insert_into(input_files::table)
             .values(self)
             .get_result(conn)
-            .context("error inserting file")?)
+            .context("error inserting input file")?)
     }
 }

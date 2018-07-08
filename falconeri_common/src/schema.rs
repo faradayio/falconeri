@@ -16,7 +16,7 @@ table! {
     use diesel::sql_types::*;
     use models::sql_types::Status;
 
-    files (id) {
+    input_files (id) {
         id -> Uuid,
         created_at -> Timestamp,
         datum_id -> Uuid,
@@ -35,15 +35,34 @@ table! {
         updated_at -> Timestamp,
         status -> Status,
         pipeline_spec -> Jsonb,
+        command -> Array<Text>,
         output_uri -> Text,
     }
 }
 
+table! {
+    use diesel::sql_types::*;
+    use models::sql_types::Status;
+
+    output_files (id) {
+        id -> Uuid,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        status -> Status,
+        job_id -> Uuid,
+        datum_id -> Uuid,
+        uri -> Text,
+    }
+}
+
 joinable!(datums -> jobs (job_id));
-joinable!(files -> datums (datum_id));
+joinable!(input_files -> datums (datum_id));
+joinable!(output_files -> datums (datum_id));
+joinable!(output_files -> jobs (job_id));
 
 allow_tables_to_appear_in_same_query!(
     datums,
-    files,
+    input_files,
     jobs,
+    output_files,
 );

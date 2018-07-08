@@ -46,6 +46,7 @@ fn add_job_to_database(
         // Create our new job.
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
+            command: pipeline_spec.transform.cmd.clone(),
             output_uri: pipeline_spec.output.uri.clone(),
         };
         let job = new_job.insert(&conn)?;
@@ -58,7 +59,7 @@ fn add_job_to_database(
             };
             let datum = new_datum.insert(&conn)?;
 
-            let new_file = NewFile {
+            let new_file = NewInputFile {
                 datum_id: datum.id,
                 uri: input.to_owned(),
                 local_path: uri_to_local_path(input, repo)?,

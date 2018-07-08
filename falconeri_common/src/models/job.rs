@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use {Error, Result};
 use schema::*;
-use super::{Datum, File, Status};
+use super::{Datum, InputFile, Status};
 
 /// A distributed data processing job.
 #[derive(Debug, Identifiable, Queryable)]
@@ -21,6 +21,8 @@ pub struct Job {
     pub status: Status,
     /// A copy of our original pipeline spec (just for debugging).
     pub pipeline_spec: serde_json::Value,
+    /// The command to run in the worker container.
+    pub command: Vec<String>,
     /// The output bucket or bucket path.
     pub output_uri: String,
 }
@@ -39,7 +41,7 @@ impl Job {
     pub fn reserve_next_datum(
         &self,
         conn: &PgConnection,
-    ) -> Result<Option<(Datum, Vec<File>)>> {
+    ) -> Result<Option<(Datum, Vec<InputFile>)>> {
         conn.transaction::<_, Error, _>(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
@@ -55,7 +57,7 @@ impl Job {
                     .set(datums::status.eq(&Status::Running))
                     .get_result(conn)
                     .context("cannot mark datum as 'processing'")?;
-                let files = File::belonging_to(&datum)
+                let files = InputFile::belonging_to(&datum)
                     .load(conn)
                     .context("cannot load file information")?;
                 Ok(Some((datum, files)))
@@ -72,6 +74,8 @@ impl Job {
 pub struct NewJob {
     /// A copy of our original pipeline spec (just for debugging).
     pub pipeline_spec: serde_json::Value,
+    /// The command to run in the worker container.
+    pub command: Vec<String>,
     /// The output bucket or bucket path.
     pub output_uri: String,
 }
