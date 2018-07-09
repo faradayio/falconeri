@@ -14,6 +14,10 @@ use falconeri_common::{db, models::*, Result};
 use std::{env, fs, path::Path, process};
 use uuid::Uuid;
 
+/// Instructions on how to use this program.
+const USAGE: &str = "Usage: falconeri-worker <job id>";
+
+/// Our main entry point.
 fn main() -> Result<()> {
     env_logger::init();
     openssl_probe::init_ssl_cert_env_vars();
@@ -22,8 +26,15 @@ fn main() -> Result<()> {
     // libraries).
     let args = env::args().collect::<Vec<_>>();
     if args.len() != 2 {
-        eprintln!("Usage: falconeri-worker <job id>");
+        eprintln!("{}", USAGE);
         process::exit(1);
+    }
+    if args[1] == "--version" {
+        println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+        process::exit(0);
+    } else if args[1] == "--help" {
+        println!("{}", USAGE);
+        process::exit(0);
     }
     let job_id = args[1].parse::<Uuid>().context("can't parse job ID")?;
     debug!("job ID: {}", job_id);
