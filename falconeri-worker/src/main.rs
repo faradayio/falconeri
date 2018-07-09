@@ -5,6 +5,8 @@ extern crate falconeri_common;
 extern crate glob;
 #[macro_use]
 extern crate log;
+extern crate openssl;
+extern crate openssl_probe;
 extern crate uuid;
 
 use failure::ResultExt;
@@ -14,6 +16,7 @@ use uuid::Uuid;
 
 fn main() -> Result<()> {
     env_logger::init();
+    openssl_probe::init_ssl_cert_env_vars();
 
     // Parse our arguments (manually, so we don't need to drag in a ton of
     // libraries).

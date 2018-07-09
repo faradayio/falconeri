@@ -4,6 +4,8 @@ extern crate failure;
 extern crate falconeri_common;
 #[macro_use]
 extern crate log;
+extern crate openssl;
+extern crate openssl_probe;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -37,6 +39,7 @@ enum Opt {
 
 fn main() -> Result<()> {
     env_logger::init();
+    openssl_probe::init_ssl_cert_env_vars();
     let opt = Opt::from_args();
     debug!("Args: {:?}", opt);
 
