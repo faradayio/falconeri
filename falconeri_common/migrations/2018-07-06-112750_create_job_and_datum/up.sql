@@ -9,7 +9,7 @@ CREATE TABLE jobs (
     status status NOT NULL DEFAULT 'running',
     pipeline_spec jsonb NOT NULL,
     command text[] NOT NULL CHECK (cardinality(command) > 0),
-    output_uri text NOT NULL
+    egress_uri text NOT NULL
 );
 
 SELECT diesel_manage_updated_at('jobs');

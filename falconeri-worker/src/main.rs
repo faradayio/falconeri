@@ -138,7 +138,7 @@ fn upload_outputs(
             .ok_or_else(|| format_err!("invalid characters in {:?}", rel_path))?;
 
         // Build the URI we want to upload to.
-        let mut uri = job.output_uri.clone();
+        let mut uri = job.egress_uri.clone();
         if !uri.ends_with("/") {
             uri.push_str("/");
         }

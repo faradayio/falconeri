@@ -11,7 +11,7 @@ pub struct PipelineSpec {
     pub pipeline: PipelineInfo,
     pub transform: TransformInfo,
     pub input: InputInfo,
-    pub output: OutputInfo,
+    pub egress: EgressInfo,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -38,7 +38,8 @@ pub enum InputInfo {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
-pub struct OutputInfo {
+pub struct EgressInfo {
+    #[serde(rename = "URI")]
     pub uri: String,
 }
 
@@ -62,8 +63,8 @@ fn parse_pipeline_spec() {
       "glob": "/*"
     }
   },
-  "output": {
-    "uri": "gs://example-bucket/words/"
+  "egress": {
+    "URI": "gs://example-bucket/words/"
   }
 }"#;
 
@@ -77,5 +78,5 @@ fn parse_pipeline_spec() {
         repo: "books".to_owned(),
         glob: "/*".to_owned(),
     });
-    assert_eq!(parsed.output.uri, "gs://example-bucket/words/");
+    assert_eq!(parsed.egress.uri, "gs://example-bucket/words/");
 }

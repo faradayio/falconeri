@@ -47,7 +47,7 @@ fn add_job_to_database(
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
             command: pipeline_spec.transform.cmd.clone(),
-            output_uri: pipeline_spec.output.uri.clone(),
+            egress_uri: pipeline_spec.egress.uri.clone(),
         };
         let job = new_job.insert(&conn)?;
 

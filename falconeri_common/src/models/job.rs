@@ -24,7 +24,7 @@ pub struct Job {
     /// The command to run in the worker container.
     pub command: Vec<String>,
     /// The output bucket or bucket path.
-    pub output_uri: String,
+    pub egress_uri: String,
 }
 
 impl Job {
@@ -77,7 +77,7 @@ pub struct NewJob {
     /// The command to run in the worker container.
     pub command: Vec<String>,
     /// The output bucket or bucket path.
-    pub output_uri: String,
+    pub egress_uri: String,
 }
 
 impl NewJob {

@@ -36,7 +36,7 @@ table! {
         status -> Status,
         pipeline_spec -> Jsonb,
         command -> Array<Text>,
-        output_uri -> Text,
+        egress_uri -> Text,
     }
 }
 
