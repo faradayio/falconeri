@@ -30,6 +30,7 @@ pub struct TransformInfo {
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum InputInfo {
     Atom {
+        #[serde(rename = "URI")]
         uri: String,
         repo: String,
         glob: String,
@@ -58,7 +59,7 @@ fn parse_pipeline_spec() {
   },
   "input": {
     "atom": {
-      "uri": "gs://example-bucket/books/",
+      "URI": "gs://example-bucket/books/",
       "repo": "books",
       "glob": "/*"
     }
