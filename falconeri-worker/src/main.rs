@@ -11,7 +11,7 @@ extern crate uuid;
 
 use failure::ResultExt;
 use falconeri_common::{db, models::*, Result};
-use std::{env, fs, path::Path, process};
+use std::{env, fs, path::Path, process, thread::sleep, time::Duration};
 use uuid::Uuid;
 
 /// Instructions on how to use this program.
@@ -66,6 +66,20 @@ fn main() -> Result<()> {
             }
         } else {
             debug!("no more datums to process");
+
+            // Don't exit until all the other workers are ready to exit, because
+            // we might be getting run as a Kubernetes `Job`, and if so, a 0
+            // exit status would mean that it's safe to start descheduling all
+            // other workers.
+            loop {
+                let count = Datum::left_to_process(&job, &conn)?;
+                if count == 0 {
+                    debug!("all workers have finished");
+                    break;
+                }
+                debug!("waiting for {} datums to finish", count);
+                sleep(Duration::from_secs(30));
+            }
             break;
         }
     }
