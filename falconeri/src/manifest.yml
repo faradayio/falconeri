@@ -1,0 +1,70 @@
+---
+# PostgreSQL volume: Stores our data semi-persistently.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: falconeri-postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Gi
+  # You'll need to have an appropriate storage class defined on your cluster.
+  # This is defined by default on GKE, and it will allocated and deallocate
+  # persistent cloud volumes.
+  storageClassName: standard
+
+---
+# PostgreSQL replica set: Keeps one PostgreSQL server running.
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: falconeri-postgres
+  labels:
+    app: falconeri-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: falconeri-postgres
+  template:
+    metadata:
+      labels:
+        app: falconeri-postgres
+    spec:
+      containers:
+      - name: falconeri-postgres
+        image: postgres
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+          - name: pgdata
+            mountPath: /var/lib/postgresql
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: falconeri
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: falconeri-postgres
+
+---
+# PostgreSQL service: Provides DNS lookup for service.
+kind: Service
+apiVersion: v1
+metadata:
+  name: falconeri-postgres
+spec:
+  selector:
+    app: falconeri-postgres
+  ports:
+  - port: 5432
