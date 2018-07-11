@@ -31,19 +31,19 @@ pub struct OutputFile {
 
 impl OutputFile {
     /// Mark this datum as having been successfully processed.
-    pub fn mark_as_done(&mut self, conn: &PgConnection) -> Result<()> {
-        *self = diesel::update(output_files::table.filter(output_files::id.eq(&self.id)))
+    pub fn mark_as_done(datum: &Datum, conn: &PgConnection) -> Result<()> {
+        diesel::update(OutputFile::belonging_to(datum))
             .set(output_files::status.eq(&Status::Done))
-            .get_result(conn)
+            .execute(conn)
             .context("can't mark output file as done")?;
         Ok(())
     }
 
     /// Mark this datum as having been unsuccessfully processed.
-    pub fn mark_as_error(&mut self, conn: &PgConnection) -> Result<()> {
-        *self = diesel::update(output_files::table.filter(output_files::id.eq(&self.id)))
+    pub fn mark_as_error(datum: &Datum, conn: &PgConnection) -> Result<()> {
+        diesel::update(OutputFile::belonging_to(datum))
             .set(output_files::status.eq(&Status::Error))
-            .get_result(conn)
+            .execute(conn)
             .context("can't mark output file as error")?;
         Ok(())
     }

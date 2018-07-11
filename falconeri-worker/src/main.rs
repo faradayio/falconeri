@@ -148,6 +148,7 @@ fn upload_outputs(
     // our command might have expired.
     let conn = db::connect(db::ConnectVia::Cluster)?;
 
+    // Create records describing the files we're going to upload.
     let local_paths = glob::glob("/pfs/out/**/*").context("error listing /pfs/out")?;
     for local_path in local_paths {
         let local_path = local_path.context("error listing /pfs/out")?;
@@ -173,21 +174,21 @@ fn upload_outputs(
         uri.push_str(&rel_path_str);
 
         // Create a database record for the file we're about to upload.
-        let mut output_file = NewOutputFile {
+        NewOutputFile {
             datum_id: datum.id,
             job_id: job.id,
             uri: uri.clone(),
         }.insert(&conn)?;
-
-        // Upload the file and record what happened.
-        let result = upload_file(&local_path, &uri);
-        match result {
-            Ok(()) => output_file.mark_as_done(&conn)?,
-            Err(_) => output_file.mark_as_error(&conn)?,
-        }
-        result?;
     }
-    Ok(())
+
+    // Upload all our files in a batch, for maximum performance, and record
+    // what happened.
+    let result = upload_dir("/pfs/out/", &job.egress_uri);
+    match result {
+        Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
+        Err(_) => OutputFile::mark_as_error(datum, &conn)?,
+    }
+    result
 }
 
 /// Download a file.
@@ -206,16 +207,14 @@ fn download_file(uri: &str, local_path: &Path) -> Result<()> {
 }
 
 /// Upload a file.
-fn upload_file(local_path: &Path, uri: &str) -> Result<()> {
-    trace!("uploading {} to {}", local_path.display(), uri);
+fn upload_dir(dir_spec: &str, uri: &str) -> Result<()> {
+    trace!("uploading {} to {}", dir_spec, uri);
     let status = process::Command::new("gsutil")
-        .arg("cp")
-        .arg(&local_path)
-        .arg(&uri)
+        .args(&["-m", "rsync", "-r", dir_spec, uri])
         .status()
         .context("could not run gsutil")?;
     if !status.success() {
-        return Err(format_err!("could not upload {}", local_path.display()));
+        return Err(format_err!("could not upload {}", dir_spec));
     }
     Ok(())
 }
