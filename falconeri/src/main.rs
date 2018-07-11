@@ -28,6 +28,10 @@ mod cmd;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "A tool for running batch jobs on Kubernetes.")]
 enum Opt {
+    /// Migrate falconeri's database schema to the latest version.
+    #[structopt(name = "migrate")]
+    Migrate,
+
     /// Create a proxy connection to the default Kubernetes cluster.
     #[structopt(name = "proxy")]
     Proxy,
@@ -48,9 +52,8 @@ fn main() -> Result<()> {
     debug!("Args: {:?}", opt);
 
     match opt {
-        Opt::Proxy => {
-            cmd::proxy::run()
-        }
+        Opt::Migrate => cmd::migrate::run(),
+        Opt::Proxy => cmd::proxy::run(),
         Opt::Run { ref pipeline_json } => {
             let f = File::open(pipeline_json)
                 .context("can't open pipeline JSON file")?;

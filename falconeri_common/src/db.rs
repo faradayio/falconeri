@@ -5,7 +5,17 @@ use base64;
 use diesel::{PgConnection, prelude::*};
 use failure::ResultExt;
 use serde_json;
-use std::{env, fs::read_to_string, process::{Command, Stdio}};
+use std::{env, fs::read_to_string, io, process::{Command, Stdio}};
+
+/// Embed our migrations directly into the executable. We use a
+/// submodule so we can configure warnings.
+#[allow(unused_imports)]
+mod migrations {
+    embed_migrations!();
+
+    // Re-export everything because it's private.
+    pub use self::embedded_migrations::*;
+}
 
 /// How should we connect to the database?
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -86,4 +96,11 @@ pub fn connect(via: ConnectVia) -> Result<PgConnection> {
     let conn = PgConnection::establish(&database_url)
         .with_context(|_| format!("Error connecting to {}", database_url))?;
     Ok(conn)
+}
+
+/// Run any pending migrations, and print to standard output.
+pub fn run_pending_migrations(conn: &PgConnection) -> Result<()> {
+    debug!("Running pending migrations");
+    migrations::run_with_output(conn, &mut io::stdout())?;
+    Ok(())
 }

@@ -7,6 +7,8 @@ extern crate chrono;
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]
+pub extern crate diesel_migrations;
+#[macro_use]
 extern crate failure;
 #[macro_use]
 extern crate log;
