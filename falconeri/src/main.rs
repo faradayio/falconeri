@@ -22,19 +22,23 @@ use structopt::StructOpt;
 use pipeline::PipelineSpec;
 
 mod pipeline;
-mod run;
+mod cmd;
 
 /// Command-line options, parsed using `structopt`.
 #[derive(Debug, StructOpt)]
 #[structopt(about = "A tool for running batch jobs on Kubernetes.")]
 enum Opt {
+    /// Create a proxy connection to the default Kubernetes cluster.
+    #[structopt(name = "proxy")]
+    Proxy,
+
     /// Run the specified pipeline.
     #[structopt(name = "run")]
     Run {
         /// Path to a JSON pipeline spec.
         #[structopt(parse(from_os_str))]
         pipeline_json: PathBuf,
-    }
+    },
 }
 
 fn main() -> Result<()> {
@@ -44,13 +48,16 @@ fn main() -> Result<()> {
     debug!("Args: {:?}", opt);
 
     match opt {
+        Opt::Proxy => {
+            cmd::proxy::run()
+        }
         Opt::Run { ref pipeline_json } => {
             let f = File::open(pipeline_json)
                 .context("can't open pipeline JSON file")?;
             let pipeline_spec: PipelineSpec =
                 serde_json::from_reader(f)
                 .context("can't parse pipeline JSON file")?;
-            run::run(&pipeline_spec)
+            cmd::run::run(&pipeline_spec)
         }
     }
 }
