@@ -2,11 +2,17 @@
 
 #![warn(missing_docs)]
 
+extern crate base64;
 extern crate chrono;
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate log;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 

@@ -41,7 +41,7 @@ fn add_job_to_database(
     inputs: &[String],
     repo: &str,
 ) -> Result<()> {
-    let conn = db::connect()?;
+    let conn = db::connect(db::ConnectVia::Proxy)?;
     conn.transaction::<_, Error, _>(|| -> Result<()> {
         // Create our new job.
         let new_job = NewJob {
