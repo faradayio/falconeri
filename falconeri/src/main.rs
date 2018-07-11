@@ -33,6 +33,7 @@ enum Opt {
     #[structopt(name = "deploy")]
     Deploy {
         /// Just print out the manifest without deploying it.
+        #[structopt(long = "dry-run")]
         dry_run: bool,
     },
 
@@ -56,6 +57,7 @@ enum Opt {
     #[structopt(name = "undeploy")]
     Undeploy {
         /// Also delete the database volume and the secrets.
+        #[structopt(long = "all")]
         all: bool,
     },
 }
