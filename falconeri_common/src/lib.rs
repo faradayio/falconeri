@@ -19,6 +19,7 @@ extern crate serde_json;
 extern crate uuid;
 
 pub mod db;
+pub mod kubernetes;
 pub mod models;
 #[allow(missing_docs, unused_imports)]
 mod schema;

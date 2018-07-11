@@ -1,11 +1,12 @@
 //! Database utilities.
 
-use Result;
 use base64;
 use diesel::{PgConnection, prelude::*};
 use failure::ResultExt;
-use serde_json;
-use std::{env, fs::read_to_string, io, process::{Command, Stdio}};
+use std::{env, fs::read_to_string, io};
+
+use Result;
+use kubernetes;
 
 /// Embed our migrations directly into the executable. We use a
 /// submodule so we can configure warnings.
@@ -49,14 +50,9 @@ fn postgres_password(via: ConnectVia) -> Result<String> {
             // kubectl get secret falconeri -o json |
             //     jq -r .data.POSTGRES_PASSWORD |
             //     base64 --decode
-            let output = Command::new("kubectl")
-                .args(&["get", "secret", "falconeri", "-o", "json"])
-                // Pass `stderr` through on console instead of capturing.
-                .stderr(Stdio::inherit())
-                .output()
-                .context("could not fetch POSTGRES_PASSWORD from secret `falconeri`")?;
-            let secret: FalconeriSecret = serde_json::from_slice(&output.stdout)
-                .context("error parsing secret `falconeri`")?;
+            let secret: FalconeriSecret = kubernetes::kubectl_parse_json(
+                &["get", "secret", "falconeri", "-o", "json"],
+            )?;
             let pw_bytes = base64::decode(&secret.data.postgres_password)
                 .context("cannot decode POSTGRES_PASSWORD")?;
             Ok(String::from_utf8(pw_bytes)

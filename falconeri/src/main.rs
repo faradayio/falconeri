@@ -28,6 +28,13 @@ mod cmd;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "A tool for running batch jobs on Kubernetes.")]
 enum Opt {
+    /// Deploy falconeri onto the current Docker cluster.
+    #[structopt(name = "deploy")]
+    Deploy {
+        /// Just print out the manifest without deploying it.
+        dry_run: bool,
+    },
+
     /// Migrate falconeri's database schema to the latest version.
     #[structopt(name = "migrate")]
     Migrate,
@@ -43,6 +50,13 @@ enum Opt {
         #[structopt(parse(from_os_str))]
         pipeline_json: PathBuf,
     },
+
+    /// Undeploy `falconeri`, removing it from the cluster.
+    #[structopt(name = "undeploy")]
+    Undeploy {
+        /// Also delete the database volume and the secrets.
+        all: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -52,6 +66,7 @@ fn main() -> Result<()> {
     debug!("Args: {:?}", opt);
 
     match opt {
+        Opt::Deploy { dry_run } => cmd::deploy::run(dry_run),
         Opt::Migrate => cmd::migrate::run(),
         Opt::Proxy => cmd::proxy::run(),
         Opt::Run { ref pipeline_json } => {
@@ -62,5 +77,6 @@ fn main() -> Result<()> {
                 .context("can't parse pipeline JSON file")?;
             cmd::run::run(&pipeline_spec)
         }
+        Opt::Undeploy { all } => cmd::deploy::run_undeploy(all),
     }
 }
