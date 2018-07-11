@@ -1,7 +1,8 @@
 //! The `run` subcommand.
 
 use failure::ResultExt;
-use falconeri_common::{db, diesel::prelude::*, Error, models::*, Result};
+use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result};
+use handlebars::Handlebars;
 use std::{io::BufRead, process::{Command, Stdio}};
 
 use pipeline::*;
@@ -28,7 +29,8 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
                 paths.push(line.trim_right().to_owned());
             }
 
-            add_job_to_database(pipeline_spec, &paths, repo)?;
+            let job = add_job_to_database(pipeline_spec, &paths, repo)?;
+            start_batch_job(pipeline_spec, &job)?;
 
             Ok(())
         }
@@ -40,9 +42,9 @@ fn add_job_to_database(
     pipeline_spec: &PipelineSpec,
     inputs: &[String],
     repo: &str,
-) -> Result<()> {
+) -> Result<Job> {
     let conn = db::connect(db::ConnectVia::Proxy)?;
-    conn.transaction::<_, Error, _>(|| -> Result<()> {
+    let job = conn.transaction::<_, Error, _>(|| -> Result<Job> {
         // Create our new job.
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
@@ -68,10 +70,9 @@ fn add_job_to_database(
         }
 
         println!("{}", job.id);
-        Ok(())
+        Ok(job)
     })?;
-
-    Ok(())
+    Ok(job)
 }
 
 /// Given a URI and a repo name, construct a local path starting with "/pfs"
@@ -93,4 +94,46 @@ fn uri_to_local_path(uri: &str, repo: &str) -> Result<String> {
 fn uri_to_local_path_works() {
     let path = uri_to_local_path("gs://bucket/path/data1.csv", "myrepo").unwrap();
     assert_eq!(path, "/pfs/myrepo/data1.csv");
+}
+
+/// The manifest to use to run a job.
+const RUN_MANIFEST_TEMPLATE: &str = include_str!("run_manifest.yml");
+
+/// Start a new batch job running.
+fn start_batch_job(
+    pipeline_spec: &PipelineSpec,
+    job: &Job,
+) -> Result<()> {
+    debug!("starting batch job on cluster");
+
+    // Set up handlebars.
+    let mut handlebars = Handlebars::new();
+    handlebars.set_strict_mode(true);
+
+    // TODO: Fix escaping as per http://yaml.org/spec/1.2/spec.html#id2776092.
+    //handlebars.register_escape_fn(...)
+
+    // Set up our template parameters.
+    #[derive(Serialize)]
+    struct JobParams {
+        name: String,
+        parallelism: u32,
+        image: String,
+        job_id: String,
+    }
+    let params = JobParams {
+        // TODO: Add a unique identifier to job name. Ideally this should
+        // be stored in the `jobs` table when create the `Job`.
+        name: pipeline_spec.pipeline.name.clone(),
+        parallelism: pipeline_spec.parallelism_spec.constant,
+        image: pipeline_spec.transform.image.clone(),
+        job_id: job.id.to_string(),
+    };
+
+    // Render our template and deploy it.
+    let manifest = handlebars.render_template(RUN_MANIFEST_TEMPLATE, &params)
+        .context("error rendering job template")?;
+    kubernetes::deploy(&manifest)?;
+
+    Ok(())
 }

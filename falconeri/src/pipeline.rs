@@ -10,6 +10,7 @@
 pub struct PipelineSpec {
     pub pipeline: PipelineInfo,
     pub transform: TransformInfo,
+    pub parallelism_spec: ParallelismInfo,
     pub input: InputInfo,
     pub egress: EgressInfo,
 }
@@ -24,6 +25,11 @@ pub struct PipelineInfo {
 pub struct TransformInfo {
     pub cmd: Vec<String>,
     pub image: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct ParallelismInfo {
+    pub constant: u32,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -57,6 +63,9 @@ fn parse_pipeline_spec() {
     "cmd": [ "python3", "/extract_words.py" ],
     "image": "somerepo/my_python_nlp"
   },
+  "parallelism_spec": {
+    "constant": 10
+  },
   "input": {
     "atom": {
       "URI": "gs://example-bucket/books/",
@@ -73,6 +82,7 @@ fn parse_pipeline_spec() {
         serde_json::from_str(json).expect("parse error");
     assert_eq!(parsed.pipeline.name, "book_words");
     assert_eq!(parsed.transform.cmd[0], "python3");
+    assert_eq!(parsed.parallelism_spec.constant, 10);
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");
     assert_eq!(parsed.input, InputInfo::Atom {
         uri: "gs://example-bucket/books/".to_owned(),

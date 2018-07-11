@@ -1,0 +1,39 @@
+---
+# Batch job template for falconeri jobs.
+#
+# This is a YAML file processed using handlebars. See
+# https://docs.rs/handlebars and https://handlebarsjs.com/
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{name}}"
+spec:
+  parallelism: {{parallelism}}
+  template:
+    spec:
+      containers:
+      - name: worker
+        image: "{{image}}"
+        command: ["/usr/local/bin/falconeri-worker", "{{job_id}}"]
+        env:
+        - name: RUST_BACKTRACE
+          value: "1"
+        - name: RUST_LOG
+          value: "falconeri_common=trace,falconeri_worker=trace"
+        volumeMounts:
+        - mountPath: /etc/falconeri/secrets
+          name: secrets
+        - mountPath: /pfs
+          name: pfs
+        - mountPath: /scratch
+          name: scratch
+      restartPolicy: Never
+      volumes:
+      - name: pfs
+        emptyDir: {}
+      - name: scratch
+        emptyDir: {}
+      - name: secrets
+        secret:
+          secretName: falconeri
+  backoffLimit: 4
