@@ -122,9 +122,11 @@ fn start_batch_job(
         job_id: String,
     }
     let params = JobParams {
+        // Make sure our name is DNS-legal for Kubernetes.
+        //
         // TODO: Add a unique identifier to job name. Ideally this should
         // be stored in the `jobs` table when create the `Job`.
-        name: pipeline_spec.pipeline.name.clone(),
+        name: pipeline_spec.pipeline.name.replace("_", "-"),
         parallelism: pipeline_spec.parallelism_spec.constant,
         image: pipeline_spec.transform.image.clone(),
         job_id: job.id.to_string(),
