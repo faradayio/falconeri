@@ -23,8 +23,9 @@ use structopt::StructOpt;
 
 use pipeline::PipelineSpec;
 
-mod pipeline;
 mod cmd;
+mod manifest;
+mod pipeline;
 
 /// Command-line options, parsed using `structopt`.
 #[derive(Debug, StructOpt)]

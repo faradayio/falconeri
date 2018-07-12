@@ -1,9 +1,10 @@
 * DONE Add node and pod names to datum when working
 * DONE Better job names
 * DONE Resource constraints
-* TODO Node type constraints
-* TODO Generate secrets
-* TODO Don't delete pvc on undeploy unless --all is passed
+* DONE FAILED: Fix node name (not yet possible)
+* DONE Node type constraints
+* DONE Generate secrets
+* DONE Don't delete pvc on undeploy unless --all is passed
 * TODO Put cloud storage behind a trait
 * TODO Job listing & inspection CLI
 * TODO Mark job status when done

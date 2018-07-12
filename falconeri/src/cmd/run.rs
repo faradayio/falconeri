@@ -2,11 +2,11 @@
 
 use failure::ResultExt;
 use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result};
-use handlebars::Handlebars;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use std::{io::BufRead, iter, process::{Command, Stdio}};
 
+use manifest::render_manifest;
 use pipeline::*;
 
 /// The `run` subcommand.
@@ -131,15 +131,8 @@ fn start_batch_job(
     }
     let params = JobParams { pipeline_spec, job };
 
-    // Set up handlebars.
-    let mut handlebars = Handlebars::new();
-    handlebars.set_strict_mode(true);
-
-    // TODO: Fix escaping as per http://yaml.org/spec/1.2/spec.html#id2776092.
-    //handlebars.register_escape_fn(...)
-
     // Render our template and deploy it.
-    let manifest = handlebars.render_template(RUN_MANIFEST_TEMPLATE, &params)
+    let manifest = render_manifest(RUN_MANIFEST_TEMPLATE, &params)
         .context("error rendering job template")?;
     kubernetes::deploy(&manifest)?;
 

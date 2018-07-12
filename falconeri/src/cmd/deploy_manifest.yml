@@ -1,3 +1,4 @@
+{{#if all}}
 ---
 # PostgreSQL volume: Stores our data semi-persistently.
 apiVersion: v1
@@ -15,6 +16,7 @@ spec:
   # This is defined by default on GKE, and it will allocated and deallocate
   # persistent cloud volumes.
   storageClassName: standard
+{{/if}}
 
 ---
 # PostgreSQL replica set: Keeps one PostgreSQL server running.
