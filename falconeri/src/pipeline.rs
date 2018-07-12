@@ -5,36 +5,46 @@
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
 /// Represents a pipeline *.json file.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineSpec {
-    pub pipeline: PipelineInfo,
-    pub transform: TransformInfo,
-    pub parallelism_spec: ParallelismInfo,
-    pub input: InputInfo,
-    pub egress: EgressInfo,
+    pub pipeline: Pipeline,
+    pub transform: Transform,
+    pub parallelism_spec: ParallelismSpec,
+    pub resource_requests: ResourceRequests,
+    pub input: Input,
+    pub egress: Egress,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct PipelineInfo {
+pub struct Pipeline {
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct TransformInfo {
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Transform {
     pub cmd: Vec<String>,
     pub image: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct ParallelismInfo {
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParallelismSpec {
     pub constant: u32,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceRequests {
+    pub memory: String,
+    pub cpu: f32,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
-pub enum InputInfo {
+pub enum Input {
     Atom {
         #[serde(rename = "URI")]
         uri: String,
@@ -43,9 +53,9 @@ pub enum InputInfo {
     },
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
-pub struct EgressInfo {
+pub struct Egress {
     #[serde(rename = "URI")]
     pub uri: String,
 }
@@ -66,6 +76,10 @@ fn parse_pipeline_spec() {
   "parallelism_spec": {
     "constant": 10
   },
+  "resource_requests": {
+    "memory": "500Mi",
+    "cpu": 1.2
+  },
   "input": {
     "atom": {
       "URI": "gs://example-bucket/books/",
@@ -83,8 +97,10 @@ fn parse_pipeline_spec() {
     assert_eq!(parsed.pipeline.name, "book_words");
     assert_eq!(parsed.transform.cmd[0], "python3");
     assert_eq!(parsed.parallelism_spec.constant, 10);
+    assert_eq!(parsed.resource_requests.memory, "500Mi");
+    assert_eq!(parsed.resource_requests.cpu, 1.2);
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");
-    assert_eq!(parsed.input, InputInfo::Atom {
+    assert_eq!(parsed.input, Input::Atom {
         uri: "gs://example-bucket/books/".to_owned(),
         repo: "books".to_owned(),
         glob: "/*".to_owned(),

@@ -6,15 +6,23 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{name}}"
+  name: "{{job.job_name}}"
 spec:
-  parallelism: {{parallelism}}
+  parallelism: {{pipeline_spec.parallelism_spec.constant}}
   template:
     spec:
       containers:
       - name: worker
-        image: "{{image}}"
-        command: ["/usr/local/bin/falconeri-worker", "{{job_id}}"]
+        image: "{{pipeline_spec.transform.image}}"
+        command: ["/usr/local/bin/falconeri-worker", "{{job.id}}"]
+        resources:
+          requests:
+            memory: "{{pipeline_spec.resource_requests.memory}}"
+            cpu: "{{millicpu pipeline_spec.resource_requests.cpu}}"
+          limits:
+            # Should always default to the same as the request, to prevent
+            # surprise evictions.
+            memory: "{{pipeline_spec.resource_requests.memory}}"
         env:
         - name: RUST_BACKTRACE
           value: "1"

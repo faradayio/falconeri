@@ -10,11 +10,13 @@ use schema::*;
 use super::{Datum, InputFile, Status};
 
 /// A distributed data processing job.
-#[derive(Debug, Identifiable, Queryable)]
+#[derive(Debug, Identifiable, Queryable, Serialize)]
 pub struct Job {
     /// The unique ID of this job.
     pub id: Uuid,
     /// When this job was created.
+    ///
+    /// TODO: Verify timezone handling is sensible.
     pub created_at: NaiveDateTime,
     /// When this job was last updated.
     pub updated_at: NaiveDateTime,

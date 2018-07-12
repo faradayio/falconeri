@@ -2,7 +2,7 @@
 
 use failure::ResultExt;
 use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result};
-use handlebars::Handlebars;
+use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use std::{io::BufRead, iter, process::{Command, Stdio}};
@@ -12,7 +12,7 @@ use pipeline::*;
 /// The `run` subcommand.
 pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
     match &pipeline_spec.input {
-        InputInfo::Atom { uri, repo, glob } => {
+        Input::Atom { uri, repo, glob } => {
             // Check to make sure we're using a supported glob mode.
             if glob != "/*" {
                 return Err(format_err!("Glob {} not yet supported", glob));
@@ -33,6 +33,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
 
             let job = add_job_to_database(pipeline_spec, &paths, repo)?;
             start_batch_job(pipeline_spec, &job)?;
+            println!("{}", job.job_name);
 
             Ok(())
         }
@@ -86,8 +87,6 @@ fn add_job_to_database(
             };
             let _file = new_file.insert(&conn)?;
         }
-
-        println!("{}", job.id);
         Ok(job)
     })?;
     Ok(job)
@@ -115,7 +114,7 @@ fn uri_to_local_path_works() {
 }
 
 /// The manifest to use to run a job.
-const RUN_MANIFEST_TEMPLATE: &str = include_str!("run_manifest.yml");
+const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml");
 
 /// Start a new batch job running.
 fn start_batch_job(
@@ -124,27 +123,21 @@ fn start_batch_job(
 ) -> Result<()> {
     debug!("starting batch job on cluster");
 
+    // Set up our template parameters.
+    #[derive(Serialize)]
+    struct JobParams<'a> {
+        pipeline_spec: &'a PipelineSpec,
+        job: &'a Job,
+    }
+    let params = JobParams { pipeline_spec, job };
+
     // Set up handlebars.
     let mut handlebars = Handlebars::new();
     handlebars.set_strict_mode(true);
+    handlebars.register_helper("millicpu", Box::new(millicpu_helper));
 
     // TODO: Fix escaping as per http://yaml.org/spec/1.2/spec.html#id2776092.
     //handlebars.register_escape_fn(...)
-
-    // Set up our template parameters.
-    #[derive(Serialize)]
-    struct JobParams {
-        name: String,
-        parallelism: u32,
-        image: String,
-        job_id: String,
-    }
-    let params = JobParams {
-        name: job.job_name.clone(),
-        parallelism: pipeline_spec.parallelism_spec.constant,
-        image: pipeline_spec.transform.image.clone(),
-        job_id: job.id.to_string(),
-    };
 
     // Render our template and deploy it.
     let manifest = handlebars.render_template(RUN_MANIFEST_TEMPLATE, &params)
@@ -153,3 +146,25 @@ fn start_batch_job(
 
     Ok(())
 }
+
+/// A handlebars helper which formats floating point numbers as Kubernetes
+/// "millicpu" values.
+fn millicpu_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> HelperResult {
+    let param = h.param(0).ok_or_else(|| {
+        RenderError::new("millicpu should have a single parameter")
+    })?;
+    let cpu = param.value().as_f64().ok_or_else(|| {
+        RenderError::new("millicpu should be passed a floating point number")
+    })?;
+    // TODO: Check `as i64` semantics for overflow handling.
+    let millicpu = format!("{}m", f64::ceil(cpu * 1000.0) as i64);
+    out.write(&millicpu)?;
+    Ok(())
+}
+
