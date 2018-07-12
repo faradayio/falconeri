@@ -9,6 +9,8 @@ table! {
         status -> Status,
         job_id -> Uuid,
         error_message -> Nullable<Text>,
+        node_name -> Nullable<Text>,
+        pod_name -> Nullable<Text>,
     }
 }
 
@@ -35,6 +37,7 @@ table! {
         updated_at -> Timestamp,
         status -> Status,
         pipeline_spec -> Jsonb,
+        job_name -> Text,
         command -> Array<Text>,
         egress_uri -> Text,
     }

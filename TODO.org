@@ -1,0 +1,10 @@
+* DONE Add node and pod names to datum when working
+* DONE Better job names
+* TODO Resource constraints
+* TODO Node type constraints
+* TODO Don't delete pvc on undeploy unless --all is passed
+* TODO Put cloud storage behind a trait
+* TODO Job listing & inspection CLI
+* TODO Mark job status when done
+* TODO Tag jobs
+* TODO Database URL subcommand

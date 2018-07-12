@@ -24,6 +24,10 @@ pub struct Datum {
     pub job_id: Uuid,
     /// An error message associated with this datum, if any.
     pub error_message: Option<String>,
+    /// The Kubernetes node on which this job is running / was run.
+    pub node_name: Option<String>,
+    /// The Kubernetes pod which is running / ran this job.
+    pub pod_name: Option<String>,
 }
 
 impl Datum {

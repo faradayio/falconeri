@@ -20,6 +20,14 @@ spec:
           value: "1"
         - name: RUST_LOG
           value: "falconeri_common=trace,falconeri_worker=trace"
+        - name: FALCONERI_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: FALCONERI_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         volumeMounts:
         - mountPath: /etc/falconeri/secrets
           name: secrets

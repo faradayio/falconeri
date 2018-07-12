@@ -3,7 +3,9 @@
 use failure::ResultExt;
 use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result};
 use handlebars::Handlebars;
-use std::{io::BufRead, process::{Command, Stdio}};
+use rand::{Rng, thread_rng};
+use rand::distributions::Alphanumeric;
+use std::{io::BufRead, iter, process::{Command, Stdio}};
 
 use pipeline::*;
 
@@ -45,9 +47,25 @@ fn add_job_to_database(
 ) -> Result<Job> {
     let conn = db::connect(db::ConnectVia::Proxy)?;
     let job = conn.transaction::<_, Error, _>(|| -> Result<Job> {
+        // Generate a unique name for our job. To keep Kubernetes happy, this
+        // must be a legal DNS name component (but we have a database constraint
+        // to enforce that).
+        let mut rng = thread_rng();
+        let tag = iter::repeat(())
+            // Note that this random distribution is biased, because we generate
+            // both upper and lowercase letters and then convert to lowercase
+            // later. This isn't a big deal for now.
+            .map(|()| rng.sample(Alphanumeric))
+            .take(5)
+            .collect::<String>();
+        let job_name = format!("{}-{}", pipeline_spec.pipeline.name, tag)
+            .replace("_", "-")
+            .to_lowercase();
+
         // Create our new job.
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
+            job_name: job_name,
             command: pipeline_spec.transform.cmd.clone(),
             egress_uri: pipeline_spec.egress.uri.clone(),
         };
@@ -122,11 +140,7 @@ fn start_batch_job(
         job_id: String,
     }
     let params = JobParams {
-        // Make sure our name is DNS-legal for Kubernetes.
-        //
-        // TODO: Add a unique identifier to job name. Ideally this should
-        // be stored in the `jobs` table when create the `Job`.
-        name: pipeline_spec.pipeline.name.replace("_", "-"),
+        name: job.job_name.clone(),
         parallelism: pipeline_spec.parallelism_spec.constant,
         image: pipeline_spec.transform.image.clone(),
         job_id: job.id.to_string(),

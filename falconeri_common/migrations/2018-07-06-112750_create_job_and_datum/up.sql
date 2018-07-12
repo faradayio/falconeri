@@ -8,6 +8,8 @@ CREATE TABLE jobs (
     updated_at timestamp NOT NULL DEFAULT now(),
     status status NOT NULL DEFAULT 'running',
     pipeline_spec jsonb NOT NULL,
+    -- DNS component regex from https://stackoverflow.com/a/30007882
+    job_name text NOT NULL UNIQUE CHECK (job_name ~ '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'),
     command text[] NOT NULL CHECK (cardinality(command) > 0),
     egress_uri text NOT NULL
 );
@@ -20,7 +22,9 @@ CREATE TABLE datums (
     updated_at timestamp NOT NULL DEFAULT now(),
     status status NOT NULL DEFAULT 'ready',
     job_id uuid NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    error_message text
+    error_message text,
+    node_name text,
+    pod_name text
 );
 
 CREATE INDEX datum_job_id_status ON datums (job_id, status);
