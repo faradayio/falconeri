@@ -22,7 +22,7 @@ spec:
         resources:
           requests:
             memory: "{{pipeline_spec.resource_requests.memory}}"
-            cpu: "{{millicpu pipeline_spec.resource_requests.cpu}}"
+            cpu: {{pipeline_spec.resource_requests.cpu}}
           limits:
             # Should always default to the same as the request, to prevent
             # surprise evictions.

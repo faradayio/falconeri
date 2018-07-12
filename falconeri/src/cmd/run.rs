@@ -2,7 +2,7 @@
 
 use failure::ResultExt;
 use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result};
-use handlebars::{Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError};
+use handlebars::Handlebars;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use std::{io::BufRead, iter, process::{Command, Stdio}};
@@ -134,7 +134,6 @@ fn start_batch_job(
     // Set up handlebars.
     let mut handlebars = Handlebars::new();
     handlebars.set_strict_mode(true);
-    handlebars.register_helper("millicpu", Box::new(millicpu_helper));
 
     // TODO: Fix escaping as per http://yaml.org/spec/1.2/spec.html#id2776092.
     //handlebars.register_escape_fn(...)
@@ -146,25 +145,3 @@ fn start_batch_job(
 
     Ok(())
 }
-
-/// A handlebars helper which formats floating point numbers as Kubernetes
-/// "millicpu" values.
-fn millicpu_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _: &mut RenderContext,
-    out: &mut Output,
-) -> HelperResult {
-    let param = h.param(0).ok_or_else(|| {
-        RenderError::new("millicpu should have a single parameter")
-    })?;
-    let cpu = param.value().as_f64().ok_or_else(|| {
-        RenderError::new("millicpu should be passed a floating point number")
-    })?;
-    // TODO: Check `as i64` semantics for overflow handling.
-    let millicpu = format!("{}m", f64::ceil(cpu * 1000.0) as i64);
-    out.write(&millicpu)?;
-    Ok(())
-}
-
