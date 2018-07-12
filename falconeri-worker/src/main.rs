@@ -186,7 +186,10 @@ fn upload_outputs(
     let result = upload_dir("/pfs/out/", &job.egress_uri);
     match result {
         Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
-        Err(_) => OutputFile::mark_as_error(datum, &conn)?,
+        Err(ref err) => {
+            error!("Failed to process datum {}: {}", datum.id, err);
+            OutputFile::mark_as_error(datum, &conn)?
+        }
     }
     result
 }
