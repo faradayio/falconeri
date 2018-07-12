@@ -4,6 +4,7 @@ name = "falconeri"
 version = "0.1.0"
 
 [dependencies]
+base64 = "0.9.2"
 env_logger = "0.5.10"
 failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }

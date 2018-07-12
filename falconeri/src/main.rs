@@ -1,3 +1,4 @@
+extern crate base64;
 extern crate env_logger;
 #[macro_use]
 extern crate failure;

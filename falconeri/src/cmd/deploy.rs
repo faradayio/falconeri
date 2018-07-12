@@ -1,5 +1,6 @@
 //! The `deploy` subcommand.
 
+use base64;
 use falconeri_common::{kubernetes, Result};
 use rand::{EntropyRng, Rng};
 use rand::distributions::Alphanumeric;
@@ -27,7 +28,7 @@ struct DeployManifestParams {
 
 /// Deploy `falconeri` to the current Kubernetes cluster.
 pub fn run(dry_run: bool) -> Result<()> {
-    // Generate a password
+    // Generate a password using the system's "secure" random number generator.
     let mut rng = EntropyRng::new();
     let postgres_password = iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
@@ -35,9 +36,9 @@ pub fn run(dry_run: bool) -> Result<()> {
         .collect::<String>();
 
     // Generate our secret manifest.
-    //
-    // TODO: Verify that our secret doesn't already exist.
-    let secret_params = SecretManifestParams { postgres_password };
+    let secret_params = SecretManifestParams {
+        postgres_password: base64::encode(&postgres_password),
+    };
     let secret_manifest = render_manifest(SECRET_MANIFEST, &secret_params)?;
 
     // Generate our deploy manifest.
