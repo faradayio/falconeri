@@ -11,6 +11,10 @@ spec:
   parallelism: {{pipeline_spec.parallelism_spec.constant}}
   template:
     spec:
+      nodeSelector:
+{{#each pipeline_spec.node_selector}}
+        "{{@key}}": "{{this}}"
+{{/each}}
       containers:
       - name: worker
         image: "{{pipeline_spec.transform.image}}"
@@ -31,6 +35,7 @@ spec:
         - name: FALCONERI_NODE_NAME
           valueFrom:
             fieldRef:
+              # This does not seem to currently work.
               fieldPath: spec.nodeName
         - name: FALCONERI_POD_NAME
           valueFrom:
