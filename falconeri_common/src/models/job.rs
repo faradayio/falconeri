@@ -44,6 +44,7 @@ impl Job {
     /// Get all known jobs.
     pub fn list(conn: &PgConnection) -> Result<Vec<Job>> {
         Ok(jobs::table
+            .order_by(jobs::created_at.desc())
             .load(conn)
             .context("could not list jobs")?)
     }

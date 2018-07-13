@@ -7,15 +7,15 @@ use std::{fs::File, path::PathBuf};
 
 use pipeline::PipelineSpec;
 
-mod ls;
+mod list;
 mod run;
 
 /// The `job` subcommand.
 #[derive(Debug, StructOpt)]
 pub enum Opt {
     /// List all jobs.
-    #[structopt(name = "ls")]
-    Ls,
+    #[structopt(name = "list")]
+    List,
 
     /// Run the specified pipeline as a one-off job.
     #[structopt(name = "run")]
@@ -29,7 +29,7 @@ pub enum Opt {
 /// Run the `job` subcommand.
 pub fn run(opt: &Opt) -> Result<()> {
     match opt {
-        Opt::Ls { } => ls::run(),
+        Opt::List {} => list::run(),
         Opt::Run { ref pipeline_json } => {
             let f = File::open(pipeline_json)
                 .context("can't open pipeline JSON file")?;
