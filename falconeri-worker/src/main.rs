@@ -62,7 +62,10 @@ fn main() -> Result<()> {
             // Handle the processing results.
             match result {
                 Ok(()) => datum.mark_as_done(&conn)?,
-                Err(err) => datum.mark_as_error(&err, &conn)?,
+                Err(err) => {
+                    error!("Failed to process datum {}: {}", datum.id, err);
+                    datum.mark_as_error(&err, &conn)?
+                }
             }
         } else {
             debug!("no more datums to process");
@@ -186,10 +189,7 @@ fn upload_outputs(
     let result = upload_dir("/pfs/out/", &job.egress_uri);
     match result {
         Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
-        Err(ref err) => {
-            error!("Failed to process datum {}: {}", datum.id, err);
-            OutputFile::mark_as_error(datum, &conn)?
-        }
+        Err(_) => OutputFile::mark_as_error(datum, &conn)?
     }
     result
 }
