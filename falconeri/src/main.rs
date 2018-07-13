@@ -32,6 +32,13 @@ mod pipeline;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "A tool for running batch jobs on Kubernetes.")]
 enum Opt {
+    /// Commands for accessing the database.
+    #[structopt(name = "db")]
+    Db {
+        #[structopt(subcommand)]
+        cmd: cmd::db::Opt,
+    },
+
     /// Deploy falconeri onto the current Docker cluster.
     #[structopt(name = "deploy")]
     Deploy {
@@ -72,6 +79,7 @@ fn main() -> Result<()> {
     debug!("Args: {:?}", opt);
 
     match opt {
+        Opt::Db { ref cmd } => cmd::db::run(cmd),
         Opt::Deploy { dry_run } => cmd::deploy::run(dry_run),
         Opt::Migrate => cmd::migrate::run(),
         Opt::Proxy => cmd::proxy::run(),

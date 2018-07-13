@@ -7,8 +7,8 @@
 * DONE Don't delete pvc on undeploy unless --all is passed
 * DONE Put cloud storage behind a trait
 * DONE Tag jobs
-* TODO Database URL subcommand
-* TODO Job listing & inspection CLI
+* DONE Database URL subcommand
 * TODO Mark job status when done
+* TODO Job listing & inspection CLI
 * TODO Retry failed jobs (manually?)
 * TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud

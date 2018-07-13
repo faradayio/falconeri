@@ -67,7 +67,7 @@ fn postgres_password(via: ConnectVia) -> Result<String> {
 }
 
 /// Get an appropriate database URL.
-fn database_url(via: ConnectVia) -> Result<String> {
+pub fn database_url(via: ConnectVia) -> Result<String> {
     // Check the environment first, so it can be overridden for testing outside
     // of a full Kubernetes setup.
     if let Ok(database_url) = env::var("DATABASE_URL") {
