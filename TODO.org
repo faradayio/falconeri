@@ -5,8 +5,10 @@
 * DONE Node type constraints
 * DONE Generate secrets
 * DONE Don't delete pvc on undeploy unless --all is passed
-* TODO Put cloud storage behind a trait
-* TODO Job listing & inspection CLI
-* TODO Mark job status when done
+* DONE Put cloud storage behind a trait
 * TODO Tag jobs
 * TODO Database URL subcommand
+* TODO Job listing & inspection CLI
+* TODO Mark job status when done
+* TODO Retry failed jobs (manually?)
+* TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud

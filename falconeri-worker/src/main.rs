@@ -10,7 +10,7 @@ extern crate openssl_probe;
 extern crate uuid;
 
 use failure::ResultExt;
-use falconeri_common::{db, models::*, Result};
+use falconeri_common::{db, models::*, Result, storage::CloudStorage};
 use std::{env, fs, path::Path, process, thread::sleep, time::Duration};
 use uuid::Uuid;
 
@@ -102,7 +102,8 @@ fn process_datum(
     // Download each file.
     reset_work_dir()?;
     for file in files {
-        download_file(&file.uri, Path::new(&file.local_path))?;
+        let storage = CloudStorage::for_uri(&file.uri)?;
+        storage.sync_down(&file.uri, Path::new(&file.local_path))?;
     }
 
     // Run our command.
@@ -117,7 +118,7 @@ fn process_datum(
     }
 
     // Finish up.
-    upload_outputs(job, datum)?;
+    upload_outputs(job, datum).context("could not upload outputs")?;
     reset_work_dir()?;
     Ok(())
 }
@@ -186,38 +187,11 @@ fn upload_outputs(
 
     // Upload all our files in a batch, for maximum performance, and record
     // what happened.
-    let result = upload_dir("/pfs/out/", &job.egress_uri);
+    let storage = CloudStorage::for_uri(&job.egress_uri)?;
+    let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
     match result {
         Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
         Err(_) => OutputFile::mark_as_error(datum, &conn)?
     }
     result
-}
-
-/// Download a file.
-fn download_file(uri: &str, local_path: &Path) -> Result<()> {
-    trace!("downloading {} to {}", uri, local_path.display());
-    let status = process::Command::new("gsutil")
-        .arg("cp")
-        .arg(uri)
-        .arg(local_path)
-        .status()
-        .context("could not run gsutil")?;
-    if !status.success() {
-        return Err(format_err!("could not download {:?}", uri));
-    }
-    Ok(())
-}
-
-/// Upload a file.
-fn upload_dir(dir_spec: &str, uri: &str) -> Result<()> {
-    trace!("uploading {} to {}", dir_spec, uri);
-    let status = process::Command::new("gsutil")
-        .args(&["-m", "rsync", "-r", dir_spec, uri])
-        .status()
-        .context("could not run gsutil")?;
-    if !status.success() {
-        return Err(format_err!("could not upload {}", dir_spec));
-    }
-    Ok(())
 }

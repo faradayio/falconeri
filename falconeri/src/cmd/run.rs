@@ -1,10 +1,10 @@
 //! The `run` subcommand.
 
 use failure::ResultExt;
-use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result};
+use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result, storage::CloudStorage};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
-use std::{io::BufRead, iter, process::{Command, Stdio}};
+use std::iter;
 
 use manifest::render_manifest;
 use pipeline::*;
@@ -18,19 +18,10 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
                 return Err(format_err!("Glob {} not yet supported", glob));
             }
 
-            // Shell out to gsutil to list the files we want to process.
-            let output = Command::new("gsutil")
-                .arg("ls")
-                .arg(&uri)
-                .stderr(Stdio::inherit())
-                .output()
-                .context("error running gsutil")?;
-            let mut paths = vec![];
-            for line in output.stdout.lines() {
-                let line = line?;
-                paths.push(line.trim_right().to_owned());
-            }
-
+            // Figure out what files to process, add our job to the database,
+            // and launch our batch job on the cluster.
+            let storage = CloudStorage::for_uri(&uri)?;
+            let paths = storage.list(uri)?;
             let job = add_job_to_database(pipeline_spec, &paths, repo)?;
             start_batch_job(pipeline_spec, &job)?;
             println!("{}", job.job_name);

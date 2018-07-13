@@ -23,6 +23,7 @@ pub mod kubernetes;
 pub mod models;
 #[allow(missing_docs, unused_imports)]
 mod schema;
+pub mod storage;
 
 /// Error type for this crate's functions.
 pub type Error = failure::Error;
