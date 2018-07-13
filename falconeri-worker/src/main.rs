@@ -45,7 +45,7 @@ fn main() -> Result<()> {
     // Loop until there are no more datums.
     loop {
         // Fetch our job, and make sure that it's still running.
-        let job = Job::find(job_id, &conn)?;
+        let mut job = Job::find(job_id, &conn)?;
         trace!("job: {:?}", job);
         if job.status != Status::Running {
             break;
@@ -63,26 +63,24 @@ fn main() -> Result<()> {
             match result {
                 Ok(()) => datum.mark_as_done(&conn)?,
                 Err(err) => {
-                    error!("Failed to process datum {}: {}", datum.id, err);
+                    error!("failed to process datum {}: {}", datum.id, err);
                     datum.mark_as_error(&err, &conn)?
                 }
             }
         } else {
             debug!("no more datums to process");
+            job.update_status_if_done(&conn)?;
 
             // Don't exit until all the other workers are ready to exit, because
             // we might be getting run as a Kubernetes `Job`, and if so, a 0
             // exit status would mean that it's safe to start descheduling all
-            // other workers.
-            loop {
-                let count = Datum::left_to_process(&job, &conn)?;
-                if count == 0 {
-                    debug!("all workers have finished");
-                    break;
-                }
-                debug!("waiting for {} datums to finish", count);
+            // other workers. Yes this is weird.
+            while job.status == Status::Running {
+                trace!("waiting for job to finish");
                 sleep(Duration::from_secs(30));
+                job = Job::find(job_id, &conn)?;
             }
+            debug!("all workers have finished");
             break;
         }
     }

@@ -31,17 +31,6 @@ pub struct Datum {
 }
 
 impl Datum {
-    /// How many datums are left to process in the specified job?
-    ///
-    /// TODO: Carefully cast result type to an unsigned type.
-    pub fn left_to_process(job: &Job, conn: &PgConnection) -> Result<i64> {
-        use diesel::dsl::{any, count_star};
-        Ok(Datum::belonging_to(job)
-            .filter(datums::status.eq(any(vec![Status::Ready, Status::Running])))
-            .select(count_star())
-            .get_result(conn)?)
-    }
-
     /// Mark this datum as having been successfully processed.
     pub fn mark_as_done(&mut self, conn: &PgConnection) -> Result<()> {
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
