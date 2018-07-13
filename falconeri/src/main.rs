@@ -17,12 +17,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate structopt;
 
-use failure::ResultExt;
 use falconeri_common::Result;
-use std::{fs::File, path::PathBuf};
 use structopt::StructOpt;
-
-use pipeline::PipelineSpec;
 
 mod cmd;
 mod manifest;
@@ -47,6 +43,13 @@ enum Opt {
         dry_run: bool,
     },
 
+    /// Job-related commands.
+    #[structopt(name = "job")]
+    Job {
+        #[structopt(subcommand)]
+        cmd: cmd::job::Opt,
+    },
+
     /// Migrate falconeri's database schema to the latest version.
     #[structopt(name = "migrate")]
     Migrate,
@@ -54,14 +57,6 @@ enum Opt {
     /// Create a proxy connection to the default Kubernetes cluster.
     #[structopt(name = "proxy")]
     Proxy,
-
-    /// Run the specified pipeline.
-    #[structopt(name = "run")]
-    Run {
-        /// Path to a JSON pipeline spec.
-        #[structopt(parse(from_os_str))]
-        pipeline_json: PathBuf,
-    },
 
     /// Undeploy `falconeri`, removing it from the cluster.
     #[structopt(name = "undeploy")]
@@ -81,16 +76,9 @@ fn main() -> Result<()> {
     match opt {
         Opt::Db { ref cmd } => cmd::db::run(cmd),
         Opt::Deploy { dry_run } => cmd::deploy::run(dry_run),
+        Opt::Job { ref cmd } => cmd::job::run(cmd),
         Opt::Migrate => cmd::migrate::run(),
         Opt::Proxy => cmd::proxy::run(),
-        Opt::Run { ref pipeline_json } => {
-            let f = File::open(pipeline_json)
-                .context("can't open pipeline JSON file")?;
-            let pipeline_spec: PipelineSpec =
-                serde_json::from_reader(f)
-                .context("can't parse pipeline JSON file")?;
-            cmd::run::run(&pipeline_spec)
-        }
         Opt::Undeploy { all } => cmd::deploy::run_undeploy(all),
     }
 }
