@@ -8,7 +8,7 @@
 * DONE Put cloud storage behind a trait
 * DONE Tag jobs
 * DONE Database URL subcommand
-* TODO Mark job status when done
+* DONE Mark job status when done
 * TODO Job listing & inspection CLI
 * TODO Retry failed jobs (manually?)
 * TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud

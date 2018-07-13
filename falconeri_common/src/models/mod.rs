@@ -1,7 +1,7 @@
 //! Database models.
 
 use diesel::{deserialize, pg::Pg, serialize};
-use std::io::Write;
+use std::{fmt, io::Write};
 
 mod datum;
 mod input_file;
@@ -22,7 +22,7 @@ pub mod sql_types {
 }
 
 /// Possible status values.
-#[derive(AsExpression, Debug, Clone, Copy, Eq, FromSqlRow, PartialEq, Serialize)]
+#[derive(AsExpression, Debug, Clone, Copy, Eq, FromSqlRow, Ord, PartialEq, PartialOrd, Serialize)]
 #[sql_type = "sql_types::Status"]
 #[serde(rename_all = "snake_case")]
 pub enum Status {
@@ -37,6 +37,19 @@ pub enum Status {
     /// This record has been canceled, and further processing should be
     /// stopped as soon as convenient.
     Canceled,
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match *self {
+            Status::Ready => "ready",
+            Status::Running => "running",
+            Status::Done => "done",
+            Status::Error => "error",
+            Status::Canceled => "canceled",
+        };
+        s.fmt(f)
+    }
 }
 
 impl ::diesel::serialize::ToSql<sql_types::Status, Pg> for Status {

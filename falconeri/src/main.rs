@@ -8,6 +8,8 @@ extern crate handlebars;
 extern crate log;
 extern crate openssl;
 extern crate openssl_probe;
+#[macro_use]
+extern crate prettytable;
 extern crate rand;
 extern crate serde;
 #[macro_use]

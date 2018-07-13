@@ -38,7 +38,14 @@ impl Job {
         Ok(jobs::table
             .find(id)
             .first(conn)
-            .with_context(|_| format_err!("could not load job {}", id))?)
+            .with_context(|_| format!("could not load job {}", id))?)
+    }
+
+    /// Get all known jobs.
+    pub fn list(conn: &PgConnection) -> Result<Vec<Job>> {
+        Ok(jobs::table
+            .load(conn)
+            .context("could not list jobs")?)
     }
 
     /// Look up the next datum available to process, and set the status to

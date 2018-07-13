@@ -1,4 +1,4 @@
-//! The `run` subcommand.
+//! The `job run` subcommand.
 
 use failure::ResultExt;
 use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result, storage::CloudStorage};
@@ -9,7 +9,7 @@ use std::iter;
 use manifest::render_manifest;
 use pipeline::*;
 
-/// The `run` subcommand.
+/// The `job run` subcommand.
 pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
     match &pipeline_spec.input {
         Input::Atom { uri, repo, glob } => {
