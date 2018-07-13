@@ -6,7 +6,7 @@
 * DONE Generate secrets
 * DONE Don't delete pvc on undeploy unless --all is passed
 * DONE Put cloud storage behind a trait
-* TODO Tag jobs
+* DONE Tag jobs
 * TODO Database URL subcommand
 * TODO Job listing & inspection CLI
 * TODO Mark job status when done

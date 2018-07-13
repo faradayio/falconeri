@@ -7,9 +7,14 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: "{{job.job_name}}"
+  labels:
+    "created-by": "falconeri"
 spec:
   parallelism: {{pipeline_spec.parallelism_spec.constant}}
   template:
+    metadata:
+      labels:
+        "created-by": "falconeri"
     spec:
       nodeSelector:
 {{#each pipeline_spec.node_selector}}
