@@ -71,6 +71,22 @@ impl Datum {
             .context("can't mark datum as having failed")?;
         Ok(())
     }
+
+    /// Generate a sample value for testing.
+    pub fn factory(job: &Job) -> Self {
+        use chrono::Utc;
+        let now = Utc::now().naive_utc();
+        Datum {
+            id: Uuid::new_v4(),
+            created_at: now,
+            updated_at: now,
+            status: Status::Running,
+            job_id: job.id,
+            error_message: None,
+            node_name: None,
+            pod_name: None,
+        }
+    }
 }
 
 /// Data required to create a new `Datum`.

@@ -23,6 +23,21 @@ pub struct InputFile {
     pub local_path: String,
 }
 
+impl InputFile {
+    /// Generate a sample value for testing.
+    pub fn factory(datum: &Datum) -> Self {
+        use chrono::Utc;
+        let now = Utc::now().naive_utc();
+        InputFile {
+            id: Uuid::new_v4(),
+            created_at: now,
+            datum_id: datum.id,
+            uri: "gs://example-bucket/input/file.csv".to_owned(),
+            local_path: "/pfs/input/file.csv".to_owned(),
+        }
+    }
+}
+
 /// Data required to create a new `InputFile`.
 #[derive(Debug, Insertable)]
 #[table_name = "input_files"]

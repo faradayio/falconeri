@@ -3,7 +3,7 @@
 use falconeri_common::{db, models::*, Result};
 use uuid::Uuid;
 
-use description::print_description;
+use description::render_description;
 
 /// Template for human-readable `describe` output.
 const DESCRIBE_TEMPLATE: &str = include_str!("describe.txt.hbs");
@@ -24,5 +24,6 @@ pub fn run(id: Uuid) -> Result<()> {
     let params = Params { datum, input_files };
 
     // Print the description.
-    print_description(DESCRIBE_TEMPLATE, &params)
+    print!("{}", render_description(DESCRIBE_TEMPLATE, &params)?);
+    Ok(())
 }

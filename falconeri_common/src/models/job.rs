@@ -174,6 +174,22 @@ impl Job {
 
         Ok(())
     }
+
+    /// Generate a sample value for testing.
+    pub fn factory() -> Self {
+        use chrono::Utc;
+        let now = Utc::now().naive_utc();
+        Job {
+            id: Uuid::new_v4(),
+            created_at: now,
+            updated_at: now,
+            status: Status::Running,
+            pipeline_spec: serde_json::Value::Object(Default::default()),
+            job_name: "my-job-123az".to_owned(), // TODO: Make unique.
+            command: vec!["echo".to_owned(), "hi".to_owned()],
+            egress_uri: "gs://example-bucket/output/".to_owned(),
+        }
+    }
 }
 
 /// Data required to create a new `Job`.
