@@ -41,6 +41,14 @@ impl Job {
             .with_context(|_| format!("could not load job {}", id))?)
     }
 
+    /// Find a job by job name.
+    pub fn find_by_job_name(job_name: &str, conn: &PgConnection) -> Result<Job> {
+        Ok(jobs::table
+            .filter(jobs::job_name.eq(job_name))
+            .first(conn)
+            .with_context(|_| format!("could not load job {:?}", job_name))?)
+    }
+
     /// Get all known jobs.
     pub fn list(conn: &PgConnection) -> Result<Vec<Job>> {
         Ok(jobs::table
@@ -101,6 +109,7 @@ impl Job {
             // https://github.com/diesel-rs/diesel/issues/210
             .group_by(datums::status)
             .select(dsl::sql::<(sql_types::Status, diesel::sql_types::BigInt)>("status, count(*)"))
+            .order_by(datums::status)
             .load(conn)
             .context("cannot load status of datums")?;
 
@@ -110,6 +119,19 @@ impl Job {
             .collect())
     }
 
+    /// Get all our our currently running datums (the ones being processed by
+    /// a worker somewhere).
+    pub fn datums_with_status(
+        &self,
+        status: Status,
+        conn: &PgConnection,
+    ) -> Result<Vec<Datum>> {
+        Ok(Datum::belonging_to(self)
+            .filter(datums::status.eq(&status))
+            .order(datums::updated_at)
+            .load(conn)
+            .context("cannot load running datums for job")?)
+    }
 
     /// Update the overall job status if there's nothing left to do.
     pub fn update_status_if_done(&mut self, conn: &PgConnection) -> Result<()> {

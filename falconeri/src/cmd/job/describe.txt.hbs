@@ -1,0 +1,27 @@
+ID: {{job.id}}
+Job Name: {{job.job_name}}
+Status: {{job.status}}
+Created At: {{job.created_at}}
+Updated At: {{job.updated_at}}
+Egress URI: {{job.egress_uri}}
+
+Datum status:
+{{~ #each datum_status_counts}}
+  {{this.0}}: {{this.1}}
+{{~ /each}}
+{{~ #if running_datums}}
+
+Running datums:
+ID  STARTED_AT
+{{~ #each running_datums}}
+{{id}}  {{updated_at}}
+{{~ /each}}
+{{~ /if}}
+{{~ #if error_datums}}
+
+Errors:
+ID  POD_NAME  FINISHED_AT  ERROR_MESSAGE
+{{~ #each error_datums}}
+{{id}}  {{updated_at}}  {{error_message}}
+{{~ /each}}
+{{~ /if}}

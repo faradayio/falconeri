@@ -8,7 +8,7 @@ use schema::*;
 use super::Datum;
 
 /// An input file which needs to be downloaded to the worker container.
-#[derive(Associations, Debug, Identifiable, Queryable)]
+#[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
 #[belongs_to(Datum, foreign_key = "datum_id")]
 pub struct InputFile {
     /// The unique ID of this file.

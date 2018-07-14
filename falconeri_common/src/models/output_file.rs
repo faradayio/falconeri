@@ -8,7 +8,7 @@ use schema::*;
 use super::{Datum, Job, Status};
 
 /// An output file uploaded from a worker.
-#[derive(Associations, Debug, Identifiable, Queryable)]
+#[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
 #[belongs_to(Datum, foreign_key = "datum_id")]
 #[belongs_to(Job, foreign_key = "job_id")]
 pub struct OutputFile {

@@ -7,12 +7,20 @@ use std::{fs::File, path::PathBuf};
 
 use pipeline::PipelineSpec;
 
+mod describe;
 mod list;
 mod run;
 
 /// The `job` subcommand.
 #[derive(Debug, StructOpt)]
 pub enum Opt {
+    /// Describe a specific job.
+    #[structopt(name = "describe")]
+    Describe {
+        /// The Kubernetes name of the job to describe.
+        job_name: String,
+    },
+
     /// List all jobs.
     #[structopt(name = "list")]
     List,
@@ -29,8 +37,9 @@ pub enum Opt {
 /// Run the `job` subcommand.
 pub fn run(opt: &Opt) -> Result<()> {
     match opt {
+        Opt::Describe { job_name } => describe::run(job_name),
         Opt::List {} => list::run(),
-        Opt::Run { ref pipeline_json } => {
+        Opt::Run { pipeline_json } => {
             let f = File::open(pipeline_json)
                 .context("can't open pipeline JSON file")?;
             let pipeline_spec: PipelineSpec =

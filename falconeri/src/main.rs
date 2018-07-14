@@ -18,11 +18,13 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate structopt;
+extern crate uuid;
 
 use falconeri_common::Result;
 use structopt::StructOpt;
 
 mod cmd;
+mod description;
 mod manifest;
 mod pipeline;
 
@@ -30,6 +32,13 @@ mod pipeline;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "A tool for running batch jobs on Kubernetes.")]
 enum Opt {
+    /// Datum-related commands.
+    #[structopt(name = "datum")]
+    Datum {
+        #[structopt(subcommand)]
+        cmd: cmd::datum::Opt,
+    },
+
     /// Commands for accessing the database.
     #[structopt(name = "db")]
     Db {
@@ -76,6 +85,7 @@ fn main() -> Result<()> {
     debug!("Args: {:?}", opt);
 
     match opt {
+        Opt::Datum { ref cmd } => cmd::datum::run(cmd),
         Opt::Db { ref cmd } => cmd::db::run(cmd),
         Opt::Deploy { dry_run } => cmd::deploy::run(dry_run),
         Opt::Job { ref cmd } => cmd::job::run(cmd),

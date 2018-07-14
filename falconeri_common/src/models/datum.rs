@@ -6,10 +6,10 @@ use uuid::Uuid;
 
 use Result;
 use schema::*;
-use super::{Job, Status};
+use super::{InputFile, Job, Status};
 
 /// A single chunk of work, consisting of one or more files.
-#[derive(Associations, Debug, Identifiable, Queryable)]
+#[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
 #[belongs_to(Job, foreign_key = "job_id")]
 pub struct Datum {
     /// The unique ID of this datum.
@@ -31,6 +31,22 @@ pub struct Datum {
 }
 
 impl Datum {
+    /// Find a datum by ID.
+    pub fn find(id: Uuid, conn: &PgConnection) -> Result<Datum> {
+        Ok(datums::table
+            .find(id)
+            .first(conn)
+            .with_context(|_| format!("could not load datum {}", id))?)
+    }
+
+    /// Get the input files for this datum.
+    pub fn input_files(&self, conn: &PgConnection) -> Result<Vec<InputFile>> {
+        Ok(InputFile::belonging_to(self)
+            .order_by(input_files::created_at)
+            .load(conn)
+            .context("could not load input file")?)
+    }
+
     /// Mark this datum as having been successfully processed.
     pub fn mark_as_done(&mut self, conn: &PgConnection) -> Result<()> {
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))

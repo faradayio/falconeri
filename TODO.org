@@ -11,4 +11,5 @@
 * DONE Mark job status when done
 * TODO Job listing & inspection CLI
 * TODO Retry failed jobs (manually?)
+* TODO Write a basic manual
 * TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud

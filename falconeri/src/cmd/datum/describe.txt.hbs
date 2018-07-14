@@ -1,0 +1,19 @@
+ID: {{datum.id}}
+Status: {{datum.status}}
+Created At: {{datum.created_at}}
+Updated At: {{datum.updated_at}}
+{{~ #if datum.node_name}}
+Pod Name: {{datum.pod_name}}
+{{~ /if}}
+{{~ #if datum.node_name}}
+Node Name: {{datum.node_name}}
+{{~ /if}}
+{{~ #if datum.error_message}}
+
+Error Message: {{datum.error_message}}
+{{~ /if}}
+
+Input Files:
+{{~ #each input_files}}
+{{uri}}
+{{~ /each}}
