@@ -3,6 +3,7 @@
 #![warn(missing_docs)]
 
 extern crate base64;
+pub extern crate cast;
 extern crate chrono;
 #[macro_use]
 pub extern crate diesel;
@@ -12,6 +13,7 @@ pub extern crate diesel_migrations;
 extern crate failure;
 #[macro_use]
 extern crate log;
+pub extern crate rand;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

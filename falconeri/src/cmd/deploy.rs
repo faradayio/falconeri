@@ -1,9 +1,11 @@
 //! The `deploy` subcommand.
 
 use base64;
-use falconeri_common::{kubernetes, Result};
-use rand::{EntropyRng, Rng};
-use rand::distributions::Alphanumeric;
+use falconeri_common::{
+    kubernetes,
+    rand::{distributions::Alphanumeric, EntropyRng, Rng},
+    Result,
+};
 use std::iter;
 
 use manifest::render_manifest;

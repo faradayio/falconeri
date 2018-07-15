@@ -1,10 +1,7 @@
 //! The `job run` subcommand.
 
 use failure::ResultExt;
-use falconeri_common::{db, diesel::prelude::*, Error, kubernetes, models::*, Result, storage::CloudStorage};
-use rand::{Rng, thread_rng};
-use rand::distributions::Alphanumeric;
-use std::iter;
+use falconeri_common::{db, diesel::prelude::*, kubernetes, models::*, Result, storage::CloudStorage};
 
 use manifest::render_manifest;
 use pipeline::*;
@@ -38,18 +35,11 @@ fn add_job_to_database(
     repo: &str,
 ) -> Result<Job> {
     let conn = db::connect(db::ConnectVia::Proxy)?;
-    let job = conn.transaction::<_, Error, _>(|| -> Result<Job> {
+    let job = conn.transaction(|| -> Result<Job> {
         // Generate a unique name for our job. To keep Kubernetes happy, this
         // must be a legal DNS name component (but we have a database constraint
         // to enforce that).
-        let mut rng = thread_rng();
-        let tag = iter::repeat(())
-            // Note that this random distribution is biased, because we generate
-            // both upper and lowercase letters and then convert to lowercase
-            // later. This isn't a big deal for now.
-            .map(|()| rng.sample(Alphanumeric))
-            .take(5)
-            .collect::<String>();
+        let tag = kubernetes::resource_tag();
         let job_name = format!("{}-{}", pipeline_spec.pipeline.name, tag)
             .replace("_", "-")
             .to_lowercase();
@@ -108,7 +98,7 @@ fn uri_to_local_path_works() {
 const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml");
 
 /// Start a new batch job running.
-fn start_batch_job(
+pub fn start_batch_job(
     pipeline_spec: &PipelineSpec,
     job: &Job,
 ) -> Result<()> {

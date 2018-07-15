@@ -1,9 +1,11 @@
 //! Tools for talking to Kubernetes.
 
 use failure::ResultExt;
+use rand::{Rng, thread_rng};
+use rand::distributions::Alphanumeric;
 use serde::de::DeserializeOwned;
 use serde_json;
-use std::{io::Write, process::{Command, Stdio}};
+use std::{io::Write, iter, process::{Command, Stdio}};
 
 use Result;
 
@@ -78,3 +80,16 @@ pub fn delete(resource_id: &str) -> Result<()> {
     kubectl(&["delete", resource_id])
 }
 
+/// Generate a hopefully unique tag for a Kubernetes resource. To keep
+/// Kubernetes happy, this must be a legal DNS name component (but we have a
+/// database constraint to enforce that).
+pub fn resource_tag() -> String {
+    let mut rng = thread_rng();
+    iter::repeat(())
+        // Note that this random distribution is biased, because we generate
+        // both upper and lowercase letters and then convert to lowercase
+        // later. This isn't a big deal for now.
+        .map(|()| rng.sample(Alphanumeric))
+        .take(5)
+        .collect::<String>()
+}

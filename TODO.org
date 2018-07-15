@@ -9,7 +9,13 @@
 * DONE Tag jobs
 * DONE Database URL subcommand
 * DONE Mark job status when done
-* TODO Job listing & inspection CLI
+* DONE Job listing & inspection CLI
 * TODO Retry failed jobs (manually?)
+* TODO Polishing
+** TODO rustfmt
 * TODO Write a basic manual
+
 * TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud
+* TODO Handlebars escape functions
+** TODO Plain text to fix &quot; in `description` output
+** TODO YAML for templates

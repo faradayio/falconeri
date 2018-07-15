@@ -1,3 +1,4 @@
+use cast;
 use chrono::NaiveDateTime;
 use diesel::{self, dsl, PgConnection, prelude::*};
 use failure::ResultExt;
@@ -5,7 +6,7 @@ use serde_json;
 use std::env;
 use uuid::Uuid;
 
-use {Error, Result};
+use Result;
 use schema::*;
 use super::{Datum, InputFile, Status, sql_types};
 
@@ -67,7 +68,7 @@ impl Job {
             .context("couldn't get FALCONERI_NODE_NAME")?;
         let pod_name = env::var("FALCONERI_POD_NAME")
             .context("couldn't get FALCONERI_POD_NAME")?;
-        conn.transaction::<_, Error, _>(|| {
+        conn.transaction(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
                 .filter(
@@ -115,8 +116,8 @@ impl Job {
 
         Ok(raw_status_counts.into_iter()
             .filter(|&(_status, count)| count > 0)
-            .map(|(status, count)| (status, count as u64))
-            .collect())
+            .map(|(status, count)| Ok((status, cast::u64(count)?)))
+            .collect::<Result<_>>()?)
     }
 
     /// Get all our our currently running datums (the ones being processed by
@@ -133,46 +134,66 @@ impl Job {
             .context("cannot load running datums for job")?)
     }
 
+    /// Lock the underying database row using `SELECT FOR UPDATE`. Must be
+    /// called from within a transaction.
+    fn lock_for_update(&mut self, conn: &PgConnection) -> Result<()> {
+        *self = jobs::table
+            .find(self.id)
+            .for_update()
+            .first(conn)
+            .with_context(|_| format!("could not load job {}", self.id))?;
+        Ok(())
+    }
+
     /// Update the overall job status if there's nothing left to do.
     pub fn update_status_if_done(&mut self, conn: &PgConnection) -> Result<()> {
         trace!("querying for status of datums for job {}", self.id);
-
-        // Count the datums with various statuses and divide them into groups.
-        let status_counts = self.datum_status_counts(conn)?;
-        let mut unfinished = 0;
-        let mut successful = 0;
-        let mut failed = 0;
-        for (status, count) in status_counts {
-            match status {
-                Status::Ready | Status::Running => { unfinished += count; }
-                Status::Done => { successful += count; }
-                // TODO: Be smarted about `Canceled` once we implement it.
-                Status::Error | Status::Canceled => { failed += count; }
+        conn.transaction(|| {
+            // Lock this job for update. This isn't necessary for this routine
+            // by itself, but it should help avoid race conditions with job
+            // retries.
+            self.lock_for_update(conn)?;
+            if self.status != Status::Running {
+                // Nothing to do, so return immediately.
+                return Ok(())
             }
-        }
 
-        // Decide what to do, if anything. Note that we don't bother to wrap
-        // this in a transaction, because even if multiple workers try to update
-        // the job state, they'll reach the same conclusion.
-        let job_status = if unfinished > 0 {
-            trace!("{} datums remaining, not updating job status", unfinished);
-            None
-        } else if failed > 0 {
-            debug!("{} datums had errors, marking job as error", failed);
-            Some(Status::Error)
-        } else {
-            debug!("all {} datums finished successfully, marking job as done", successful);
-            Some(Status::Done)
-        };
-        if let Some(job_status) = job_status {
-            *self = diesel::update(jobs::table)
-                .filter(jobs::id.eq(&self.id))
-                .set(jobs::status.eq(&job_status))
-                .get_result(conn)
-                .context("could not update job status")?;
-        }
+            // Count the datums with various statuses and divide them into
+            // groups.
+            let status_counts = self.datum_status_counts(conn)?;
+            let mut unfinished = 0;
+            let mut successful = 0;
+            let mut failed = 0;
+            for (status, count) in status_counts {
+                match status {
+                    Status::Ready | Status::Running => { unfinished += count; }
+                    Status::Done => { successful += count; }
+                    // TODO: Be smarted about `Canceled` once we implement it.
+                    Status::Error | Status::Canceled => { failed += count; }
+                }
+            }
 
-        Ok(())
+            // Decide what to do, if anything.
+            let job_status = if unfinished > 0 {
+                trace!("{} datums remaining, not updating job status", unfinished);
+                None
+            } else if failed > 0 {
+                debug!("{} datums had errors, marking job as error", failed);
+                Some(Status::Error)
+            } else {
+                debug!("all {} datums finished successfully, marking job as done", successful);
+                Some(Status::Done)
+            };
+            if let Some(job_status) = job_status {
+                *self = diesel::update(jobs::table)
+                    .filter(jobs::id.eq(&self.id))
+                    .set(jobs::status.eq(&job_status))
+                    .get_result(conn)
+                    .context("could not update job status")?;
+            }
+
+            Ok(())
+        })
     }
 
     /// Generate a sample value for testing.
