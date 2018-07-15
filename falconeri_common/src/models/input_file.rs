@@ -24,6 +24,18 @@ pub struct InputFile {
 }
 
 impl InputFile {
+    /// Fetch all the input files corresponding to `datums`, returning grouped
+    /// in the same order.
+    pub fn for_datums(
+        datums: &[Datum],
+        conn: &PgConnection,
+    ) -> Result<Vec<Vec<InputFile>>> {
+        Ok(InputFile::belonging_to(datums)
+            .load(conn)
+            .context("could not load input files belonging to failed datums")?
+            .grouped_by(datums))
+    }
+
     /// Generate a sample value for testing.
     pub fn factory(datum: &Datum) -> Self {
         use chrono::Utc;

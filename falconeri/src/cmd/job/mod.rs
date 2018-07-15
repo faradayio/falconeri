@@ -9,6 +9,7 @@ use pipeline::PipelineSpec;
 
 mod describe;
 mod list;
+mod retry;
 mod run;
 
 /// The `job` subcommand.
@@ -25,6 +26,13 @@ pub enum Opt {
     #[structopt(name = "list")]
     List,
 
+    /// Retry failed datums.
+    #[structopt(name = "retry")]
+    Retry {
+        /// The name of the job for which to retry failed datums.
+        job_name: String,
+    },
+
     /// Run the specified pipeline as a one-off job.
     #[structopt(name = "run")]
     Run {
@@ -39,6 +47,7 @@ pub fn run(opt: &Opt) -> Result<()> {
     match opt {
         Opt::Describe { job_name } => describe::run(job_name),
         Opt::List {} => list::run(),
+        Opt::Retry { job_name } => retry::run(job_name),
         Opt::Run { pipeline_json } => {
             let f = File::open(pipeline_json)
                 .context("can't open pipeline JSON file")?;

@@ -4,7 +4,7 @@
 
 extern crate base64;
 pub extern crate cast;
-extern crate chrono;
+pub extern crate chrono;
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]

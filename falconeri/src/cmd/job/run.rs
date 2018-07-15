@@ -28,6 +28,16 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
     }
 }
 
+/// Generate a unique name for our job. To keep Kubernetes happy, this
+/// must be a legal DNS name component (but we have a database constraint
+/// to enforce that).
+pub fn unique_kubernetes_job_name(pipeline_name: &str) -> String {
+    let tag = kubernetes::resource_tag();
+    format!("{}-{}", pipeline_name, tag)
+        .replace("_", "-")
+        .to_lowercase()
+}
+
 /// Register a new job in the database.
 fn add_job_to_database(
     pipeline_spec: &PipelineSpec,
@@ -36,15 +46,8 @@ fn add_job_to_database(
 ) -> Result<Job> {
     let conn = db::connect(db::ConnectVia::Proxy)?;
     let job = conn.transaction(|| -> Result<Job> {
-        // Generate a unique name for our job. To keep Kubernetes happy, this
-        // must be a legal DNS name component (but we have a database constraint
-        // to enforce that).
-        let tag = kubernetes::resource_tag();
-        let job_name = format!("{}-{}", pipeline_spec.pipeline.name, tag)
-            .replace("_", "-")
-            .to_lowercase();
-
         // Create our new job.
+        let job_name = unique_kubernetes_job_name(&pipeline_spec.pipeline.name);
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
             job_name: job_name,
