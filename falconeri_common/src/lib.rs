@@ -30,14 +30,16 @@ pub mod storage;
 /// Common imports used by many modules.
 pub mod prefix {
     pub use chrono::{NaiveDateTime, Utc};
-    pub use diesel::{self, PgConnection, prelude::*};
+    pub use diesel::{self, prelude::*, PgConnection};
     pub use failure::ResultExt;
     pub use serde::{Deserialize, Serialize};
-    pub use std::{collections::HashMap, fmt, fs::File, io::Write, path::{Path, PathBuf}};
+    pub use std::{
+        collections::HashMap, fmt, fs::File, io::Write, path::{Path, PathBuf},
+    };
     pub use uuid::Uuid;
 
-    pub use super::{Error, Result};
     pub use super::models::*;
+    pub use super::{Error, Result};
 }
 
 /// Error type for this crate's functions.

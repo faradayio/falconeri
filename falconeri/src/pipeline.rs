@@ -102,8 +102,7 @@ fn parse_pipeline_spec() {
   }
 }"#;
 
-    let parsed: PipelineSpec =
-        serde_json::from_str(json).expect("parse error");
+    let parsed: PipelineSpec = serde_json::from_str(json).expect("parse error");
     assert_eq!(parsed.pipeline.name, "book_words");
     assert_eq!(parsed.transform.cmd[0], "python3");
     assert_eq!(parsed.parallelism_spec.constant, 10);
@@ -111,10 +110,13 @@ fn parse_pipeline_spec() {
     assert_eq!(parsed.resource_requests.cpu, 1.2);
     assert_eq!(parsed.node_selector["my_node_type"], "falconeri_worker");
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");
-    assert_eq!(parsed.input, Input::Atom {
-        uri: "gs://example-bucket/books/".to_owned(),
-        repo: "books".to_owned(),
-        glob: "/*".to_owned(),
-    });
+    assert_eq!(
+        parsed.input,
+        Input::Atom {
+            uri: "gs://example-bucket/books/".to_owned(),
+            repo: "books".to_owned(),
+            glob: "/*".to_owned(),
+        }
+    );
     assert_eq!(parsed.egress.uri, "gs://example-bucket/words/");
 }

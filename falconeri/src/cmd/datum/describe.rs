@@ -36,6 +36,5 @@ fn render_template() {
     let input_file = InputFile::factory(&datum);
     let input_files = vec![input_file];
     let params = Params { datum, input_files };
-    render_description(DESCRIBE_TEMPLATE, &params)
-        .expect("could not render template");
+    render_description(DESCRIBE_TEMPLATE, &params).expect("could not render template");
 }

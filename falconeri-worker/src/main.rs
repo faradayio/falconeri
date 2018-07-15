@@ -106,9 +106,7 @@ fn process_datum(
     if cmd.len() < 1 {
         return Err(format_err!("job {} command is empty", job.id));
     }
-    let status = process::Command::new(&cmd[0])
-        .args(&cmd[1..])
-        .status()?;
+    let status = process::Command::new(&cmd[0]).args(&cmd[1..]).status()?;
     if !status.success() {
         return Err(format_err!("could not run {:?}", cmd));
     }
@@ -138,10 +136,7 @@ fn reset_work_dir() -> Result<()> {
 }
 
 /// Upload `/pfs/out` to our output bucket.
-fn upload_outputs(
-    job: &Job,
-    datum: &Datum,
-) -> Result<()> {
+fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
     debug!("uploading outputs");
 
     // Make a new database connection, because any one we created before running
@@ -163,7 +158,8 @@ fn upload_outputs(
 
         // Get our local path, and strip the prefix.
         let rel_path = local_path.strip_prefix("/pfs/out/")?;
-        let rel_path_str = rel_path.to_str()
+        let rel_path_str = rel_path
+            .to_str()
             .ok_or_else(|| format_err!("invalid characters in {:?}", rel_path))?;
 
         // Build the URI we want to upload to.
@@ -187,7 +183,7 @@ fn upload_outputs(
     let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
     match result {
         Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
-        Err(_) => OutputFile::mark_as_error(datum, &conn)?
+        Err(_) => OutputFile::mark_as_error(datum, &conn)?,
     }
     result
 }

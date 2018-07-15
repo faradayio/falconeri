@@ -10,9 +10,10 @@
 * DONE Database URL subcommand
 * DONE Mark job status when done
 * DONE Job listing & inspection CLI
-* TODO Retry failed jobs (manually?)
-* TODO Polishing
-** TODO rustfmt
+* DONE Retry failed jobs (manually?)
+* DONE Polishing
+** DONE prefix
+** DONE rustfmt
 * TODO Write a basic manual
 
 * TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud

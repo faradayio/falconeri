@@ -2,18 +2,16 @@
 
 use std::{io::BufRead, process};
 
-use prefix::*;
 use super::CloudStorage;
+use prefix::*;
 
 /// Backend for talking to Google Cloud Storage, currently based on `gsutil`.
-pub struct GoogleCloudStorage {
-}
+pub struct GoogleCloudStorage {}
 
 impl GoogleCloudStorage {
     /// Create a new `GoogleCloudStorage` backend.
     pub fn new() -> Self {
-        GoogleCloudStorage {
-        }
+        GoogleCloudStorage {}
     }
 }
 

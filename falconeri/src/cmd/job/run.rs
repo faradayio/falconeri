@@ -58,9 +58,7 @@ fn add_job_to_database(
         // Create a datum for each input file. For now, we only handle the
         // trivial case of one file per datum.
         for input in inputs {
-            let new_datum = NewDatum {
-                job_id: job.id,
-            };
+            let new_datum = NewDatum { job_id: job.id };
             let datum = new_datum.insert(&conn)?;
 
             let new_file = NewInputFile {
@@ -81,7 +79,8 @@ fn add_job_to_database(
 /// TODO: This will need to get fancier if we actually implement globs
 /// correctly.
 fn uri_to_local_path(uri: &str, repo: &str) -> Result<String> {
-    let pos = uri.rfind('/').ok_or_else(|| format_err!("No '/' in {:?}", uri))?;
+    let pos = uri.rfind('/')
+        .ok_or_else(|| format_err!("No '/' in {:?}", uri))?;
     let basename = &uri[pos..];
     if basename.is_empty() {
         Err(format_err!("{:?} ends with '/'", uri))
@@ -100,10 +99,7 @@ fn uri_to_local_path_works() {
 const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml");
 
 /// Start a new batch job running.
-pub fn start_batch_job(
-    pipeline_spec: &PipelineSpec,
-    job: &Job,
-) -> Result<()> {
+pub fn start_batch_job(pipeline_spec: &PipelineSpec, job: &Job) -> Result<()> {
     debug!("starting batch job on cluster");
 
     // Set up our template parameters.

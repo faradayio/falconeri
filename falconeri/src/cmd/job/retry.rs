@@ -4,8 +4,8 @@ use falconeri_common::{cast, db, diesel::Connection, prefix::*};
 use serde_json;
 use std::cmp::min;
 
-use pipeline::PipelineSpec;
 use super::run::{start_batch_job, unique_kubernetes_job_name};
+use pipeline::PipelineSpec;
 
 /// The `job retry` subcommand.
 pub fn run(job_name: &str) -> Result<()> {
@@ -39,9 +39,7 @@ pub fn run(job_name: &str) -> Result<()> {
 
         // Create new datums and input files.
         for (_datum, input_files) in error_datums.into_iter().zip(input_files) {
-            let new_datum = NewDatum {
-                job_id: new_job.id,
-            }.insert(&conn)?;
+            let new_datum = NewDatum { job_id: new_job.id }.insert(&conn)?;
             for input_file in input_files {
                 NewInputFile {
                     datum_id: new_datum.id,

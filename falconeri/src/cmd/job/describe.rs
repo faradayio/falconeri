@@ -24,7 +24,12 @@ pub fn run(job_name: &str) -> Result<()> {
     let datum_status_counts = job.datum_status_counts(&conn)?;
     let running_datums = job.datums_with_status(Status::Running, &conn)?;
     let error_datums = job.datums_with_status(Status::Error, &conn)?;
-    let params = Params { job, datum_status_counts, running_datums, error_datums };
+    let params = Params {
+        job,
+        datum_status_counts,
+        running_datums,
+        error_datums,
+    };
 
     // Print the description.
     print!("{}", render_description(DESCRIBE_TEMPLATE, &params)?);
@@ -34,11 +39,8 @@ pub fn run(job_name: &str) -> Result<()> {
 #[test]
 fn render_template() {
     let job = Job::factory();
-    let datum_status_counts = vec![
-        (Status::Ready, 1),
-        (Status::Running, 1),
-        (Status::Error, 1),
-    ];
+    let datum_status_counts =
+        vec![(Status::Ready, 1), (Status::Running, 1), (Status::Error, 1)];
     let mut running_datum = Datum::factory(&job);
     running_datum.status = Status::Running;
     let running_datums = vec![running_datum];
@@ -46,9 +48,12 @@ fn render_template() {
     error_datum.status = Status::Error;
     error_datum.error_message = Some("Ooops.".to_owned());
     let error_datums = vec![error_datum];
-    let params = Params { job, datum_status_counts, running_datums, error_datums };
+    let params = Params {
+        job,
+        datum_status_counts,
+        running_datums,
+        error_datums,
+    };
 
-    render_description(DESCRIBE_TEMPLATE, &params)
-        .expect("could not render template");
+    render_description(DESCRIBE_TEMPLATE, &params).expect("could not render template");
 }
-

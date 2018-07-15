@@ -62,13 +62,15 @@ impl Job {
     ) -> Result<Option<(Datum, Vec<InputFile>)>> {
         let node_name = env::var("FALCONERI_NODE_NAME")
             .context("couldn't get FALCONERI_NODE_NAME")?;
-        let pod_name = env::var("FALCONERI_POD_NAME")
-            .context("couldn't get FALCONERI_POD_NAME")?;
+        let pod_name =
+            env::var("FALCONERI_POD_NAME").context("couldn't get FALCONERI_POD_NAME")?;
         conn.transaction(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
                 .filter(
-                    datums::job_id.eq(&self.id).and(datums::status.eq(Status::Ready))
+                    datums::job_id
+                        .eq(&self.id)
+                        .and(datums::status.eq(Status::Ready)),
                 )
                 .first(conn)
                 .optional()
@@ -110,7 +112,8 @@ impl Job {
             .load(conn)
             .context("cannot load status of datums")?;
 
-        Ok(raw_status_counts.into_iter()
+        Ok(raw_status_counts
+            .into_iter()
             .filter(|&(_status, count)| count > 0)
             .map(|(status, count)| Ok((status, cast::u64(count)?)))
             .collect::<Result<_>>()?)
@@ -151,7 +154,7 @@ impl Job {
             self.lock_for_update(conn)?;
             if self.status != Status::Running {
                 // Nothing to do, so return immediately.
-                return Ok(())
+                return Ok(());
             }
 
             // Count the datums with various statuses and divide them into
@@ -162,10 +165,16 @@ impl Job {
             let mut failed = 0;
             for (status, count) in status_counts {
                 match status {
-                    Status::Ready | Status::Running => { unfinished += count; }
-                    Status::Done => { successful += count; }
+                    Status::Ready | Status::Running => {
+                        unfinished += count;
+                    }
+                    Status::Done => {
+                        successful += count;
+                    }
                     // TODO: Be smarted about `Canceled` once we implement it.
-                    Status::Error | Status::Canceled => { failed += count; }
+                    Status::Error | Status::Canceled => {
+                        failed += count;
+                    }
                 }
             }
 
@@ -177,7 +186,10 @@ impl Job {
                 debug!("{} datums had errors, marking job as error", failed);
                 Some(Status::Error)
             } else {
-                debug!("all {} datums finished successfully, marking job as done", successful);
+                debug!(
+                    "all {} datums finished successfully, marking job as done",
+                    successful,
+                );
                 Some(Status::Done)
             };
             if let Some(job_status) = job_status {

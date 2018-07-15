@@ -19,6 +19,7 @@ pub fn render_manifest<T: Serialize>(
     //handlebars.register_escape_fn(...)
 
     // Render our template and deploy it.
-    Ok(handlebars.render_template(template_yml, params)
+    Ok(handlebars
+        .render_template(template_yml, params)
         .context("error rendering manifest template")?)
 }

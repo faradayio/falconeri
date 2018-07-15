@@ -1,10 +1,12 @@
 //! Tools for talking to Kubernetes.
 
-use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use serde::de::DeserializeOwned;
 use serde_json;
-use std::{iter, process::{Command, Stdio}};
+use std::{
+    iter, process::{Command, Stdio},
+};
 
 use prefix::*;
 
@@ -43,9 +45,13 @@ pub fn kubectl_with_input(args: &[&str], input: &str) -> Result<()> {
         .stdin(Stdio::piped())
         .spawn()
         .with_context(|_| format!("error starting kubectl with {:?}", args))?;
-    write!(child.stdin.as_mut().expect("child stdin is missing"), "{}", input)
-        .with_context(|_| format!("error writing intput to kubectl {:?}", args))?;
-    let status = child.wait()
+    write!(
+        child.stdin.as_mut().expect("child stdin is missing"),
+        "{}",
+        input
+    ).with_context(|_| format!("error writing intput to kubectl {:?}", args))?;
+    let status = child
+        .wait()
         .with_context(|_| format!("error running kubectl with {:?}", args))?;
     if !status.success() {
         return Err(format_err!("error running kubectl with {:?}", args));

@@ -48,9 +48,13 @@ fn postgres_password(via: ConnectVia) -> Result<String> {
             // kubectl get secret falconeri -o json |
             //     jq -r .data.POSTGRES_PASSWORD |
             //     base64 --decode
-            let secret: FalconeriSecret = kubernetes::kubectl_parse_json(
-                &["get", "secret", "falconeri", "-o", "json"],
-            )?;
+            let secret: FalconeriSecret = kubernetes::kubectl_parse_json(&[
+                "get",
+                "secret",
+                "falconeri",
+                "-o",
+                "json",
+            ])?;
             let pw_bytes = base64::decode(&secret.data.postgres_password)
                 .context("cannot decode POSTGRES_PASSWORD")?;
             Ok(String::from_utf8(pw_bytes)
@@ -78,9 +82,10 @@ pub fn database_url(via: ConnectVia) -> Result<String> {
         ConnectVia::Proxy => {
             Ok(format!("postgres://postgres:{}@localhost:5432/", password))
         }
-        ConnectVia::Cluster => {
-            Ok(format!("postgres://postgres:{}@falconeri-postgres:5432/", password))
-        }
+        ConnectVia::Cluster => Ok(format!(
+            "postgres://postgres:{}@falconeri-postgres:5432/",
+            password,
+        )),
     }
 }
 

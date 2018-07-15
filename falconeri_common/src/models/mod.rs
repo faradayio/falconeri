@@ -23,7 +23,8 @@ pub mod sql_types {
 }
 
 /// Possible status values.
-#[derive(AsExpression, Debug, Clone, Copy, Eq, FromSqlRow, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(AsExpression, Debug, Clone, Copy, Eq, FromSqlRow, Ord, PartialEq,
+         PartialOrd, Serialize)]
 #[sql_type = "sql_types::Status"]
 #[serde(rename_all = "snake_case")]
 pub enum Status {
