@@ -9,10 +9,8 @@ extern crate openssl;
 extern crate openssl_probe;
 extern crate uuid;
 
-use failure::ResultExt;
-use falconeri_common::{db, models::*, Result, storage::CloudStorage};
-use std::{env, fs, path::Path, process, thread::sleep, time::Duration};
-use uuid::Uuid;
+use falconeri_common::{db, prefix::*, storage::CloudStorage};
+use std::{env, fs, process, thread::sleep, time::Duration};
 
 /// Instructions on how to use this program.
 const USAGE: &str = "Usage: falconeri-worker <job id>";

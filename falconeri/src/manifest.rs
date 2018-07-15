@@ -1,9 +1,7 @@
 //! Tools for manipulating Kubernetes manifests.
 
-use failure::ResultExt;
-use falconeri_common::Result;
+use falconeri_common::prefix::*;
 use handlebars::Handlebars;
-use serde::Serialize;
 
 /// Render the specified YAML manifest, filling in the supplied values
 /// using [Handlebars][].

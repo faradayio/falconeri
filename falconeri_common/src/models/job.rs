@@ -1,14 +1,10 @@
 use cast;
-use chrono::NaiveDateTime;
-use diesel::{self, dsl, PgConnection, prelude::*};
-use failure::ResultExt;
+use diesel::dsl;
 use serde_json;
 use std::env;
-use uuid::Uuid;
 
-use Result;
+use prefix::*;
 use schema::*;
-use super::{Datum, InputFile, Status, sql_types};
 
 /// A distributed data processing job.
 #[derive(Debug, Identifiable, Queryable, Serialize)]
@@ -198,7 +194,6 @@ impl Job {
 
     /// Generate a sample value for testing.
     pub fn factory() -> Self {
-        use chrono::Utc;
         let now = Utc::now().naive_utc();
         Job {
             id: Uuid::new_v4(),

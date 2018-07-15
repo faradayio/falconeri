@@ -1,13 +1,12 @@
 //! Tools for talking to Kubernetes.
 
-use failure::ResultExt;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use serde::de::DeserializeOwned;
 use serde_json;
-use std::{io::Write, iter, process::{Command, Stdio}};
+use std::{iter, process::{Command, Stdio}};
 
-use Result;
+use prefix::*;
 
 /// Run `kubectl`, passing any output through to the console.
 pub fn kubectl(args: &[&str]) -> Result<()> {

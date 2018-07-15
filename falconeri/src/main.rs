@@ -19,7 +19,7 @@ extern crate serde_json;
 extern crate structopt;
 extern crate uuid;
 
-use falconeri_common::Result;
+use falconeri_common::prefix::*;
 use structopt::StructOpt;
 
 mod cmd;

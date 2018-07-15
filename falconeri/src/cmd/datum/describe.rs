@@ -1,7 +1,6 @@
 //! The `datum describe` subcommand.
 
-use falconeri_common::{db, models::*, Result};
-use uuid::Uuid;
+use falconeri_common::{db, prefix::*};
 
 use description::render_description;
 

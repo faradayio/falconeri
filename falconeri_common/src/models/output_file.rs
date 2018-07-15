@@ -1,11 +1,5 @@
-use chrono::NaiveDateTime;
-use diesel::{self, PgConnection, prelude::*};
-use failure::ResultExt;
-use uuid::Uuid;
-
-use Result;
+use prefix::*;
 use schema::*;
-use super::{Datum, Job, Status};
 
 /// An output file uploaded from a worker.
 #[derive(Associations, Debug, Identifiable, Queryable, Serialize)]

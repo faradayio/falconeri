@@ -1,12 +1,5 @@
-use chrono::NaiveDateTime;
-use diesel::{self, PgConnection, prelude::*};
-use failure::ResultExt;
-use std::fmt::Display;
-use uuid::Uuid;
-
-use Result;
+use prefix::*;
 use schema::*;
-use super::{InputFile, Job, Status};
 
 /// A single chunk of work, consisting of one or more files.
 #[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
@@ -59,7 +52,7 @@ impl Datum {
     /// Mark this datum as having been unsuccessfully processed.
     pub fn mark_as_error(
         &mut self,
-        error_message: &dyn Display,
+        error_message: &dyn fmt::Display,
         conn: &PgConnection,
     ) -> Result<()> {
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
@@ -74,7 +67,6 @@ impl Datum {
 
     /// Generate a sample value for testing.
     pub fn factory(job: &Job) -> Self {
-        use chrono::Utc;
         let now = Utc::now().naive_utc();
         Datum {
             id: Uuid::new_v4(),

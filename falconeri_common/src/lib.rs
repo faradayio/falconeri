@@ -17,7 +17,7 @@ pub extern crate rand;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
+pub extern crate serde_json;
 extern crate uuid;
 
 pub mod db;
@@ -26,6 +26,19 @@ pub mod models;
 #[allow(missing_docs, unused_imports)]
 mod schema;
 pub mod storage;
+
+/// Common imports used by many modules.
+pub mod prefix {
+    pub use chrono::{NaiveDateTime, Utc};
+    pub use diesel::{self, PgConnection, prelude::*};
+    pub use failure::ResultExt;
+    pub use serde::{Deserialize, Serialize};
+    pub use std::{collections::HashMap, fmt, fs::File, io::Write, path::{Path, PathBuf}};
+    pub use uuid::Uuid;
+
+    pub use super::{Error, Result};
+    pub use super::models::*;
+}
 
 /// Error type for this crate's functions.
 pub type Error = failure::Error;

@@ -1,9 +1,8 @@
 //! Support for Google Cloud Storage.
 
-use failure::ResultExt;
-use std::{io::BufRead, path::Path, process};
+use std::{io::BufRead, process};
 
-use Result;
+use prefix::*;
 use super::CloudStorage;
 
 /// Backend for talking to Google Cloud Storage, currently based on `gsutil`.

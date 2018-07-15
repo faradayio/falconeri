@@ -1,7 +1,6 @@
 //! `db` subcommand for interaction with the database.
 
-use failure::ResultExt;
-use falconeri_common::{db, Result};
+use falconeri_common::{db, prefix::*};
 use std::process;
 
 /// Commands for interacting with the database.

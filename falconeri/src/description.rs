@@ -1,8 +1,7 @@
 //! Human-readable descriptions of an object.
 
-use falconeri_common::Result;
+use falconeri_common::prefix::*;
 use handlebars::Handlebars;
-use serde::Serialize;
 
 /// Render the specified textual description, filling in the supplied values
 /// using [Handlebars][].

@@ -1,11 +1,5 @@
-use chrono::NaiveDateTime;
-use diesel::{self, PgConnection, prelude::*};
-use failure::ResultExt;
-use uuid::Uuid;
-
-use Result;
+use prefix::*;
 use schema::*;
-use super::Datum;
 
 /// An input file which needs to be downloaded to the worker container.
 #[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
@@ -38,7 +32,6 @@ impl InputFile {
 
     /// Generate a sample value for testing.
     pub fn factory(datum: &Datum) -> Self {
-        use chrono::Utc;
         let now = Utc::now().naive_utc();
         InputFile {
             id: Uuid::new_v4(),

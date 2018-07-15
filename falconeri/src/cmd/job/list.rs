@@ -1,6 +1,6 @@
 //! The `job list` subcommand.
 
-use falconeri_common::{db, models::*, Result};
+use falconeri_common::{db, prefix::*};
 use prettytable::{format::consts::FORMAT_CLEAN, Table};
 
 /// The `job list` subcommand.

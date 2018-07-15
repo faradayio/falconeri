@@ -1,7 +1,6 @@
 //! The `job run` subcommand.
 
-use failure::ResultExt;
-use falconeri_common::{db, diesel::prelude::*, kubernetes, models::*, Result, storage::CloudStorage};
+use falconeri_common::{db, kubernetes, prefix::*, storage::CloudStorage};
 
 use manifest::render_manifest;
 use pipeline::*;

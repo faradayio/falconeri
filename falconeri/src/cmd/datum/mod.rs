@@ -1,7 +1,6 @@
 //! The `datum` subcommand.
 
-use falconeri_common::Result;
-use uuid::Uuid;
+use falconeri_common::prefix::*;
 
 mod describe;
 

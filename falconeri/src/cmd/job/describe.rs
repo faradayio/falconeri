@@ -1,6 +1,6 @@
 //! The `job describe` subcommand.
 
-use falconeri_common::{db, models::*, Result};
+use falconeri_common::{db, prefix::*};
 
 use description::render_description;
 

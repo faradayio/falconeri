@@ -4,7 +4,7 @@
 //!
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
-use std::collections::HashMap;
+use falconeri_common::prefix::*;
 
 /// Represents a pipeline *.json file.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

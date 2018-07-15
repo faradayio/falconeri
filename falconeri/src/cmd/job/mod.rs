@@ -1,9 +1,7 @@
 //! The `job` subcommand.
 
-use failure::ResultExt;
-use falconeri_common::Result;
+use falconeri_common::prefix::*;
 use serde_json;
-use std::{fs::File, path::PathBuf};
 
 use pipeline::PipelineSpec;
 

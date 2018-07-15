@@ -1,8 +1,6 @@
 //! Cloud storage backends.
 
-use std::path::Path;
-
-use Result;
+use prefix::*;
 
 pub mod gs;
 

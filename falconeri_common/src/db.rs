@@ -1,12 +1,10 @@
 //! Database utilities.
 
 use base64;
-use diesel::{PgConnection, prelude::*};
-use failure::ResultExt;
 use std::{env, fs::read_to_string, io};
 
-use Result;
 use kubernetes;
+use prefix::*;
 
 /// Embed our migrations directly into the executable. We use a
 /// submodule so we can configure warnings.

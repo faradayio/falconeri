@@ -1,7 +1,6 @@
 //! The `job retry` subcommand.
 
-use failure::ResultExt;
-use falconeri_common::{cast, db, diesel::Connection, models::*, Result};
+use falconeri_common::{cast, db, diesel::Connection, prefix::*};
 use serde_json;
 use std::cmp::min;
 
