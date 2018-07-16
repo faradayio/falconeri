@@ -9,10 +9,10 @@ use std::iter;
 use manifest::render_manifest;
 
 /// The manifest defining secrets for `falconeri`.
-const SECRET_MANIFEST: &str = include_str!("secret_manifest.yml");
+const SECRET_MANIFEST: &str = include_str!("secret_manifest.yml.hbs");
 
 /// The manifest we use to deploy `falconeri`.
-const DEPLOY_MANIFEST: &str = include_str!("deploy_manifest.yml");
+const DEPLOY_MANIFEST: &str = include_str!("deploy_manifest.yml.hbs");
 
 /// Parameters used to generate a secret manifest.
 #[derive(Serialize)]

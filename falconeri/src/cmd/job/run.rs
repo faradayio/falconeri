@@ -96,7 +96,7 @@ fn uri_to_local_path_works() {
 }
 
 /// The manifest to use to run a job.
-const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml");
+const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml.hbs");
 
 /// Start a new batch job running.
 pub fn start_batch_job(pipeline_spec: &PipelineSpec, job: &Job) -> Result<()> {

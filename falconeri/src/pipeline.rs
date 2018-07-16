@@ -71,44 +71,14 @@ pub struct Egress {
 fn parse_pipeline_spec() {
     use serde_json;
 
-    let json = r#"
-{
-  "pipeline": {
-    "name": "book_words"
-  },
-  "transform": {
-    "cmd": [ "python3", "/extract_words.py" ],
-    "image": "somerepo/my_python_nlp"
-  },
-  "parallelism_spec": {
-    "constant": 10
-  },
-  "resource_requests": {
-    "memory": "500Mi",
-    "cpu": 1.2
-  },
-  "node_selector": {
-      "my_node_type": "falconeri_worker"
-  },
-  "input": {
-    "atom": {
-      "URI": "gs://example-bucket/books/",
-      "repo": "books",
-      "glob": "/*"
-    }
-  },
-  "egress": {
-    "URI": "gs://example-bucket/words/"
-  }
-}"#;
-
+    let json = include_str!("example_pipeline_spec.json");
     let parsed: PipelineSpec = serde_json::from_str(json).expect("parse error");
     assert_eq!(parsed.pipeline.name, "book_words");
     assert_eq!(parsed.transform.cmd[0], "python3");
     assert_eq!(parsed.parallelism_spec.constant, 10);
     assert_eq!(parsed.resource_requests.memory, "500Mi");
     assert_eq!(parsed.resource_requests.cpu, 1.2);
-    assert_eq!(parsed.node_selector["my_node_type"], "falconeri_worker");
+    assert_eq!(parsed.node_selector["node_type"], "falconeri_worker");
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");
     assert_eq!(
         parsed.input,
