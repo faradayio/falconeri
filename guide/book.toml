@@ -1,0 +1,5 @@
+[book]
+authors = ["Eric Kidd"]
+multilingual = false
+src = "src"
+title = "falconeri: Distributed batch processing using Kubernetes"
