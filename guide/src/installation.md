@@ -23,6 +23,21 @@ For all setups, you will also need:
 
 [releases]: https://github.com/faradayio/falconeri/
 
+## Authenticating with your cluster
+
+If you're using Google Cloud, and your cluster is named `falconeri`, you can authenticate with your Falconeri cluster as follows:
+
+```sh
+gcloud container clusters get-credentials falconeri \
+    --zone $CLUSTER_ZONE --project $CLUSTER_PROJECT
+```
+
+You'll also need to set your Falconeri cluster as the default for `kubectl` commands:
+
+```sh
+kubectl config set-cluster falconeri
+```
+
 ## Setting up a cluster autoscaling pool
 
 We've had good luck splitting our cluster into two separate parts:
@@ -30,17 +45,9 @@ We've had good luck splitting our cluster into two separate parts:
 1. Three master nodes. These run the Kubernetes cluster infrastructure, plus the Falconeri back end. These are always running. For a really small installation, it might be possible to get by with a single master node.
 2. A cluster autoscaling pool for the worker nodes. This will grow and shrink automatically as needed to accomodate the batch jobs run by Falconeri.
 
-If you're running on Google, and you have a cluster named `falconeri` in `$CLUSTER_ZONE`, you can use a command like the following to add a worker node pool:
+If you're running on Google, and you have a cluster named `falconeri` in `$CLUSTER_ZONE`, you can add a node pool using the command line:
 
 ```sh
-# Authenticate with your Falconeri cluster.
-gcloud container clusters get-credentials falconeri \
-    --zone $CLUSTER_ZONE --project $CLUSTER_PROJECT
-
-# Set your Falconeri cluster as the default for kubectl commands.
-kubectl config set-cluster falconeri
-
-# Create the worker node pool (adjust parameters as needed).
 gcloud container node-pools create falconeri-workers \
     --cluster=falconeri --disk-size=1000 --enable-autorepair \
     --machine-type=n1-standard-8 --node-version=1.10.5-gke.0 \
@@ -56,15 +63,23 @@ Strictly speaking, this is optional. But in practice, autoscaling is extremely c
 Once you are authenticated with your cluster and you have added your autoscaling pool, you can install Falconeri as follows:
 
 ```sh
-# Install the software.
 falconeri deploy
+```
 
-# Wait for the falconeri-postgres pod to become ready.
+Next, wait for the falconeri-postgres pod to become ready. The following command can be used to inspect the current cluster state:
+
+```sh
 kubectl get pods
+```
 
-# (In a separate terminal.) Set up a proxy connection to Falconeri.
+In a separate terminal, set up a proxy connection to Falconeri:
+
+```sh
 falconeri proxy
+```
 
-# Update your database to the latest schema.
+Finally, update your database to the latest schema:
+
+```sh
 falconeri migrate
 ```

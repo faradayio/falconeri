@@ -1,6 +1,10 @@
-# Docker image requirements
+# Creating Docker images
 
-If your pipeline JSON contained the following input:
+In order to transform your data, you will need to create a Docker image.
+
+## Inputs and outputs
+
+If your pipeline JSON contains the following input section:
 
 ```json
 "input": {
