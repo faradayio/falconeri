@@ -6,4 +6,4 @@ ADD . ./
 RUN sudo chown -R rust:rust .
 
 # Build all binaries when on Linux.
-CMD cargo build --all --release
+CMD cargo build --all --release && cd guide && mdbook build
