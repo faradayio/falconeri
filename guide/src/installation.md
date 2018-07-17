@@ -21,7 +21,7 @@ For all setups, you will also need:
 - `kubectl`, compatible with your version of Kubernetes.
 - `falconeri`, which you should be able to find on the [releases page][releases].
 
-[releases]: https://github.com/faradayio/falconeri/
+[releases]: https://github.com/faradayio/falconeri/releases
 
 ## Authenticating with your cluster
 

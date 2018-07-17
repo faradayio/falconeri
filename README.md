@@ -2,7 +2,7 @@
 
 Falconeri runs on a pre-existing Kubernetes cluster, and it allows you to use Docker images to transform large data files stored in cloud buckets.
 
-For detailed instructions, see the Falconeri guide.
+For detailed instructions, see the [Falconeri guide][guide].
 
 Setup is simple:
 
@@ -17,3 +17,5 @@ Running is similarly simple:
 ```sh
 falconeri job run my-job.json
 ```
+
+[guide]: https://faradayio.github.io/falconeri/
