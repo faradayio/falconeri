@@ -1,0 +1,20 @@
+language: rust
+sudo: required
+os:
+- linux
+- osx
+rust:
+- stable
+services:
+- docker
+before_deploy: "./build-release myapp ${TRAVIS_TAG}-${TRAVIS_OS_NAME}"
+deploy:
+  provider: releases
+  api_key:
+    secure: kcs3eJ4u/aAeBxI85zig16acZMJFrlfEWYyB9nCnW8YAvVkz8HUnnT4at5ulpoISIvAxJnDbu4yJEmVme7IfAunMmb8Tezv3IDsfjkG39LuEQam16xBabU8eISV+mE7YbrIWkMrHmJH/9G9sn4jSyiWchCw0+6HlcOw73P11CgaHyHy0rV92K6Yo5xO431j8Qom1/QqffuDYWjr/48ubtXIKIVsMeu9hW0VFCCAEYCMwJgd0oKbRpxtTOJhADPaDol8TlMcWeBHht6f8cRQbdGJ4vWaA31XGvSaKlLzRrooDGfaFx7zhVYxuzqRzi/8URqWHwwOajM7DUtLg0hCYbOGT7ma6RGS2WMpKNnohUhFX7E9NiSw6NaXkWWFizD58t/VKP6ZY+os41AIBIQhNrQK8yyVRKtwfv5Ey5NUey0AWS4ZiN9AY4XfRo4626Him8k0mnQo4FA22s7e5jSHyg4uQp/kAQcUz7K5kHhCI1PaP909xtKCJTzx0ayGLYfxSXlaVba/0zKVpKrNPEddAdKpQGuDepBHCvS2HddO8My0cmVPim23cWin0TWZBeY+FTKuIxJyDRx7MYZKwRWg0YP5mybyr5a8gPRvjoxk53Q/NklCWRq+LOA/nyEwfHgujx/zpuzSvWIG+mYltZjVkHFNABwHHzIx3abH5MTLmXxo=
+  file_glob: true
+  file: "myapp-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.*"
+  skip_cleanup: true
+  on:
+    rust: stable
+    tags: true
