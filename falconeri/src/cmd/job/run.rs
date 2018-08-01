@@ -98,22 +98,44 @@ fn uri_to_local_path_works() {
 /// The manifest to use to run a job.
 const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml.hbs");
 
+/// Parameters used to render `MANIFEST_TEMPLATE`.
+#[derive(Serialize)]
+struct JobParams<'a> {
+    pipeline_spec: &'a PipelineSpec,
+    job: &'a Job,
+}
+
 /// Start a new batch job running.
 pub fn start_batch_job(pipeline_spec: &PipelineSpec, job: &Job) -> Result<()> {
     debug!("starting batch job on cluster");
 
-    // Set up our template parameters.
-    #[derive(Serialize)]
-    struct JobParams<'a> {
-        pipeline_spec: &'a PipelineSpec,
-        job: &'a Job,
-    }
+    // Set up our template parameters, rendder our template, and deploy it.
     let params = JobParams { pipeline_spec, job };
-
-    // Render our template and deploy it.
     let manifest = render_manifest(RUN_MANIFEST_TEMPLATE, &params)
         .context("error rendering job template")?;
     kubernetes::deploy(&manifest)?;
 
     Ok(())
+}
+
+#[test]
+fn render_template() {
+    use serde_json;
+    use serde_yaml;
+
+    let json = include_str!("../../example_pipeline_spec.json");
+    let pipeline_spec: PipelineSpec = serde_json::from_str(json)
+        .expect("parse error");
+
+    let job = Job::factory();
+    let params = JobParams {
+        pipeline_spec: &pipeline_spec,
+        job: &job,
+    };
+
+    let manifest = render_manifest(RUN_MANIFEST_TEMPLATE, &params)
+        .expect("error rendering job template");
+    print!("{}", manifest);
+    let _parsed: serde_json::Value = serde_yaml::from_str(&manifest)
+        .expect("rendered invalid YAML");
 }

@@ -46,6 +46,15 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+{{#each pipeline_spec.transform.secrets}}
+{{#if (lookup this "env_var")}}
+        - name: "{{env_var}}"
+          valueFrom:
+            secretKeyRef:
+              name: "{{name}}"
+              key: "{{key}}"
+{{/if}}
+{{/each}}
         volumeMounts:
         - mountPath: /etc/falconeri/secrets
           name: secrets
@@ -53,6 +62,12 @@ spec:
           name: pfs
         - mountPath: /scratch
           name: scratch
+{{#each pipeline_spec.transform.secrets}}
+{{#if (lookup this "mount_path")}}
+        - mountPath: "{{mount_path}}"
+          name: "transform-secret-{{name}}"
+{{/if}}
+{{/each}}
       restartPolicy: Never
       volumes:
       - name: pfs
@@ -62,4 +77,11 @@ spec:
       - name: secrets
         secret:
           secretName: falconeri
+{{#each pipeline_spec.transform.secrets}}
+{{#if (lookup this "mount_path")}}
+      - name: "transform-secret-{{name}}"
+        secret:
+          secretName: "{{name}}"
+{{/if}}
+{{/each}}
   backoffLimit: 4

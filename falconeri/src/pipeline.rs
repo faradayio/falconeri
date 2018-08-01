@@ -33,6 +33,22 @@ pub struct Pipeline {
 pub struct Transform {
     pub cmd: Vec<String>,
     pub image: String,
+    #[serde(default)]
+    pub secrets: Vec<Secret>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields, untagged)]
+pub enum Secret {
+    File {
+        name: String,
+        mount_path: String,
+    },
+    Env {
+        name: String,
+        key: String,
+        env_var: String,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -75,6 +91,22 @@ fn parse_pipeline_spec() {
     let parsed: PipelineSpec = serde_json::from_str(json).expect("parse error");
     assert_eq!(parsed.pipeline.name, "book_words");
     assert_eq!(parsed.transform.cmd[0], "python3");
+    assert_eq!(parsed.transform.secrets.len(), 2);
+    assert_eq!(
+        parsed.transform.secrets[0],
+        Secret::File {
+            name: "ssl".to_owned(),
+            mount_path: "/ssl".to_owned(),
+        },
+    );
+    assert_eq!(
+        parsed.transform.secrets[1],
+        Secret::Env {
+            name: "s3".to_owned(),
+            key: "access_key".to_owned(),
+            env_var: "AWS_ACCESS_KEY_ID".to_owned(),
+        },
+    );
     assert_eq!(parsed.parallelism_spec.constant, 10);
     assert_eq!(parsed.resource_requests.memory, "500Mi");
     assert_eq!(parsed.resource_requests.cpu, 1.2);

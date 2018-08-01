@@ -7,7 +7,18 @@
       "python3",
       "/extract_words.py"
     ],
-    "image": "somerepo/my_python_nlp"
+    "image": "somerepo/my_python_nlp",
+    "secrets": [
+      {
+        "name": "ssl",
+        "mount_path": "/ssl"
+      },
+      {
+        "name": "s3",
+        "key": "access_key",
+        "env_var": "AWS_ACCESS_KEY_ID"
+      }
+    ]
   },
   "parallelism_spec": {
     "constant": 10
