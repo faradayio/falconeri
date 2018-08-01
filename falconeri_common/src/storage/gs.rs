@@ -25,6 +25,9 @@ impl CloudStorage for GoogleCloudStorage {
             .stderr(process::Stdio::inherit())
             .output()
             .context("error running gsutil")?;
+        if !output.status.success() {
+            return Err(format_err!("could not list {:?}: {}", uri, output.status));
+        }
         let mut paths = vec![];
         for line in output.stdout.lines() {
             let line = line?;
