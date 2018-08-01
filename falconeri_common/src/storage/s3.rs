@@ -55,7 +55,7 @@ impl CloudStorage for S3Storage {
         }
 
         // Use `aws` to list our bucket, and parse the results.parse_s3_url(
-        let output_json = self.aws_command()
+        let output = self.aws_command()
             .args(&["s3api", "list-objects-v2"])
             .arg("--bucket")
             .arg(bucket)
@@ -63,22 +63,24 @@ impl CloudStorage for S3Storage {
             .arg(prefix)
             .stderr(process::Stdio::inherit())
             .output()
-            .context("error running gsutil")?
-            .stdout;
-        let output: ListObjectsV2Output = serde_json::from_slice(&output_json)
+            .context("could not run gsutil")?;
+        if !output.status.success() {
+            return Err(format_err!("could not list {:?}: {}", uri, output.status));
+        }
+        let s3_output: ListObjectsV2Output = serde_json::from_slice(&output.stdout)
             .context("error parsing list-objects-v2 output")?;
 
         // Fail if the bucket has too many entries to get in one call.
         //
         // TODO: Chain together multiple calls to `list-objects-v2`.
-        if output.is_truncated.unwrap_or(false) {
+        if s3_output.is_truncated.unwrap_or(false) {
             return Err(format_err!(
                 "S3 prefix {:?} contains too many objects for this version",
                 uri,
             ));
         }
 
-        Ok(output.contents
+        Ok(s3_output.contents
             .into_iter()
             // Only include files.
             .filter(|obj| !obj.key.ends_with("/"))
@@ -89,12 +91,38 @@ impl CloudStorage for S3Storage {
 
     fn sync_down(&self, uri: &str, local_path: &Path) -> Result<()> {
         trace!("downloading {} to {}", uri, local_path.display());
-        unimplemented!()
+
+        // We assume that we only need to support files.
+        let status = self.aws_command()
+            .args(&["s3", "cp"])
+            .arg(uri)
+            .arg(local_path)
+            .status()
+            .context("could not run gsutil")?;
+        if !status.success() {
+            return Err(format_err!("could not download {:?}: {}", uri, status));
+        }
+        Ok(())
     }
 
     fn sync_up(&self, local_path: &Path, uri: &str) -> Result<()> {
         trace!("uploading {} to {}", local_path.display(), uri);
-        unimplemented!()
+
+        // We assume that we only need to support directories, namely /pfs/out.
+        let status = self.aws_command()
+            .args(&["s3", "sync"])
+            .arg(local_path)
+            .arg(uri)
+            .status()
+            .context("could not run gsutil")?;
+        if !status.success() {
+            return Err(format_err!(
+                "could not upload {:?}: {}",
+                local_path.display(),
+                status,
+            ));
+        }
+        Ok(())
     }
 }
 
