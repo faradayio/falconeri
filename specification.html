@@ -158,7 +158,18 @@
       &quot;python3&quot;,
       &quot;/extract_words.py&quot;
     ],
-    &quot;image&quot;: &quot;somerepo/my_python_nlp&quot;
+    &quot;image&quot;: &quot;somerepo/my_python_nlp&quot;,
+    &quot;secrets&quot;: [
+      {
+        &quot;name&quot;: &quot;ssl&quot;,
+        &quot;mount_path&quot;: &quot;/ssl&quot;
+      },
+      {
+        &quot;name&quot;: &quot;s3&quot;,
+        &quot;key&quot;: &quot;access_key&quot;,
+        &quot;env_var&quot;: &quot;AWS_ACCESS_KEY_ID&quot;
+      }
+    ]
   },
   &quot;parallelism_spec&quot;: {
     &quot;constant&quot;: 10
