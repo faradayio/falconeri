@@ -25,12 +25,6 @@ pub enum ConnectVia {
     Cluster,
 }
 
-/// A Kubernetes secret (missing lots of fields).
-#[derive(Debug, Deserialize)]
-struct FalconeriSecret {
-    data: FalconeriSecretData,
-}
-
 /// The data we store in our secret.
 #[derive(Debug, Deserialize)]
 struct FalconeriSecretData {
@@ -48,14 +42,9 @@ fn postgres_password(via: ConnectVia) -> Result<String> {
             // kubectl get secret falconeri -o json |
             //     jq -r .data.POSTGRES_PASSWORD |
             //     base64 --decode
-            let secret: FalconeriSecret = kubernetes::kubectl_parse_json(&[
-                "get",
-                "secret",
-                "falconeri",
-                "-o",
-                "json",
-            ])?;
-            let pw_bytes = base64::decode(&secret.data.postgres_password)
+            let secret_data: FalconeriSecretData =
+                kubernetes::kubectl_secret("falconeri")?;
+            let pw_bytes = base64::decode(&secret_data.postgres_password)
                 .context("cannot decode POSTGRES_PASSWORD")?;
             Ok(String::from_utf8(pw_bytes)
                 .context("POSTGRES_PASSWORD must be valid UTF-8")?)

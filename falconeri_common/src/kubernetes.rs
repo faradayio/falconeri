@@ -2,7 +2,7 @@
 
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use serde::de::DeserializeOwned;
+use serde::de::{Deserialize, DeserializeOwned};
 use serde_json;
 use std::{
     iter, process::{Command, Stdio},
@@ -63,6 +63,30 @@ pub fn kubectl_with_input(args: &[&str], input: &str) -> Result<()> {
 pub fn kubectl_succeeds(args: &[&str]) -> Result<bool> {
     let output = Command::new("kubectl").args(args).output()?;
     Ok(output.status.success())
+}
+
+/// A Kubernetes secret (missing lots of fields).
+#[derive(Debug, Deserialize)]
+struct Secret<T> {
+    /// Our secret data.
+    ///
+    /// We use some [serde magic][] to deserialize a parameterized type.
+    ///
+    /// [serde magic]: https://serde.rs/attr-bound.html
+    #[serde(bound(deserialize = "T: Deserialize<'de>"))]
+    data: T,
+}
+
+/// Fetch a secret and deserialize it as the specified type.
+pub fn kubectl_secret<T: DeserializeOwned>(secret: &str) -> Result<T> {
+    let secret: Secret<T> = kubectl_parse_json(&[
+        "get",
+        "secret",
+        secret,
+        "-o",
+        "json",
+    ])?;
+    Ok(secret.data)
 }
 
 /// Deploy a manifest to our Kubernetes cluster.

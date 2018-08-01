@@ -3,6 +3,7 @@
 use prefix::*;
 
 pub mod gs;
+pub mod s3;
 
 /// Abstract interface to different kinds of cloud storage backends.
 pub trait CloudStorage {
@@ -28,6 +29,8 @@ impl CloudStorage {
     pub fn for_uri(uri: &str) -> Result<Box<dyn CloudStorage>> {
         if uri.starts_with("gs://") {
             Ok(Box::new(gs::GoogleCloudStorage::new()))
+        } else if uri.starts_with("s3://") {
+            Ok(Box::new(s3::S3Storage::new()))
         } else {
             Err(format_err!("cannot find storage backend for {}", uri))
         }
