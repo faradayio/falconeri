@@ -14,10 +14,33 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
                 return Err(format_err!("Glob {} not yet supported", glob));
             }
 
-            // Figure out what files to process, add our job to the database,
-            // and launch our batch job on the cluster.
-            let storage = CloudStorage::for_uri(&uri)?;
+            // Figure out what files to process
+            let storage = CloudStorage::for_uri(&uri, &pipeline_spec.transform.secrets)?;
             let paths = storage.list(uri)?;
+
+            // Make sure we have no nested directories, which we don't handle
+            // correctly for "/*" yet.
+            let mut base = uri.to_owned();
+            if !base.ends_with("/") {
+                base.push_str("/");
+            }
+            for path in &paths {
+                // These assertions should always be true because of how
+                // `storage.list` is supposed to work.
+                assert!(path.len() > base.len());
+                assert_eq!(path[..base.len()], base);
+
+                // Strip base and look for a remaining '/'.
+                if path[base.len()..].find('/').is_some() {
+                    return Err(format_err!(
+                        "we cannot handle directory inputs yet: {:?}",
+                        path,
+                    ));
+                }
+            }
+
+            // Add our job to the database, and launch our batch job on the
+            // cluster.
             let job = add_job_to_database(pipeline_spec, &paths, repo)?;
             start_batch_job(pipeline_spec, &job)?;
             println!("{}", job.job_name);

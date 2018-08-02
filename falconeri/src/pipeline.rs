@@ -4,7 +4,7 @@
 //!
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
-use falconeri_common::prefix::*;
+use falconeri_common::{prefix::*, secret::Secret};
 
 /// Represents a pipeline *.json file.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -33,22 +33,11 @@ pub struct Pipeline {
 pub struct Transform {
     pub cmd: Vec<String>,
     pub image: String,
+    // TODO: We currently also use this for secrets needed to access buckets,
+    // but that's not really a complete or well-thought-out solution, and we may
+    // want to declare secrets as part of our `Input::Atom` values.
     #[serde(default)]
     pub secrets: Vec<Secret>,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields, untagged)]
-pub enum Secret {
-    File {
-        name: String,
-        mount_path: String,
-    },
-    Env {
-        name: String,
-        key: String,
-        env_var: String,
-    },
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -94,7 +83,7 @@ fn parse_pipeline_spec() {
     assert_eq!(parsed.transform.secrets.len(), 2);
     assert_eq!(
         parsed.transform.secrets[0],
-        Secret::File {
+        Secret::Mount {
             name: "ssl".to_owned(),
             mount_path: "/ssl".to_owned(),
         },
@@ -103,7 +92,7 @@ fn parse_pipeline_spec() {
         parsed.transform.secrets[1],
         Secret::Env {
             name: "s3".to_owned(),
-            key: "access_key".to_owned(),
+            key: "AWS_ACCESS_KEY_ID".to_owned(),
             env_var: "AWS_ACCESS_KEY_ID".to_owned(),
         },
     );

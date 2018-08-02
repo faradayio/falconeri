@@ -1,9 +1,8 @@
 //! Database utilities.
 
-use base64;
 use std::{env, fs::read_to_string, io};
 
-use kubernetes;
+use kubernetes::{base64_encoded_secret_string, kubectl_secret};
 use prefix::*;
 
 /// Embed our migrations directly into the executable. We use a
@@ -25,16 +24,10 @@ pub enum ConnectVia {
     Cluster,
 }
 
-/// A Kubernetes secret (missing lots of fields).
-#[derive(Debug, Deserialize)]
-struct FalconeriSecret {
-    data: FalconeriSecretData,
-}
-
 /// The data we store in our secret.
 #[derive(Debug, Deserialize)]
 struct FalconeriSecretData {
-    #[serde(rename = "POSTGRES_PASSWORD")]
+    #[serde(with = "base64_encoded_secret_string", rename = "POSTGRES_PASSWORD")]
     postgres_password: String,
 }
 
@@ -48,17 +41,8 @@ fn postgres_password(via: ConnectVia) -> Result<String> {
             // kubectl get secret falconeri -o json |
             //     jq -r .data.POSTGRES_PASSWORD |
             //     base64 --decode
-            let secret: FalconeriSecret = kubernetes::kubectl_parse_json(&[
-                "get",
-                "secret",
-                "falconeri",
-                "-o",
-                "json",
-            ])?;
-            let pw_bytes = base64::decode(&secret.data.postgres_password)
-                .context("cannot decode POSTGRES_PASSWORD")?;
-            Ok(String::from_utf8(pw_bytes)
-                .context("POSTGRES_PASSWORD must be valid UTF-8")?)
+            let secret_data: FalconeriSecretData = kubectl_secret("falconeri")?;
+            Ok(secret_data.postgres_password)
         }
         ConnectVia::Cluster => {
             // This should be mounted into our container.

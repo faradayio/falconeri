@@ -15,7 +15,7 @@
       },
       {
         "name": "s3",
-        "key": "access_key",
+        "key": "AWS_ACCESS_KEY_ID",
         "env_var": "AWS_ACCESS_KEY_ID"
       }
     ]

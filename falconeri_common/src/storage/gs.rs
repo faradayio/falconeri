@@ -2,16 +2,18 @@
 
 use std::{io::BufRead, process};
 
-use super::CloudStorage;
 use prefix::*;
+use secret::Secret;
+use super::CloudStorage;
 
 /// Backend for talking to Google Cloud Storage, currently based on `gsutil`.
 pub struct GoogleCloudStorage {}
 
 impl GoogleCloudStorage {
     /// Create a new `GoogleCloudStorage` backend.
-    pub fn new() -> Self {
-        GoogleCloudStorage {}
+    pub fn new(_secrets: &[Secret]) -> Result<Self> {
+        // We don't yet know how to authenticate using secrets.
+        Ok(GoogleCloudStorage {})
     }
 }
 
@@ -25,6 +27,9 @@ impl CloudStorage for GoogleCloudStorage {
             .stderr(process::Stdio::inherit())
             .output()
             .context("error running gsutil")?;
+        if !output.status.success() {
+            return Err(format_err!("could not list {:?}: {}", uri, output.status));
+        }
         let mut paths = vec![];
         for line in output.stdout.lines() {
             let line = line?;

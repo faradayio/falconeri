@@ -2,7 +2,7 @@
 
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use serde::de::DeserializeOwned;
+use serde::de::{Deserialize, DeserializeOwned};
 use serde_json;
 use std::{
     iter, process::{Command, Stdio},
@@ -63,6 +63,54 @@ pub fn kubectl_with_input(args: &[&str], input: &str) -> Result<()> {
 pub fn kubectl_succeeds(args: &[&str]) -> Result<bool> {
     let output = Command::new("kubectl").args(args).output()?;
     Ok(output.status.success())
+}
+
+/// A Kubernetes secret (missing lots of fields).
+#[derive(Debug, Deserialize)]
+struct Secret<T> {
+    /// Our secret data.
+    ///
+    /// We use some [serde magic][] to deserialize a parameterized type.
+    ///
+    /// [serde magic]: https://serde.rs/attr-bound.html
+    #[serde(bound(deserialize = "T: Deserialize<'de>"))]
+    data: T,
+}
+
+/// Custom `serde` (de)serialization module for Base64-encoded strings. Use
+/// with `#[serde(with = "base64_encoded_secret_string")]` to automatically
+/// decode Base64-encoded fields.
+pub mod base64_encoded_secret_string {
+    use base64;
+    use serde::de::{Deserialize, Deserializer, Error as DeError};
+    use std::result;
+
+    /// Deserialize a secret represented as a Base64-encoded UTF-8 string.
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D
+    ) -> result::Result<String, D::Error> {
+        let encoded = String::deserialize(deserializer)?;
+        let bytes = base64::decode(&encoded).map_err(|err| {
+            D::Error::custom(format!("could not base64-decode secret: {}", err))
+        })?;
+        let decoded = String::from_utf8(bytes).map_err(|err| {
+            D::Error::custom(format!("could not UTF-8-decode secret: {}", err))
+
+        })?;
+        Ok(decoded)
+    }
+}
+
+/// Fetch a secret and deserialize it as the specified type.
+pub fn kubectl_secret<T: DeserializeOwned>(secret: &str) -> Result<T> {
+    let secret: Secret<T> = kubectl_parse_json(&[
+        "get",
+        "secret",
+        secret,
+        "-o",
+        "json",
+    ])?;
+    Ok(secret.data)
 }
 
 /// Deploy a manifest to our Kubernetes cluster.

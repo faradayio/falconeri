@@ -12,8 +12,11 @@ pub extern crate diesel_migrations;
 #[macro_use]
 extern crate failure;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate log;
 pub extern crate rand;
+extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -25,6 +28,7 @@ pub mod kubernetes;
 pub mod models;
 #[allow(missing_docs, unused_imports)]
 mod schema;
+pub mod secret;
 pub mod storage;
 
 /// Common imports used by many modules.
