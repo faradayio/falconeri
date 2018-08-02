@@ -262,6 +262,21 @@
 <li>For now, <code>input.atom</code> is the only supported input type.</li>
 <li><code>egress.URI</code> is mandatory.</li>
 </ul>
+<a class="header" href="print.html#s3-authentication" id="s3-authentication"><h2>S3 authentication</h2></a>
+<p>In order to authenticate with S3, you will need to create a secret, and add a <code>transform.secrets</code> section to your pipeline specification. This should look like the following, although you may replace the secret name with something other than <code>&quot;s3&quot;</code>. For now, the <code>&quot;key&quot;</code> values must be as specified below for the S3 backend to work.</p>
+<pre><code class="language-json">&quot;secrets&quot;: [
+  {
+    &quot;name&quot;: &quot;s3&quot;,
+    &quot;key&quot;: &quot;AWS_ACCESS_KEY_ID&quot;,
+    &quot;env_var&quot;: &quot;AWS_ACCESS_KEY_ID&quot;
+  },
+  {
+    &quot;name&quot;: &quot;s3&quot;,
+    &quot;key&quot;: &quot;AWS_SECRET_ACCESS_KEY&quot;,
+    &quot;env_var&quot;: &quot;AWS_SECRET_ACCESS_KEY&quot;
+  }
+]
+</code></pre>
 <a class="header" href="print.html#creating-docker-images" id="creating-docker-images"><h1>Creating Docker images</h1></a>
 <p>In order to transform your data, you will need to create a Docker image.</p>
 <a class="header" href="print.html#inputs-and-outputs" id="inputs-and-outputs"><h2>Inputs and outputs</h2></a>
