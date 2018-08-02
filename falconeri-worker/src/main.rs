@@ -98,6 +98,8 @@ fn process_datum(
     // Download each file.
     reset_work_dir()?;
     for file in files {
+        // We don't pass in any `secrets` here, because those are supposed to
+        // be specified in our Kubernetes job when it's created.
         let storage = CloudStorage::for_uri(&file.uri, &[])?;
         storage.sync_down(&file.uri, Path::new(&file.local_path))?;
     }

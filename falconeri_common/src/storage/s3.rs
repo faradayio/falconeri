@@ -1,7 +1,7 @@
 //! Support for AWS S3 storage.
 
 use failure::ResultExt;
-use kubernetes::kubectl_secret;
+use kubernetes::{base64_encoded_secret_string, kubectl_secret};
 use regex::Regex;
 use serde_json;
 use std::process;
@@ -16,8 +16,10 @@ use super::CloudStorage;
 #[serde(rename_all = "SCREAMING_SNAKE_CASE", deny_unknown_fields)]
 struct S3SecretData {
     /// Our `AWS_ACCESS_KEY_ID` value.
+    #[serde(with = "base64_encoded_secret_string")]
     aws_access_key_id: String,
     /// Our `AWS_SECRET_ACCESS_KEY` value.
+    #[serde(with = "base64_encoded_secret_string")]
     aws_secret_access_key: String,
 }
 

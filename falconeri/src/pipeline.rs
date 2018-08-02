@@ -92,7 +92,7 @@ fn parse_pipeline_spec() {
         parsed.transform.secrets[1],
         Secret::Env {
             name: "s3".to_owned(),
-            key: "access_key".to_owned(),
+            key: "AWS_ACCESS_KEY_ID".to_owned(),
             env_var: "AWS_ACCESS_KEY_ID".to_owned(),
         },
     );

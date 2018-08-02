@@ -77,6 +77,30 @@ struct Secret<T> {
     data: T,
 }
 
+/// Custom `serde` (de)serialization module for Base64-encoded strings. Use
+/// with `#[serde(with = "base64_encoded_secret_string")]` to automatically
+/// decode Base64-encoded fields.
+pub mod base64_encoded_secret_string {
+    use base64;
+    use serde::de::{Deserialize, Deserializer, Error as DeError};
+    use std::result;
+
+    /// Deserialize a secret represented as a Base64-encoded UTF-8 string.
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D
+    ) -> result::Result<String, D::Error> {
+        let encoded = String::deserialize(deserializer)?;
+        let bytes = base64::decode(&encoded).map_err(|err| {
+            D::Error::custom(format!("could not base64-decode secret: {}", err))
+        })?;
+        let decoded = String::from_utf8(bytes).map_err(|err| {
+            D::Error::custom(format!("could not UTF-8-decode secret: {}", err))
+
+        })?;
+        Ok(decoded)
+    }
+}
+
 /// Fetch a secret and deserialize it as the specified type.
 pub fn kubectl_secret<T: DeserializeOwned>(secret: &str) -> Result<T> {
     let secret: Secret<T> = kubectl_parse_json(&[
