@@ -2,16 +2,18 @@
 
 use std::{io::BufRead, process};
 
-use super::CloudStorage;
 use prefix::*;
+use secret::Secret;
+use super::CloudStorage;
 
 /// Backend for talking to Google Cloud Storage, currently based on `gsutil`.
 pub struct GoogleCloudStorage {}
 
 impl GoogleCloudStorage {
     /// Create a new `GoogleCloudStorage` backend.
-    pub fn new() -> Self {
-        GoogleCloudStorage {}
+    pub fn new(_secrets: &[Secret]) -> Result<Self> {
+        // We don't yet know how to authenticate using secrets.
+        Ok(GoogleCloudStorage {})
     }
 }
 

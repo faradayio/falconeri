@@ -1,22 +1,24 @@
 //! Support for AWS S3 storage.
 
 use failure::ResultExt;
+use kubernetes::kubectl_secret;
 use regex::Regex;
 use serde_json;
 use std::process;
 
 use prefix::*;
+use secret::Secret;
 use super::CloudStorage;
 
 /// An S3 secret fetched from Kubernetes. This can be fetched using
 /// `kubernetes_secret`.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE", deny_unknown_fields)]
-pub struct S3SecretData {
+struct S3SecretData {
     /// Our `AWS_ACCESS_KEY_ID` value.
-    pub aws_access_key_id: String,
+    aws_access_key_id: String,
     /// Our `AWS_SECRET_ACCESS_KEY` value.
-    pub aws_secret_access_key: String,
+    aws_secret_access_key: String,
 }
 
 /// Backend for talking to AWS S3, currently based on `awscli`.
@@ -26,10 +28,31 @@ pub struct S3Storage {
 
 impl S3Storage {
     /// Create a new `S3Storage` backend.
-    pub fn new() -> Self {
-        S3Storage {
-            secret_data: None,
-        }
+    pub fn new(secrets: &[Secret]) -> Result<Self> {
+        let secret = secrets.iter().find(|s| {
+            match s {
+                // We assume that the AWS_ACCESS_KEY_ID and
+                // AWS_SECRET_ACCESS_KEY are stored in the same secret, because
+                // we're lazy and this code path will probably be heavily
+                // modified when we write an actual server.
+                Secret::Env { env_var, .. } if env_var == "AWS_ACCESS_KEY_ID" => true,
+                _ => false,
+            }
+        });
+        let secret_data = if let Some(Secret::Env { name, .. }) = secret {
+            Some(kubectl_secret(name)?)
+        } else {
+            None
+        };
+        Ok(S3Storage { secret_data })
+    }
+
+    /// Construct a new `S3Storage` backend, using an AWS access key from
+    /// the Kubernetes secret `secret_name`.
+    pub fn new_with_secret(secret_name: &str) -> Result<Self> {
+        Ok(S3Storage {
+            secret_data: kubectl_secret(secret_name)?,
+        })
     }
 
     /// Build a `Command` object which calls the `aws` CLI tool, including any

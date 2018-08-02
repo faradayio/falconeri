@@ -28,6 +28,7 @@ pub mod kubernetes;
 pub mod models;
 #[allow(missing_docs, unused_imports)]
 mod schema;
+pub mod secret;
 pub mod storage;
 
 /// Common imports used by many modules.

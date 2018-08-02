@@ -1,6 +1,7 @@
 //! Cloud storage backends.
 
 use prefix::*;
+use secret::Secret;
 
 pub mod gs;
 pub mod s3;
@@ -25,12 +26,14 @@ pub trait CloudStorage {
 }
 
 impl CloudStorage {
-    /// Get the storage backend for the specified URI.
-    pub fn for_uri(uri: &str) -> Result<Box<dyn CloudStorage>> {
+    /// Get the storage backend for the specified URI. If we know about any
+    /// secrets, we can pass them as the `secrets` array, and the storage driver
+    /// can check to see if there are any secrets it can use to authenticate.
+    pub fn for_uri(uri: &str, secrets: &[Secret]) -> Result<Box<dyn CloudStorage>> {
         if uri.starts_with("gs://") {
-            Ok(Box::new(gs::GoogleCloudStorage::new()))
+            Ok(Box::new(gs::GoogleCloudStorage::new(secrets)?))
         } else if uri.starts_with("s3://") {
-            Ok(Box::new(s3::S3Storage::new()))
+            Ok(Box::new(s3::S3Storage::new(secrets)?))
         } else {
             Err(format_err!("cannot find storage backend for {}", uri))
         }

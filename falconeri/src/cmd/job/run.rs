@@ -16,7 +16,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
 
             // Figure out what files to process, add our job to the database,
             // and launch our batch job on the cluster.
-            let storage = CloudStorage::for_uri(&uri)?;
+            let storage = CloudStorage::for_uri(&uri, &pipeline_spec.transform.secrets)?;
             let paths = storage.list(uri)?;
             let job = add_job_to_database(pipeline_spec, &paths, repo)?;
             start_batch_job(pipeline_spec, &job)?;

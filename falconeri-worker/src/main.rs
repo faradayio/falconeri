@@ -98,7 +98,7 @@ fn process_datum(
     // Download each file.
     reset_work_dir()?;
     for file in files {
-        let storage = CloudStorage::for_uri(&file.uri)?;
+        let storage = CloudStorage::for_uri(&file.uri, &[])?;
         storage.sync_down(&file.uri, Path::new(&file.local_path))?;
     }
 
@@ -179,7 +179,7 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
 
     // Upload all our files in a batch, for maximum performance, and record
     // what happened.
-    let storage = CloudStorage::for_uri(&job.egress_uri)?;
+    let storage = CloudStorage::for_uri(&job.egress_uri, &[])?;
     let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
     match result {
         Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
