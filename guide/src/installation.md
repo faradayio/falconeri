@@ -21,6 +21,12 @@ For all setups, you will also need:
 - `kubectl`, compatible with your version of Kubernetes.
 - `falconeri`, which you should be able to find on the [releases page][releases].
 
+On the Mac, you will also need to install OpenSSL shared libraries. You can do this using `brew`:
+
+```sh
+brew install openssl
+```
+
 [releases]: https://github.com/faradayio/falconeri/releases
 
 ## Authenticating with your cluster
@@ -28,6 +34,7 @@ For all setups, you will also need:
 If you're using Google Cloud, and your cluster is named `falconeri`, you can authenticate with your Falconeri cluster as follows:
 
 ```sh
+gcloud auth login
 gcloud container clusters get-credentials falconeri \
     --zone $CLUSTER_ZONE --project $CLUSTER_PROJECT
 ```
@@ -35,7 +42,7 @@ gcloud container clusters get-credentials falconeri \
 You'll also need to set your Falconeri cluster as the default for `kubectl` commands:
 
 ```sh
-kubectl config set-cluster falconeri
+kubectl config use-context $CONTEXT_NAME
 ```
 
 ## Setting up a cluster autoscaling pool
