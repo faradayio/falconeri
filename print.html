@@ -170,13 +170,17 @@
 <li><code>kubectl</code>, compatible with your version of Kubernetes.</li>
 <li><code>falconeri</code>, which you should be able to find on the <a href="https://github.com/faradayio/falconeri/releases">releases page</a>.</li>
 </ul>
+<p>On the Mac, you will also need to install OpenSSL shared libraries. You can do this using <code>brew</code>:</p>
+<pre><code class="language-sh">brew install openssl
+</code></pre>
 <a class="header" href="print.html#authenticating-with-your-cluster" id="authenticating-with-your-cluster"><h2>Authenticating with your cluster</h2></a>
 <p>If you're using Google Cloud, and your cluster is named <code>falconeri</code>, you can authenticate with your Falconeri cluster as follows:</p>
-<pre><code class="language-sh">gcloud container clusters get-credentials falconeri \
+<pre><code class="language-sh">gcloud auth login
+gcloud container clusters get-credentials falconeri \
     --zone $CLUSTER_ZONE --project $CLUSTER_PROJECT
 </code></pre>
 <p>You'll also need to set your Falconeri cluster as the default for <code>kubectl</code> commands:</p>
-<pre><code class="language-sh">kubectl config set-cluster falconeri
+<pre><code class="language-sh">kubectl config use-context $CONTEXT_NAME
 </code></pre>
 <a class="header" href="print.html#setting-up-a-cluster-autoscaling-pool" id="setting-up-a-cluster-autoscaling-pool"><h2>Setting up a cluster autoscaling pool</h2></a>
 <p>We've had good luck splitting our cluster into two separate parts:</p>
