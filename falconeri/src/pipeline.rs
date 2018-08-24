@@ -7,7 +7,7 @@
 use falconeri_common::{prefix::*, secret::Secret};
 
 /// Represents a pipeline *.json file.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineSpec {
     pub pipeline: Pipeline,
@@ -22,13 +22,13 @@ pub struct PipelineSpec {
     pub egress: Egress,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pipeline {
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Transform {
     pub cmd: Vec<String>,
@@ -40,20 +40,20 @@ pub struct Transform {
     pub secrets: Vec<Secret>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParallelismSpec {
     pub constant: u32,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ResourceRequests {
     pub memory: String,
     pub cpu: f32,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum Input {
     Atom {
@@ -65,7 +65,7 @@ pub enum Input {
     },
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub struct Egress {
     #[serde(rename = "URI")]

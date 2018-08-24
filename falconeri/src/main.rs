@@ -1,4 +1,6 @@
 extern crate base64;
+#[macro_use]
+extern crate bson;
 extern crate env_logger;
 #[macro_use]
 extern crate failure;
@@ -6,6 +8,9 @@ extern crate falconeri_common;
 extern crate handlebars;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate magnet_derive;
+extern crate magnet_schema;
 extern crate openssl;
 extern crate openssl_probe;
 #[macro_use]

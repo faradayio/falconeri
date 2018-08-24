@@ -5,7 +5,7 @@
 ///
 /// Note that this is used directly as part of the `PipelineSpec` format, so it
 /// can't be changed without breaking a user-facing file format.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, untagged)]
 pub enum Secret {
     /// A secret that should be mounted as a directory of files.

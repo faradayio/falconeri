@@ -3,6 +3,8 @@
 #![warn(missing_docs)]
 
 extern crate base64;
+#[macro_use]
+extern crate bson;
 pub extern crate cast;
 pub extern crate chrono;
 #[macro_use]
@@ -15,6 +17,9 @@ extern crate failure;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate magnet_derive;
+extern crate magnet_schema;
 pub extern crate rand;
 extern crate regex;
 extern crate serde;

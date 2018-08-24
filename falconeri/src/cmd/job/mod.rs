@@ -9,6 +9,7 @@ mod describe;
 mod list;
 mod retry;
 mod run;
+mod schema;
 
 /// The `job` subcommand.
 #[derive(Debug, StructOpt)]
@@ -38,6 +39,10 @@ pub enum Opt {
         #[structopt(parse(from_os_str))]
         pipeline_json: PathBuf,
     },
+
+    /// Output a JSON schema for a falconeri job.
+    #[structopt(name = "schema")]
+    Schema,
 }
 
 /// Run the `job` subcommand.
@@ -53,5 +58,6 @@ pub fn run(opt: &Opt) -> Result<()> {
                 serde_json::from_reader(f).context("can't parse pipeline JSON file")?;
             run::run(&pipeline_spec)
         }
+        Opt::Schema => schema::run(),
     }
 }

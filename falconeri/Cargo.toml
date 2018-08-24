@@ -5,11 +5,14 @@ version = "0.1.2"
 
 [dependencies]
 base64 = "0.9.2"
+bson = "0.13.0"
 env_logger = "0.5.10"
 failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }
 handlebars = "1.0.0-beta.4"
 log = "0.4.3"
+magnet_derive = "0.4.0"
+magnet_schema = "0.4.0"
 # Needed for ekidd/rust-musl-builder.
 openssl = "*"
 openssl-probe = "0.1.2"
