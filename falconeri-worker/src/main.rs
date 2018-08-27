@@ -96,7 +96,7 @@ fn process_datum(
     debug!("processing datum {}", datum.id);
 
     // Download each file.
-    reset_work_dir()?;
+    reset_work_dirs()?;
     for file in files {
         // We don't pass in any `secrets` here, because those are supposed to
         // be specified in our Kubernetes job when it's created.
@@ -115,15 +115,24 @@ fn process_datum(
 
     // Finish up.
     upload_outputs(job, datum).context("could not upload outputs")?;
-    reset_work_dir()?;
+    reset_work_dirs()?;
+    Ok(())
+}
+
+/// Reset our working directories to a default, clean state.
+fn reset_work_dirs() -> Result<()> {
+    reset_work_dir("/pfs/*")?;
+    reset_work_dir("/scratch/*")?;
     Ok(())
 }
 
 /// Restore our `/pfs` directory to its default, clean state.
-fn reset_work_dir() -> Result<()> {
-    let paths = glob::glob("/pfs/*").context("error listing /pfs")?;
+fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
+    let paths = glob::glob(work_dir_glob)
+        .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
     for path in paths {
-        let path = path.context("error listing /pfs")?;
+        let path = path
+            .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
         trace!("deleting: {}", path.display());
         if path.is_dir() {
             fs::remove_dir_all(&path)
