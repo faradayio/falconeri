@@ -38,16 +38,21 @@ pub fn run(job_name: &str) -> Result<()> {
         }.insert(&conn)?;
 
         // Create new datums and input files.
+        let mut new_datums = vec![];
+        let mut new_input_files = vec![];
         for (_datum, input_files) in error_datums.into_iter().zip(input_files) {
-            let new_datum = NewDatum { job_id: new_job.id }.insert(&conn)?;
+            let datum_id = Uuid::new_v4();
+            new_datums.push(NewDatum { id: datum_id, job_id: new_job.id });
             for input_file in input_files {
-                NewInputFile {
-                    datum_id: new_datum.id,
+                new_input_files.push(NewInputFile {
+                    datum_id: datum_id,
                     uri: input_file.uri.clone(),
                     local_path: input_file.local_path.clone(),
-                }.insert(&conn)?;
+                });
             }
         }
+        NewDatum::insert_all(&new_datums, &conn)?;
+        NewInputFile::insert_all(&new_input_files, &conn)?;
 
         Ok((pipeline_spec, new_job))
     })?;

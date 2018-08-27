@@ -57,10 +57,11 @@ pub struct NewInputFile {
 
 impl NewInputFile {
     /// Insert a new job into the database.
-    pub fn insert(&self, conn: &PgConnection) -> Result<InputFile> {
-        Ok(diesel::insert_into(input_files::table)
-            .values(self)
-            .get_result(conn)
-            .context("error inserting input file")?)
+    pub fn insert_all(input_files: &[Self], conn: &PgConnection) -> Result<()> {
+        diesel::insert_into(input_files::table)
+            .values(input_files)
+            .execute(conn)
+            .context("error inserting input file")?;
+        Ok(())
     }
 }

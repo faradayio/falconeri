@@ -80,17 +80,20 @@ fn add_job_to_database(
 
         // Create a datum for each input file. For now, we only handle the
         // trivial case of one file per datum.
+        let mut datums = vec![];
+        let mut input_files = vec![];
         for input in inputs {
-            let new_datum = NewDatum { job_id: job.id };
-            let datum = new_datum.insert(&conn)?;
+            let datum_id = Uuid::new_v4();
+            datums.push(NewDatum { id: datum_id, job_id: job.id });
 
-            let new_file = NewInputFile {
-                datum_id: datum.id,
+            input_files.push(NewInputFile {
+                datum_id,
                 uri: input.to_owned(),
                 local_path: uri_to_local_path(input, repo)?,
-            };
-            let _file = new_file.insert(&conn)?;
+            });
         }
+        NewDatum::insert_all(&datums, &conn)?;
+        NewInputFile::insert_all(&input_files, &conn)?;
         Ok(job)
     })?;
     Ok(job)
