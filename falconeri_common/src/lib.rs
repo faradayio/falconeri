@@ -7,6 +7,7 @@ extern crate base64;
 extern crate bson;
 pub extern crate cast;
 pub extern crate chrono;
+extern crate common_failures;
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]

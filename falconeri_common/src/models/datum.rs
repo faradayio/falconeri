@@ -1,3 +1,4 @@
+use common_failures::display::DisplayCausesAndBacktraceExt;
 use prefix::*;
 use schema::*;
 
@@ -52,13 +53,16 @@ impl Datum {
     /// Mark this datum as having been unsuccessfully processed.
     pub fn mark_as_error(
         &mut self,
-        error_message: &dyn fmt::Display,
+        error_message: &dyn DisplayCausesAndBacktraceExt,
         conn: &PgConnection,
     ) -> Result<()> {
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
                 datums::status.eq(&Status::Error),
-                datums::error_message.eq(&format!("{}", error_message)),
+                datums::error_message.eq(&format!(
+                    "{}",
+                    error_message.display_causes_and_backtrace(),
+                )),
             ))
             .get_result(conn)
             .context("can't mark datum as having failed")?;
