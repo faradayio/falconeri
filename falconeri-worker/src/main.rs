@@ -122,11 +122,12 @@ fn process_datum(
 /// Reset our working directories to a default, clean state.
 fn reset_work_dirs() -> Result<()> {
     reset_work_dir("/pfs/*")?;
+    fs::create_dir("/pfs/out").context("cannot create /pfs/out")?;
     reset_work_dir("/scratch/*")?;
     Ok(())
 }
 
-/// Restore our `/pfs` directory to its default, clean state.
+/// Restore a directory to a default, clean state.
 fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
     let paths = glob::glob(work_dir_glob)
         .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
@@ -142,7 +143,6 @@ fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
                 .with_context(|_| format!("cannot delete {}", path.display()))?;
         }
     }
-    fs::create_dir("/pfs/out").context("cannot create /pfs/out")?;
     Ok(())
 }
 
