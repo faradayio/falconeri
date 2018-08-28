@@ -48,6 +48,7 @@ pub fn run(job_name: &str) -> Result<()> {
                     datum_id: datum_id,
                     uri: input_file.uri.clone(),
                     local_path: input_file.local_path.clone(),
+                    job_id: new_job.id,
                 });
             }
         }

@@ -90,6 +90,7 @@ fn add_job_to_database(
                 datum_id,
                 uri: input.to_owned(),
                 local_path: uri_to_local_path(input, repo)?,
+                job_id: job.id,
             });
         }
         NewDatum::insert_all(&datums, &conn)?;

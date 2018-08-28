@@ -15,6 +15,8 @@ pub struct InputFile {
     pub uri: String,
     /// The local path to which this file should be downloaded.
     pub local_path: String,
+    /// The job to which this input file belongs.
+    pub job_id: Uuid,
 }
 
 impl InputFile {
@@ -39,6 +41,7 @@ impl InputFile {
             datum_id: datum.id,
             uri: "gs://example-bucket/input/file.csv".to_owned(),
             local_path: "/pfs/input/file.csv".to_owned(),
+            job_id: datum.job_id,
         }
     }
 }
@@ -53,6 +56,8 @@ pub struct NewInputFile {
     pub uri: String,
     /// The local path to which this file should be downloaded.
     pub local_path: String,
+    /// The job to which this input file belongs.
+    pub job_id: Uuid,
 }
 
 impl NewInputFile {

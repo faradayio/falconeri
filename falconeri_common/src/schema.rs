@@ -24,6 +24,7 @@ table! {
         datum_id -> Uuid,
         uri -> Text,
         local_path -> Text,
+        job_id -> Uuid,
     }
 }
 
