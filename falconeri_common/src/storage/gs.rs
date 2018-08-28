@@ -1,6 +1,6 @@
 //! Support for Google Cloud Storage.
 
-use std::{io::BufRead, process};
+use std::{collections::HashSet, io::BufRead, process};
 
 use prefix::*;
 use secret::Secret;
@@ -30,12 +30,14 @@ impl CloudStorage for GoogleCloudStorage {
         if !output.status.success() {
             return Err(format_err!("could not list {:?}: {}", uri, output.status));
         }
-        let mut paths = vec![];
+        // `gsutil ls` is "eventually consistent", and seems to occasionally retun
+        // duplicate entries.
+        let mut paths = HashSet::new();
         for line in output.stdout.lines() {
             let line = line?;
-            paths.push(line.trim_right().to_owned());
+            paths.insert(line.trim_right().to_owned());
         }
-        Ok(paths)
+        Ok(paths.into_iter().collect())
     }
 
     fn sync_down(&self, uri: &str, local_path: &Path) -> Result<()> {
