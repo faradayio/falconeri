@@ -67,6 +67,8 @@ impl Job {
         conn.transaction(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
+                .for_update()
+                .skip_locked()
                 .filter(
                     datums::job_id
                         .eq(&self.id)
