@@ -58,9 +58,12 @@ pub struct NewOutputFile {
 impl NewOutputFile {
     /// Insert a new job into the database.
     pub fn insert(&self, conn: &PgConnection) -> Result<OutputFile> {
+        trace!("Inserting output file: {:?}", self);
         Ok(diesel::insert_into(output_files::table)
             .values(self)
             .get_result(conn)
-            .context("error inserting output file")?)
+            .with_context(|_| {
+                format!("error inserting output file: {:?}", self)
+            })?)
     }
 }

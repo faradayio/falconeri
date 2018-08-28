@@ -9,7 +9,12 @@ extern crate openssl;
 extern crate openssl_probe;
 extern crate uuid;
 
-use falconeri_common::{db, prefix::*, storage::CloudStorage};
+use falconeri_common::{
+    common_failures::display::DisplayCausesAndBacktraceExt,
+    db,
+    prefix::*,
+    storage::CloudStorage,
+};
 use std::{env, fs, process, thread::sleep, time::Duration};
 
 /// Instructions on how to use this program.
@@ -61,7 +66,11 @@ fn main() -> Result<()> {
             match result {
                 Ok(()) => datum.mark_as_done(&conn)?,
                 Err(err) => {
-                    error!("failed to process datum {}: {}", datum.id, err);
+                    error!(
+                        "failed to process datum {}: {}",
+                        datum.id,
+                        err.display_causes_and_backtrace(),
+                    );
                     datum.mark_as_error(&err, &conn)?
                 }
             }
