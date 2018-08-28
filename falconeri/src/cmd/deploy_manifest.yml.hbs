@@ -39,6 +39,9 @@ spec:
       containers:
       - name: falconeri-postgres
         image: postgres
+        # Deliberately ridiculously high until we add a server, because we have
+        # lots of lightly-used connections.
+        args: ["postgres", "-c", "max_connections=500"]
         resources:
           requests:
             cpu: 100m
