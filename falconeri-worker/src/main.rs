@@ -117,7 +117,10 @@ fn process_datum(
     if cmd.len() < 1 {
         return Err(format_err!("job {} command is empty", job.id));
     }
-    let status = process::Command::new(&cmd[0]).args(&cmd[1..]).status()?;
+    let status = process::Command::new(&cmd[0])
+        .args(&cmd[1..])
+        .status()
+        .with_context(|_| format!("could not run {:?}", &cmd[0]))?;
     if !status.success() {
         return Err(format_err!("could not run {:?}", cmd));
     }
