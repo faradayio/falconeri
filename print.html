@@ -232,7 +232,8 @@ gcloud container clusters get-credentials falconeri \
         &quot;key&quot;: &quot;AWS_ACCESS_KEY_ID&quot;,
         &quot;env_var&quot;: &quot;AWS_ACCESS_KEY_ID&quot;
       }
-    ]
+    ],
+    &quot;service_account&quot;: &quot;example-service&quot;
   },
   &quot;parallelism_spec&quot;: {
     &quot;constant&quot;: 10
@@ -263,6 +264,7 @@ gcloud container clusters get-credentials falconeri \
 <li><code>resource_requests</code> is mandatory.</li>
 <li>The <code>resource_requests.memory</code> value is used as both a request and as a hard limit. This is because we've seen too many problems caused by worker nodes that consume unexpectedly large amounts of RAM, forcing other workers (or cluster infrastructure) to be evicted from the node.</li>
 <li><code>node_selector</code> is optional. When present, it allows you to limit which nodes will be used for workers. This also integrates with Kubernetes cluster autoscaling. The autoscaler will look for a node pool with matching tags, and create as many nodes as required to satisfy the <code>resource_requests</code>.</li>
+<li><code>service_account</code> is optional. This may be used to specify a Kubernetes service account name, allowing access to the Kubernetes API or to third-party integrations such as credentials from Vault.</li>
 <li>For now, <code>input.atom</code> is the only supported input type.</li>
 <li><code>egress.URI</code> is mandatory.</li>
 </ul>
