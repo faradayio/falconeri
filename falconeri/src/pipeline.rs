@@ -38,6 +38,8 @@ pub struct Transform {
     // want to declare secrets as part of our `Input::Atom` values.
     #[serde(default)]
     pub secrets: Vec<Secret>,
+    /// The Kubernetes service account to use for this job.
+    pub service_account: Option<String>,
 }
 
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -95,6 +97,10 @@ fn parse_pipeline_spec() {
             key: "AWS_ACCESS_KEY_ID".to_owned(),
             env_var: "AWS_ACCESS_KEY_ID".to_owned(),
         },
+    );
+    assert_eq!(
+        parsed.transform.service_account,
+        Some("example-service".to_owned()),
     );
     assert_eq!(parsed.parallelism_spec.constant, 10);
     assert_eq!(parsed.resource_requests.memory, "500Mi");

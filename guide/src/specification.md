@@ -12,6 +12,7 @@ Some notes:
 - `resource_requests` is mandatory.
 - The `resource_requests.memory` value is used as both a request and as a hard limit. This is because we've seen too many problems caused by worker nodes that consume unexpectedly large amounts of RAM, forcing other workers (or cluster infrastructure) to be evicted from the node.
 - `node_selector` is optional. When present, it allows you to limit which nodes will be used for workers. This also integrates with Kubernetes cluster autoscaling. The autoscaler will look for a node pool with matching tags, and create as many nodes as required to satisfy the `resource_requests`.
+- `service_account` is optional. This may be used to specify a Kubernetes service account name, allowing access to the Kubernetes API or to third-party integrations such as credentials from Vault.
 - For now, `input.atom` is the only supported input type.
 - `egress.URI` is mandatory.
 

@@ -18,7 +18,8 @@
         "key": "AWS_ACCESS_KEY_ID",
         "env_var": "AWS_ACCESS_KEY_ID"
       }
-    ]
+    ],
+    "service_account": "example-service"
   },
   "parallelism_spec": {
     "constant": 10
