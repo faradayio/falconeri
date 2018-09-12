@@ -49,6 +49,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+{{#each pipeline_spec.transform.env}}
+        - name: "{{@key}}"
+          value: "{{this}}"
+{{/each}}
 {{#each pipeline_spec.transform.secrets}}
 {{! Use lookup to avoid triggering a strict mode error when not defined. }}
 {{#if (lookup this "env_var")}}

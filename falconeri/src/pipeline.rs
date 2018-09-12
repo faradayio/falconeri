@@ -33,6 +33,8 @@ pub struct Pipeline {
 pub struct Transform {
     pub cmd: Vec<String>,
     pub image: String,
+    #[serde(default)]
+    pub env: HashMap<String, String>,
     // TODO: We currently also use this for secrets needed to access buckets,
     // but that's not really a complete or well-thought-out solution, and we may
     // want to declare secrets as part of our `Input::Atom` values.
@@ -82,6 +84,7 @@ fn parse_pipeline_spec() {
     let parsed: PipelineSpec = serde_json::from_str(json).expect("parse error");
     assert_eq!(parsed.pipeline.name, "book_words");
     assert_eq!(parsed.transform.cmd[0], "python3");
+    assert_eq!(parsed.transform.env.get("VARNAME").unwrap(), "value");
     assert_eq!(parsed.transform.secrets.len(), 2);
     assert_eq!(
         parsed.transform.secrets[0],

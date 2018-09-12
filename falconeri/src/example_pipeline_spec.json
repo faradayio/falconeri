@@ -8,6 +8,9 @@
       "/extract_words.py"
     ],
     "image": "somerepo/my_python_nlp",
+    "env": {
+      "VARNAME": "value"
+    },
     "secrets": [
       {
         "name": "ssl",
