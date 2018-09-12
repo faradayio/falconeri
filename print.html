@@ -222,6 +222,9 @@ gcloud container clusters get-credentials falconeri \
       &quot;/extract_words.py&quot;
     ],
     &quot;image&quot;: &quot;somerepo/my_python_nlp&quot;,
+    &quot;env&quot;: {
+      &quot;VARNAME&quot;: &quot;value&quot;
+    },
     &quot;secrets&quot;: [
       {
         &quot;name&quot;: &quot;ssl&quot;,
