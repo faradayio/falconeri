@@ -17,7 +17,7 @@ spec:
         "created-by": "falconeri"
     spec:
 {{#if pipeline_spec.transform.service_account}}
-      service_account: "{{pipeline_spec.transform.service_account}}"
+      serviceAccountName: "{{pipeline_spec.transform.service_account}}"
 {{/if}}
       nodeSelector:
 {{#each pipeline_spec.node_selector}}
