@@ -1,6 +1,7 @@
 //! Database utilities.
 
-use std::{env, fs::read_to_string, io};
+use backoff::{self, ExponentialBackoff, Operation};
+use std::{env, fs::read_to_string, io, result};
 
 use kubernetes::{base64_encoded_secret_string, kubectl_secret};
 use prefix::*;
@@ -22,6 +23,17 @@ pub enum ConnectVia {
     Proxy,
     /// Assume we're connecting via internal cluster networking and DNS.
     Cluster,
+}
+
+impl ConnectVia {
+    /// Should we retry failed connections?
+    fn should_retry_connection_errors(self) -> bool {
+        match self {
+            ConnectVia::Proxy => false,
+            // Work around flaky cluster DNS.
+            ConnectVia::Cluster => true,
+        }
+    }
 }
 
 /// The data we store in our secret.
@@ -76,7 +88,27 @@ pub fn database_url(via: ConnectVia) -> Result<String> {
 /// Connect to PostgreSQL.
 pub fn connect(via: ConnectVia) -> Result<PgConnection> {
     let database_url = database_url(via)?;
-    let conn = PgConnection::establish(&database_url)
+    let mut operation = || -> result::Result<PgConnection, backoff::Error<Error>> {
+        PgConnection::establish(&database_url).map_err(|err| {
+            let err = err.into();
+            if via.should_retry_connection_errors() {
+                backoff::Error::Transient(err)
+            } else {
+                backoff::Error::Permanent(err)
+            }
+        })
+    };
+
+    let mut backoff = ExponentialBackoff::default();
+    let conn = operation.retry(&mut backoff)
+        // Unwrap the backoff error into something we can handle. This should
+        // have been built in.
+        .map_err(|e| {
+            match e {
+                backoff::Error::Transient(e) => e,
+                backoff::Error::Permanent(e) => e,
+            }
+        })
         .with_context(|_| format!("Error connecting to {}", database_url))?;
     Ok(conn)
 }

@@ -4,6 +4,7 @@ version = "0.1.7"
 authors = ["Eric Kidd <git@randomhacks.net>"]
 
 [dependencies]
+backoff = "0.1.2"
 base64 = "0.9.2"
 bson = "0.13.0"
 cast = "0.2.2"
