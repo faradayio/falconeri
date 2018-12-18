@@ -5,7 +5,7 @@ use serde_json;
 use std::cmp::min;
 
 use super::run::{start_batch_job, unique_kubernetes_job_name};
-use pipeline::PipelineSpec;
+use crate::pipeline::PipelineSpec;
 
 /// The `job retry` subcommand.
 pub fn run(job_name: &str) -> Result<()> {

@@ -1,14 +1,14 @@
 //! Support for AWS S3 storage.
 
 use failure::ResultExt;
-use kubernetes::{base64_encoded_secret_string, kubectl_secret};
 use regex::Regex;
 use serde_json;
 use std::process;
 
 use super::CloudStorage;
-use prefix::*;
-use secret::Secret;
+use crate::kubernetes::{base64_encoded_secret_string, kubectl_secret};
+use crate::prefix::*;
+use crate::secret::Secret;
 
 /// An S3 secret fetched from Kubernetes. This can be fetched using
 /// `kubernetes_secret`.

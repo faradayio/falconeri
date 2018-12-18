@@ -1,5 +1,5 @@
-use prefix::*;
-use schema::*;
+use crate::prefix::*;
+use crate::schema::*;
 
 /// An output file uploaded from a worker.
 #[derive(Associations, Debug, Identifiable, Queryable, Serialize)]

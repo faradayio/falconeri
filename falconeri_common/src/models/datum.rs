@@ -1,6 +1,6 @@
 use common_failures::display::DisplayCausesAndBacktraceExt;
-use prefix::*;
-use schema::*;
+use crate::prefix::*;
+use crate::schema::*;
 
 /// A single chunk of work, consisting of one or more files.
 #[derive(Associations, Debug, Identifiable, Queryable, Serialize)]

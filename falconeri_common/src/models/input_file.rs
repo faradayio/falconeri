@@ -1,5 +1,5 @@
-use prefix::*;
-use schema::*;
+use crate::prefix::*;
+use crate::schema::*;
 
 /// An input file which needs to be downloaded to the worker container.
 #[derive(Associations, Debug, Identifiable, Queryable, Serialize)]

@@ -8,7 +8,7 @@ use falconeri_common::{
 };
 use std::iter;
 
-use manifest::render_manifest;
+use crate::manifest::render_manifest;
 
 /// The manifest defining secrets for `falconeri`.
 const SECRET_MANIFEST: &str = include_str!("secret_manifest.yml.hbs");

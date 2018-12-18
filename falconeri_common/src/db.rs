@@ -3,8 +3,8 @@
 use backoff::{self, ExponentialBackoff, Operation};
 use std::{env, fs::read_to_string, io, result};
 
-use kubernetes::{base64_encoded_secret_string, kubectl_secret};
-use prefix::*;
+use crate::kubernetes::{base64_encoded_secret_string, kubectl_secret};
+use crate::prefix::*;
 
 /// Embed our migrations directly into the executable. We use a
 /// submodule so we can configure warnings.

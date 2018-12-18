@@ -5,7 +5,7 @@
 
 use diesel::{deserialize, pg::Pg, serialize};
 
-use prefix::*;
+use crate::prefix::*;
 
 mod datum;
 mod input_file;

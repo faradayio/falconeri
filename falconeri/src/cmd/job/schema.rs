@@ -5,7 +5,7 @@ use magnet_schema::BsonSchema;
 use serde_json;
 use std::io::stdout;
 
-use pipeline::PipelineSpec;
+use crate::pipeline::PipelineSpec;
 
 /// The `job schema` subcommand.
 pub fn run() -> Result<()> {

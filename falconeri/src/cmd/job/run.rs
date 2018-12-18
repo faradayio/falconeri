@@ -2,8 +2,8 @@
 
 use falconeri_common::{db, kubernetes, prefix::*, storage::CloudStorage};
 
-use manifest::render_manifest;
-use pipeline::*;
+use crate::manifest::render_manifest;
+use crate::pipeline::*;
 
 /// The `job run` subcommand.
 pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {

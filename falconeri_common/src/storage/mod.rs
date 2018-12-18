@@ -1,7 +1,7 @@
 //! Cloud storage backends.
 
-use prefix::*;
-use secret::Secret;
+use crate::prefix::*;
+use crate::secret::Secret;
 
 pub mod gs;
 pub mod s3;

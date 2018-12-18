@@ -3,8 +3,8 @@ use diesel::dsl;
 use serde_json;
 use std::env;
 
-use prefix::*;
-use schema::*;
+use crate::prefix::*;
+use crate::schema::*;
 
 /// A distributed data processing job.
 #[derive(Debug, Identifiable, Queryable, Serialize)]

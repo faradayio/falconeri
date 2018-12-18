@@ -2,7 +2,7 @@
 
 use falconeri_common::{db, prefix::*};
 
-use description::render_description;
+use crate::description::render_description;
 
 /// Template for human-readable `describe` output.
 const DESCRIBE_TEMPLATE: &str = include_str!("describe.txt.hbs");

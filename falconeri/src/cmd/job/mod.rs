@@ -3,7 +3,7 @@
 use falconeri_common::prefix::*;
 use serde_json;
 
-use pipeline::PipelineSpec;
+use crate::pipeline::PipelineSpec;
 
 mod describe;
 mod list;
