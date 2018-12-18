@@ -2,6 +2,7 @@
 
 use falconeri_common::prefix::*;
 use serde_json;
+use structopt::StructOpt;
 
 use crate::pipeline::PipelineSpec;
 

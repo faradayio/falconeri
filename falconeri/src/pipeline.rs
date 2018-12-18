@@ -4,7 +4,9 @@
 //!
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
+use bson::{bson, doc};
 use falconeri_common::{prefix::*, secret::Secret};
+use magnet_derive::BsonSchema;
 
 /// Represents a pipeline *.json file.
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]

@@ -1,7 +1,7 @@
 //! The `job list` subcommand.
 
 use falconeri_common::{db, prefix::*};
-use prettytable::{format::consts::FORMAT_CLEAN, Table};
+use prettytable::{cell, format::consts::FORMAT_CLEAN, row, Table};
 
 /// The `job list` subcommand.
 pub fn run() -> Result<()> {

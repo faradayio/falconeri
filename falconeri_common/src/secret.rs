@@ -1,5 +1,10 @@
 //! Secrets used to access various resources.
 
+use bson::{bson, doc};
+use magnet_derive::BsonSchema;
+
+use crate::prefix::*;
+
 /// A Kubernetes-managed secret used to access some resource, and how we should
 /// map it into a container. Kubernetes secrets contain key-value pairs.
 ///

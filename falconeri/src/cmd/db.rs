@@ -2,6 +2,7 @@
 
 use falconeri_common::{db, prefix::*};
 use std::process;
+use structopt::StructOpt;
 
 /// Commands for interacting with the database.
 #[derive(Debug, StructOpt)]

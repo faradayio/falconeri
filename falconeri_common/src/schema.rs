@@ -1,5 +1,7 @@
-use diesel::sql_types::*;
+#![allow(missing_docs, unused_imports)]
+
 use crate::models::sql_types::Status;
+use diesel::sql_types::*;
 
 table! {
     use super::*;

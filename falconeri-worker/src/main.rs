@@ -1,18 +1,10 @@
 use env_logger;
-#[macro_use]
-extern crate failure;
-
-use glob;
-#[macro_use]
-extern crate log;
-
-use openssl_probe;
-
-
 use falconeri_common::{
     common_failures::display::DisplayCausesAndBacktraceExt, db, prefix::*,
     storage::CloudStorage,
 };
+use glob;
+use openssl_probe;
 use std::{env, fs, process, thread::sleep, time::Duration};
 
 /// Instructions on how to use this program.

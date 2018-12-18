@@ -1,6 +1,7 @@
 //! Support for AWS S3 storage.
 
 use failure::ResultExt;
+use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json;
 use std::process;

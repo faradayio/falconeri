@@ -1,31 +1,7 @@
 use base64;
-#[macro_use]
-extern crate bson;
 use env_logger;
-#[macro_use]
-extern crate failure;
-
-
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate magnet_derive;
-use magnet_schema;
-
-use openssl_probe;
-#[macro_use]
-extern crate prettytable;
-
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
-use serde_yaml;
-#[macro_use]
-extern crate structopt;
-
-
 use falconeri_common::prefix::*;
+use openssl_probe;
 use structopt::StructOpt;
 
 mod cmd;

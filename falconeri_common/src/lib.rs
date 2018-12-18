@@ -1,42 +1,27 @@
 //! Code shared between various Falconeri tools.
 
 #![warn(missing_docs)]
-
 // Silence diesel warnings: https://github.com/diesel-rs/diesel/pull/1787
 #![allow(proc_macro_derive_resolution_fallback)]
 
-use backoff;
-use base64;
-#[macro_use]
-extern crate bson;
-pub use cast;
-pub use chrono;
-pub use common_failures;
+// Keep `macro_use` for `diesel` until it's easier to use Rust 2018 macro
+// imports with it.
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]
 pub extern crate diesel_migrations;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate magnet_derive;
-use magnet_schema;
+
+use backoff;
+use base64;
+pub use cast;
+pub use chrono;
+pub use common_failures;
 pub use rand;
-
-
-#[macro_use]
-extern crate serde_derive;
 pub use serde_json;
-
 
 pub mod db;
 pub mod kubernetes;
 pub mod models;
-#[allow(missing_docs, unused_imports)]
 mod schema;
 pub mod secret;
 pub mod storage;
@@ -45,8 +30,10 @@ pub mod storage;
 pub mod prefix {
     pub use chrono::{NaiveDateTime, Utc};
     pub use diesel::{self, prelude::*, PgConnection};
-    pub use failure::ResultExt;
+    pub use failure::{format_err, ResultExt};
+    pub use log::{debug, error, info, trace, warn};
     pub use serde::{Deserialize, Serialize};
+    pub use serde_derive::{Deserialize, Serialize};
     pub use std::{
         collections::HashMap,
         fmt,
