@@ -2,6 +2,7 @@
 authors = ["Eric Kidd <git@randomhacks.net>"]
 name = "falconeri"
 version = "0.1.8"
+edition = "2018"
 
 [dependencies]
 base64 = "0.10"

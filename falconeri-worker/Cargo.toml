@@ -2,6 +2,7 @@
 name = "falconeri-worker"
 version = "0.1.8"
 authors = ["Eric Kidd <git@randomhacks.net>"]
+edition = "2018"
 
 [dependencies]
 env_logger = "0.6"

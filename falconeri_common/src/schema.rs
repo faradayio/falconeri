@@ -1,6 +1,8 @@
+use diesel::sql_types::*;
+use crate::models::sql_types::Status;
+
 table! {
-    use diesel::sql_types::*;
-    use crate::models::sql_types::Status;
+    use super::*;
 
     datums (id) {
         id -> Uuid,
@@ -15,8 +17,7 @@ table! {
 }
 
 table! {
-    use diesel::sql_types::*;
-    use crate::models::sql_types::Status;
+    use super::*;
 
     input_files (id) {
         id -> Uuid,
@@ -29,8 +30,7 @@ table! {
 }
 
 table! {
-    use diesel::sql_types::*;
-    use crate::models::sql_types::Status;
+    use super::*;
 
     jobs (id) {
         id -> Uuid,
@@ -45,8 +45,7 @@ table! {
 }
 
 table! {
-    use diesel::sql_types::*;
-    use crate::models::sql_types::Status;
+    use super::*;
 
     output_files (id) {
         id -> Uuid,
