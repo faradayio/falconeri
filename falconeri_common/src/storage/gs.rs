@@ -11,6 +11,7 @@ pub struct GoogleCloudStorage {}
 
 impl GoogleCloudStorage {
     /// Create a new `GoogleCloudStorage` backend.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(_secrets: &[Secret]) -> Result<Self> {
         // We don't yet know how to authenticate using secrets.
         Ok(GoogleCloudStorage {})

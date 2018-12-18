@@ -31,6 +31,7 @@ pub struct S3Storage {
 
 impl S3Storage {
     /// Create a new `S3Storage` backend.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(secrets: &[Secret]) -> Result<Self> {
         let secret = secrets.iter().find(|s| {
             match s {
@@ -76,7 +77,7 @@ impl CloudStorage for S3Storage {
 
         let (bucket, key) = parse_s3_url(uri)?;
         let mut prefix = key.to_owned();
-        if key != "" && !key.ends_with("/") {
+        if key != "" && !key.ends_with('/') {
             prefix.push_str("/");
         }
 
@@ -111,7 +112,7 @@ impl CloudStorage for S3Storage {
             .contents
             .into_iter()
             // Only include files.
-            .filter(|obj| !obj.key.ends_with("/"))
+            .filter(|obj| !obj.key.ends_with('/'))
             // Convert to URLs.
             .map(|obj| format!("s3://{}/{}", bucket, obj.key))
             .collect::<Vec<_>>())

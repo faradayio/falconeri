@@ -11,6 +11,6 @@ use crate::pipeline::PipelineSpec;
 pub fn run() -> Result<()> {
     let bson = PipelineSpec::bson_schema();
     serde_json::to_writer_pretty(&mut stdout(), &bson)?;
-    println!("");
+    println!();
     Ok(())
 }

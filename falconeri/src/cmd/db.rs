@@ -29,7 +29,7 @@ fn run_console() -> Result<()> {
     let status = process::Command::new("psql")
         .arg(&url)
         .status()
-        .with_context(|_| format!("error starting psql"))?;
+        .context("error starting psql")?;
     if !status.success() {
         return Err(format_err!("error running psql with {:?}", url));
     }

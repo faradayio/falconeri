@@ -23,7 +23,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
             // Make sure we have no nested directories, which we don't handle
             // correctly for "/*" yet.
             let mut base = uri.to_owned();
-            if !base.ends_with("/") {
+            if !base.ends_with('/') {
                 base.push_str("/");
             }
             for path in &paths {
@@ -74,7 +74,7 @@ fn add_job_to_database(
         let job_name = unique_kubernetes_job_name(&pipeline_spec.pipeline.name);
         let new_job = NewJob {
             pipeline_spec: json!(pipeline_spec),
-            job_name: job_name,
+            job_name,
             command: pipeline_spec.transform.cmd.clone(),
             egress_uri: pipeline_spec.egress.uri.clone(),
         };

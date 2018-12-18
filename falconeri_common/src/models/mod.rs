@@ -88,7 +88,7 @@ impl ::diesel::deserialize::FromSql<sql_types::Status, Pg> for Status {
             b"done" => Ok(Status::Done),
             b"error" => Ok(Status::Error),
             b"canceled" => Ok(Status::Canceled),
-            _ => Err(format!("Unrecognized status value from database").into()),
+            _ => Err("Unrecognized status value from database".into()),
         }
     }
 }

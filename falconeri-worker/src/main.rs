@@ -104,7 +104,7 @@ fn process_datum(
     }
 
     // Run our command.
-    if cmd.len() < 1 {
+    if cmd.is_empty() {
         return Err(format_err!("job {} command is empty", job.id));
     }
     let status = process::Command::new(&cmd[0])
@@ -177,7 +177,7 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
 
         // Build the URI we want to upload to.
         let mut uri = job.egress_uri.clone();
-        if !uri.ends_with("/") {
+        if !uri.ends_with('/') {
             uri.push_str("/");
         }
         uri.push_str(&rel_path_str);
