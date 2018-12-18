@@ -1,5 +1,8 @@
 //! Database models.
 
+// Silence diesel warnings: https://github.com/diesel-rs/diesel/pull/1787
+#![allow(proc_macro_derive_resolution_fallback)]
+
 use diesel::{deserialize, pg::Pg, serialize};
 
 use prefix::*;

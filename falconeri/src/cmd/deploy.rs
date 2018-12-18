@@ -2,7 +2,7 @@
 
 use base64;
 use falconeri_common::{
-    kubernetes, rand::{distributions::Alphanumeric, EntropyRng, Rng}, Result,
+    kubernetes, rand::{distributions::Alphanumeric, rngs::EntropyRng, Rng}, Result,
 };
 use std::iter;
 
