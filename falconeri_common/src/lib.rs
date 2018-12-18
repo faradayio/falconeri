@@ -45,7 +45,11 @@ pub mod prefix {
     pub use failure::ResultExt;
     pub use serde::{Deserialize, Serialize};
     pub use std::{
-        collections::HashMap, fmt, fs::File, io::Write, path::{Path, PathBuf},
+        collections::HashMap,
+        fmt,
+        fs::File,
+        io::Write,
+        path::{Path, PathBuf},
     };
     pub use uuid::Uuid;
 

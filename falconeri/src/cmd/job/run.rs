@@ -15,7 +15,8 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
             }
 
             // Figure out what files to process
-            let storage = CloudStorage::for_uri(&uri, &pipeline_spec.transform.secrets)?;
+            let storage =
+                CloudStorage::for_uri(&uri, &pipeline_spec.transform.secrets)?;
             let paths = storage.list(uri)?;
 
             // Make sure we have no nested directories, which we don't handle
@@ -84,7 +85,10 @@ fn add_job_to_database(
         let mut input_files = vec![];
         for input in inputs {
             let datum_id = Uuid::new_v4();
-            datums.push(NewDatum { id: datum_id, job_id: job.id });
+            datums.push(NewDatum {
+                id: datum_id,
+                job_id: job.id,
+            });
 
             input_files.push(NewInputFile {
                 datum_id,
@@ -106,7 +110,8 @@ fn add_job_to_database(
 /// TODO: This will need to get fancier if we actually implement globs
 /// correctly.
 fn uri_to_local_path(uri: &str, repo: &str) -> Result<String> {
-    let pos = uri.rfind('/')
+    let pos = uri
+        .rfind('/')
         .ok_or_else(|| format_err!("No '/' in {:?}", uri))?;
     let basename = &uri[pos..];
     if basename.is_empty() {
@@ -151,8 +156,7 @@ fn render_template() {
     use serde_yaml;
 
     let json = include_str!("../../example_pipeline_spec.json");
-    let pipeline_spec: PipelineSpec = serde_json::from_str(json)
-        .expect("parse error");
+    let pipeline_spec: PipelineSpec = serde_json::from_str(json).expect("parse error");
 
     let job = Job::factory();
     let params = JobParams {
@@ -163,6 +167,6 @@ fn render_template() {
     let manifest = render_manifest(RUN_MANIFEST_TEMPLATE, &params)
         .expect("error rendering job template");
     print!("{}", manifest);
-    let _parsed: serde_json::Value = serde_yaml::from_str(&manifest)
-        .expect("rendered invalid YAML");
+    let _parsed: serde_json::Value =
+        serde_yaml::from_str(&manifest).expect("rendered invalid YAML");
 }

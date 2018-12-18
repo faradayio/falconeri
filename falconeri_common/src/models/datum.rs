@@ -59,10 +59,8 @@ impl Datum {
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
                 datums::status.eq(&Status::Error),
-                datums::error_message.eq(&format!(
-                    "{}",
-                    error_message.display_causes_and_backtrace(),
-                )),
+                datums::error_message
+                    .eq(&format!("{}", error_message.display_causes_and_backtrace(),)),
             ))
             .get_result(conn)
             .context("can't mark datum as having failed")?;

@@ -62,8 +62,8 @@ impl Job {
     ) -> Result<Option<(Datum, Vec<InputFile>)>> {
         let node_name = env::var("FALCONERI_NODE_NAME")
             .context("couldn't get FALCONERI_NODE_NAME")?;
-        let pod_name =
-            env::var("FALCONERI_POD_NAME").context("couldn't get FALCONERI_POD_NAME")?;
+        let pod_name = env::var("FALCONERI_POD_NAME")
+            .context("couldn't get FALCONERI_POD_NAME")?;
         conn.transaction(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
@@ -109,7 +109,9 @@ impl Job {
             // the query anyways. For details, see
             // https://github.com/diesel-rs/diesel/issues/210
             .group_by(datums::status)
-            .select(dsl::sql::<(sql_types::Status, diesel::sql_types::BigInt)>("status, count(*)"))
+            .select(dsl::sql::<(sql_types::Status, diesel::sql_types::BigInt)>(
+                "status, count(*)",
+            ))
             .order_by(datums::status)
             .load(conn)
             .context("cannot load status of datums")?;

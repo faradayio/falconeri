@@ -5,7 +5,8 @@ use rand::{thread_rng, Rng};
 use serde::de::{Deserialize, DeserializeOwned};
 use serde_json;
 use std::{
-    iter, process::{Command, Stdio},
+    iter,
+    process::{Command, Stdio},
 };
 
 use prefix::*;
@@ -49,7 +50,8 @@ pub fn kubectl_with_input(args: &[&str], input: &str) -> Result<()> {
         child.stdin.as_mut().expect("child stdin is missing"),
         "{}",
         input
-    ).with_context(|_| format!("error writing intput to kubectl {:?}", args))?;
+    )
+    .with_context(|_| format!("error writing intput to kubectl {:?}", args))?;
     let status = child
         .wait()
         .with_context(|_| format!("error running kubectl with {:?}", args))?;
@@ -87,7 +89,7 @@ pub mod base64_encoded_secret_string {
 
     /// Deserialize a secret represented as a Base64-encoded UTF-8 string.
     pub fn deserialize<'de, D: Deserializer<'de>>(
-        deserializer: D
+        deserializer: D,
     ) -> result::Result<String, D::Error> {
         let encoded = String::deserialize(deserializer)?;
         let bytes = base64::decode(&encoded).map_err(|err| {
@@ -95,7 +97,6 @@ pub mod base64_encoded_secret_string {
         })?;
         let decoded = String::from_utf8(bytes).map_err(|err| {
             D::Error::custom(format!("could not UTF-8-decode secret: {}", err))
-
         })?;
         Ok(decoded)
     }
@@ -103,13 +104,8 @@ pub mod base64_encoded_secret_string {
 
 /// Fetch a secret and deserialize it as the specified type.
 pub fn kubectl_secret<T: DeserializeOwned>(secret: &str) -> Result<T> {
-    let secret: Secret<T> = kubectl_parse_json(&[
-        "get",
-        "secret",
-        secret,
-        "-o",
-        "json",
-    ])?;
+    let secret: Secret<T> =
+        kubectl_parse_json(&["get", "secret", secret, "-o", "json"])?;
     Ok(secret.data)
 }
 

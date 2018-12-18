@@ -54,8 +54,8 @@ pub fn run(opt: &Opt) -> Result<()> {
         Opt::Run { pipeline_json } => {
             let f =
                 File::open(pipeline_json).context("can't open pipeline JSON file")?;
-            let pipeline_spec: PipelineSpec =
-                serde_json::from_reader(f).context("can't parse pipeline JSON file")?;
+            let pipeline_spec: PipelineSpec = serde_json::from_reader(f)
+                .context("can't parse pipeline JSON file")?;
             run::run(&pipeline_spec)
         }
         Opt::Schema => schema::run(),

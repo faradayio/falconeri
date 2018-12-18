@@ -35,14 +35,18 @@ pub fn run(job_name: &str) -> Result<()> {
             job_name,
             command: job.command.clone(),
             egress_uri: job.egress_uri.clone(),
-        }.insert(&conn)?;
+        }
+        .insert(&conn)?;
 
         // Create new datums and input files.
         let mut new_datums = vec![];
         let mut new_input_files = vec![];
         for (_datum, input_files) in error_datums.into_iter().zip(input_files) {
             let datum_id = Uuid::new_v4();
-            new_datums.push(NewDatum { id: datum_id, job_id: new_job.id });
+            new_datums.push(NewDatum {
+                id: datum_id,
+                job_id: new_job.id,
+            });
             for input_file in input_files {
                 new_input_files.push(NewInputFile {
                     datum_id: datum_id,

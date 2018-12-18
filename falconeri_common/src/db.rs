@@ -100,14 +100,13 @@ pub fn connect(via: ConnectVia) -> Result<PgConnection> {
     };
 
     let mut backoff = ExponentialBackoff::default();
-    let conn = operation.retry(&mut backoff)
+    let conn = operation
+        .retry(&mut backoff)
         // Unwrap the backoff error into something we can handle. This should
         // have been built in.
-        .map_err(|e| {
-            match e {
-                backoff::Error::Transient(e) => e,
-                backoff::Error::Permanent(e) => e,
-            }
+        .map_err(|e| match e {
+            backoff::Error::Transient(e) => e,
+            backoff::Error::Permanent(e) => e,
         })
         .with_context(|_| format!("Error connecting to {}", database_url))?;
     Ok(conn)

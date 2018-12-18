@@ -10,9 +10,7 @@ extern crate openssl_probe;
 extern crate uuid;
 
 use falconeri_common::{
-    common_failures::display::DisplayCausesAndBacktraceExt,
-    db,
-    prefix::*,
+    common_failures::display::DisplayCausesAndBacktraceExt, db, prefix::*,
     storage::CloudStorage,
 };
 use std::{env, fs, process, thread::sleep, time::Duration};
@@ -197,7 +195,8 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
             datum_id: datum.id,
             job_id: job.id,
             uri: uri.clone(),
-        }.insert(&conn)?;
+        }
+        .insert(&conn)?;
     }
 
     // Upload all our files in a batch, for maximum performance, and record

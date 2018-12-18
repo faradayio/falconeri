@@ -64,9 +64,4 @@ joinable!(input_files -> datums (datum_id));
 joinable!(output_files -> datums (datum_id));
 joinable!(output_files -> jobs (job_id));
 
-allow_tables_to_appear_in_same_query!(
-    datums,
-    input_files,
-    jobs,
-    output_files,
-);
+allow_tables_to_appear_in_same_query!(datums, input_files, jobs, output_files,);

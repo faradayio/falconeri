@@ -62,8 +62,6 @@ impl NewOutputFile {
         Ok(diesel::insert_into(output_files::table)
             .values(self)
             .get_result(conn)
-            .with_context(|_| {
-                format!("error inserting output file: {:?}", self)
-            })?)
+            .with_context(|_| format!("error inserting output file: {:?}", self))?)
     }
 }

@@ -6,9 +6,9 @@ use regex::Regex;
 use serde_json;
 use std::process;
 
+use super::CloudStorage;
 use prefix::*;
 use secret::Secret;
-use super::CloudStorage;
 
 /// An S3 secret fetched from Kubernetes. This can be fetched using
 /// `kubernetes_secret`.
@@ -80,7 +80,8 @@ impl CloudStorage for S3Storage {
         }
 
         // Use `aws` to list our bucket, and parse the results.parse_s3_url(
-        let output = self.aws_command()
+        let output = self
+            .aws_command()
             .args(&["s3api", "list-objects-v2"])
             .arg("--bucket")
             .arg(bucket)
@@ -105,7 +106,8 @@ impl CloudStorage for S3Storage {
             ));
         }
 
-        Ok(s3_output.contents
+        Ok(s3_output
+            .contents
             .into_iter()
             // Only include files.
             .filter(|obj| !obj.key.ends_with("/"))
@@ -118,7 +120,8 @@ impl CloudStorage for S3Storage {
         trace!("downloading {} to {}", uri, local_path.display());
 
         // We assume that we only need to support files.
-        let status = self.aws_command()
+        let status = self
+            .aws_command()
             .args(&["s3", "cp"])
             .arg(uri)
             .arg(local_path)
@@ -134,7 +137,8 @@ impl CloudStorage for S3Storage {
         trace!("uploading {} to {}", local_path.display(), uri);
 
         // We assume that we only need to support directories, namely /pfs/out.
-        let status = self.aws_command()
+        let status = self
+            .aws_command()
             .args(&["s3", "sync"])
             .arg(local_path)
             .arg(uri)
@@ -155,19 +159,18 @@ impl CloudStorage for S3Storage {
 fn parse_s3_url(url: &str) -> Result<(&str, &str)> {
     // lazy_static allows us to compile this regex only once.
     lazy_static! {
-        static ref RE: Regex =
-            Regex::new("^s3://(?P<bucket>[^/]+)(?:/(?P<key>.*))?$")
-                .expect("couldn't parse built-in regex");
+        static ref RE: Regex = Regex::new("^s3://(?P<bucket>[^/]+)(?:/(?P<key>.*))?$")
+            .expect("couldn't parse built-in regex");
     }
 
-    let caps = RE.captures(url)
+    let caps = RE
+        .captures(url)
         .ok_or_else(|| format_err!("the URL {:?} could not be parsed", url))?;
-    let bucket = caps.name("bucket")
+    let bucket = caps
+        .name("bucket")
         .expect("missing hard-coded capture???")
         .as_str();
-    let key = caps.name("key")
-        .map(|m| m.as_str())
-        .unwrap_or("");
+    let key = caps.name("key").map(|m| m.as_str()).unwrap_or("");
 
     Ok((bucket, key))
 }
@@ -176,8 +179,14 @@ fn parse_s3_url(url: &str) -> Result<(&str, &str)> {
 fn url_parsing() {
     assert_eq!(parse_s3_url("s3://top-level").unwrap(), ("top-level", ""));
     assert_eq!(parse_s3_url("s3://top-level/").unwrap(), ("top-level", ""));
-    assert_eq!(parse_s3_url("s3://top-level/path").unwrap(), ("top-level", "path"));
-    assert_eq!(parse_s3_url("s3://top-level/path/").unwrap(), ("top-level", "path/"));
+    assert_eq!(
+        parse_s3_url("s3://top-level/path").unwrap(),
+        ("top-level", "path")
+    );
+    assert_eq!(
+        parse_s3_url("s3://top-level/path/").unwrap(),
+        ("top-level", "path/")
+    );
     assert!(parse_s3_url("gs://foo/").is_err());
 }
 
