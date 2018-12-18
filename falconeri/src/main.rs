@@ -1,29 +1,29 @@
-extern crate base64;
+use base64;
 #[macro_use]
 extern crate bson;
-extern crate env_logger;
+use env_logger;
 #[macro_use]
 extern crate failure;
-extern crate falconeri_common;
-extern crate handlebars;
+
+
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate magnet_derive;
-extern crate magnet_schema;
-extern crate openssl;
-extern crate openssl_probe;
+use magnet_schema;
+
+use openssl_probe;
 #[macro_use]
 extern crate prettytable;
-extern crate serde;
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate serde_yaml;
+use serde_yaml;
 #[macro_use]
 extern crate structopt;
-extern crate uuid;
+
 
 use falconeri_common::prefix::*;
 use structopt::StructOpt;

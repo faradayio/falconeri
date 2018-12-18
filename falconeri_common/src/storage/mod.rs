@@ -25,7 +25,7 @@ pub trait CloudStorage {
     fn sync_up(&self, local_path: &Path, uri: &str) -> Result<()>;
 }
 
-impl CloudStorage {
+impl dyn CloudStorage {
     /// Get the storage backend for the specified URI. If we know about any
     /// secrets, we can pass them as the `secrets` array, and the storage driver
     /// can check to see if there are any secrets it can use to authenticate.

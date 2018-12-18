@@ -2,13 +2,16 @@
 
 #![warn(missing_docs)]
 
-extern crate backoff;
-extern crate base64;
+// Silence diesel warnings: https://github.com/diesel-rs/diesel/pull/1787
+#![allow(proc_macro_derive_resolution_fallback)]
+
+use backoff;
+use base64;
 #[macro_use]
 extern crate bson;
-pub extern crate cast;
-pub extern crate chrono;
-pub extern crate common_failures;
+pub use cast;
+pub use chrono;
+pub use common_failures;
 #[macro_use]
 pub extern crate diesel;
 #[macro_use]
@@ -21,14 +24,14 @@ extern crate lazy_static;
 extern crate log;
 #[macro_use]
 extern crate magnet_derive;
-extern crate magnet_schema;
-pub extern crate rand;
-extern crate regex;
-extern crate serde;
+use magnet_schema;
+pub use rand;
+
+
 #[macro_use]
 extern crate serde_derive;
-pub extern crate serde_json;
-extern crate uuid;
+pub use serde_json;
+
 
 pub mod db;
 pub mod kubernetes;

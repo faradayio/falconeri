@@ -1,8 +1,5 @@
 //! Database models.
 
-// Silence diesel warnings: https://github.com/diesel-rs/diesel/pull/1787
-#![allow(proc_macro_derive_resolution_fallback)]
-
 use diesel::{deserialize, pg::Pg, serialize};
 
 use crate::prefix::*;
@@ -55,7 +52,7 @@ pub enum Status {
 }
 
 impl fmt::Display for Status {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match *self {
             Status::Ready => "ready",
             Status::Running => "running",
@@ -70,7 +67,7 @@ impl fmt::Display for Status {
 impl ::diesel::serialize::ToSql<sql_types::Status, Pg> for Status {
     fn to_sql<W: Write>(
         &self,
-        out: &mut serialize::Output<W, Pg>,
+        out: &mut serialize::Output<'_, W, Pg>,
     ) -> serialize::Result {
         match *self {
             Status::Ready => out.write_all(b"ready")?,

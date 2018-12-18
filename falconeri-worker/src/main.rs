@@ -1,13 +1,13 @@
-extern crate env_logger;
+use env_logger;
 #[macro_use]
 extern crate failure;
-extern crate falconeri_common;
-extern crate glob;
+
+use glob;
 #[macro_use]
 extern crate log;
-extern crate openssl;
-extern crate openssl_probe;
-extern crate uuid;
+
+use openssl_probe;
+
 
 use falconeri_common::{
     common_failures::display::DisplayCausesAndBacktraceExt, db, prefix::*,
