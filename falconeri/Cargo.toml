@@ -4,9 +4,9 @@ name = "falconeri"
 version = "0.1.8"
 
 [dependencies]
-base64 = "0.9.2"
+base64 = "0.10"
 bson = "0.13.0"
-env_logger = "0.5.10"
+env_logger = "0.6"
 failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }
 handlebars = "1.0.0-beta.4"
@@ -16,10 +16,10 @@ magnet_schema = "0.4.0"
 # Needed for ekidd/rust-musl-builder.
 openssl = "*"
 openssl-probe = "0.1.2"
-prettytable-rs = "0.7.0"
+prettytable-rs = "0.8.0"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-serde_yaml = "0.7.5"
+serde_yaml = "0.8"
 structopt = "0.2.10"
-uuid = { version = "0.6.5", features = ["serde", "v4"] }
+uuid = { version = "0.6", features = ["serde", "v4"] }

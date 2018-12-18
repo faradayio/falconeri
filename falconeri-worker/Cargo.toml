@@ -4,7 +4,7 @@ version = "0.1.8"
 authors = ["Eric Kidd <git@randomhacks.net>"]
 
 [dependencies]
-env_logger = "0.5.10"
+env_logger = "0.6"
 failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }
 glob = "0.2.11"
@@ -12,4 +12,4 @@ log = "0.4.3"
 # Needed for ekidd/rust-musl-builder.
 openssl = "*"
 openssl-probe = "0.1.2"
-uuid = { version = "0.6.5", features = ["serde", "v4"] }
+uuid = { version = "0.6", features = ["serde", "v4"] }
