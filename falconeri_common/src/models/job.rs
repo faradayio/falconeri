@@ -228,6 +228,8 @@ impl Job {
 #[derive(Debug, Insertable)]
 #[table_name = "jobs"]
 pub struct NewJob {
+    /// The unique ID for this job.
+    pub id: Uuid,
     /// A copy of our original pipeline spec (just for debugging).
     pub pipeline_spec: serde_json::Value,
     /// The Kubenetes `Job` name for this job.

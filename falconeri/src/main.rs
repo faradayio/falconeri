@@ -5,6 +5,7 @@ use structopt::StructOpt;
 
 mod cmd;
 mod description;
+mod inputs;
 mod manifest;
 mod pipeline;
 
