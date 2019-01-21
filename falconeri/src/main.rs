@@ -1,5 +1,3 @@
-#![warn(clippy::pendantic)]
-
 use env_logger;
 use falconeri_common::prefix::*;
 use openssl_probe;
