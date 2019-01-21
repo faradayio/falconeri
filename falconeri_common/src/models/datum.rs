@@ -1,6 +1,6 @@
 use common_failures::display::DisplayCausesAndBacktraceExt;
 
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::schema::*;
 
 /// A single chunk of work, consisting of one or more files.

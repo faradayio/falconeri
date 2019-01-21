@@ -3,7 +3,7 @@ use diesel::dsl;
 use serde_json;
 use std::env;
 
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::schema::*;
 
 /// A distributed data processing job.

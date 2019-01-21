@@ -1,6 +1,6 @@
 //! The `job` subcommand.
 
-use falconeri_common::prefix::*;
+use falconeri_common::prelude::*;
 use serde_json;
 use structopt::StructOpt;
 

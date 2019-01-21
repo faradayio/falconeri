@@ -1,6 +1,6 @@
 //! Cloud storage backends.
 
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::secret::Secret;
 
 pub mod gs;

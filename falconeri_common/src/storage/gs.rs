@@ -3,7 +3,7 @@
 use std::{collections::HashSet, io::BufRead, process};
 
 use super::CloudStorage;
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::secret::Secret;
 
 /// Backend for talking to Google Cloud Storage, currently based on `gsutil`.

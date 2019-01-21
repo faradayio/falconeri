@@ -1,6 +1,6 @@
 //! The `job describe` subcommand.
 
-use falconeri_common::{db, prefix::*};
+use falconeri_common::{db, prelude::*};
 
 use crate::description::render_description;
 

@@ -1,6 +1,6 @@
 //! The `job run` subcommand.
 
-use falconeri_common::{db, kubernetes, prefix::*};
+use falconeri_common::{db, kubernetes, prelude::*};
 use serde_json::json;
 
 use crate::inputs::input_to_datums;

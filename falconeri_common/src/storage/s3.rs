@@ -8,7 +8,7 @@ use std::process;
 
 use super::CloudStorage;
 use crate::kubernetes::{base64_encoded_secret_string, kubectl_secret};
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::secret::Secret;
 
 /// An S3 secret fetched from Kubernetes. This can be fetched using

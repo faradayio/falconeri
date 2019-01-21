@@ -1,5 +1,5 @@
 use env_logger;
-use falconeri_common::prefix::*;
+use falconeri_common::prelude::*;
 use openssl_probe;
 use structopt::StructOpt;
 

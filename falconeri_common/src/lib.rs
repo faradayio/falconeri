@@ -25,7 +25,7 @@ pub mod secret;
 pub mod storage;
 
 /// Common imports used by many modules.
-pub mod prefix {
+pub mod prelude {
     pub use chrono::{NaiveDateTime, Utc};
     pub use diesel::{self, prelude::*, PgConnection};
     pub use failure::{format_err, ResultExt};

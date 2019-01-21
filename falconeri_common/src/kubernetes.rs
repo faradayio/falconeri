@@ -9,7 +9,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::prefix::*;
+use crate::prelude::*;
 
 /// Run `kubectl`, passing any output through to the console.
 pub fn kubectl(args: &[&str]) -> Result<()> {
