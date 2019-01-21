@@ -1,3 +1,5 @@
+#![warn(clippy::pendantic)]
+
 use env_logger;
 use falconeri_common::{
     common_failures::display::DisplayCausesAndBacktraceExt, db, prefix::*,

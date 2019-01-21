@@ -1,6 +1,6 @@
 //! Code shared between various Falconeri tools.
 
-#![warn(missing_docs)]
+#![warn(missing_docs, clippy::pendantic)]
 // Silence diesel warnings: https://github.com/diesel-rs/diesel/pull/1787
 #![allow(proc_macro_derive_resolution_fallback)]
 
@@ -11,8 +11,6 @@ pub extern crate diesel;
 #[macro_use]
 pub extern crate diesel_migrations;
 
-use backoff;
-use base64;
 pub use cast;
 pub use chrono;
 pub use common_failures;
