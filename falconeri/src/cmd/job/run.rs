@@ -11,8 +11,8 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
     match &pipeline_spec.input {
         Input::Atom { uri, repo, glob } => {
             // Check to make sure we're using a supported glob mode.
-            if glob != "/*" {
-                return Err(format_err!("Glob {} not yet supported", glob));
+            if *glob != Glob::TopLevelDirectoryEntries {
+                return Err(format_err!("Glob {:?} not yet supported", glob));
             }
 
             // Figure out what files to process
@@ -49,6 +49,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
 
             Ok(())
         }
+        _ => Err(format_err!("cannot handle input")),
     }
 }
 

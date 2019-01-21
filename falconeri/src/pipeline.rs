@@ -62,13 +62,81 @@ pub struct ResourceRequests {
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum Input {
+    /// Input from a cloud storage bucket.
+    #[serde(alias = "pfs")]
     Atom {
         // EXTENSION: URI from which to fetch input data.
         #[serde(rename = "URI")]
         uri: String,
         repo: String,
-        glob: String,
+        glob: Glob,
     },
+    /// Cross product of two other inputs, producing every possible combination.
+    Cross(Vec<Input>),
+    /// Union of two other inputs
+    Union(Vec<Input>),
+}
+
+#[test]
+fn parse_nested_inputs() {
+    let json = r#"
+{
+    "cross": [{
+        "pfs": {
+            "URI": "gs://example-bucket/dewey-decimal-categories/",
+            "repo": "dewey-decimal-categories",
+            "glob": "/"
+        }
+    }, {
+        "union": [{
+            "atom": {
+                "URI": "gs://example-bucket/books/",
+                "repo": "books",
+                "glob": "/*"
+            }
+        }, {
+            "atom": {
+                "URI": "gs://example-bucket/more-books/",
+                "repo": "more-books",
+                "glob": "/*"
+            }
+        }]
+    }]
+}
+"#;
+    let parsed: Input = serde_json::from_str(json).expect("parse error");
+    let expected = Input::Cross(vec![
+        Input::Atom {
+            uri: "gs://example-bucket/dewey-decimal-categories/".to_owned(),
+            repo: "dewey-decimal-categories".to_owned(),
+            glob: Glob::WholeRepo,
+        },
+        Input::Union(vec![
+            Input::Atom {
+                uri: "gs://example-bucket/books/".to_owned(),
+                repo: "books".to_owned(),
+                glob: Glob::TopLevelDirectoryEntries,
+            },
+            Input::Atom {
+                uri: "gs://example-bucket/more-books/".to_owned(),
+                repo: "more-books".to_owned(),
+                glob: Glob::TopLevelDirectoryEntries,
+            },
+        ]),
+    ]);
+    assert_eq!(parsed, expected);
+}
+
+/// We only support two kinds of glob patterns for now.
+#[derive(BsonSchema, Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+pub enum Glob {
+    /// Put each top-level directory entry (file, subdir) its own datum.
+    #[serde(rename = "/*")]
+    TopLevelDirectoryEntries,
+
+    /// Put the entire repo in a single datum.
+    #[serde(rename = "/")]
+    WholeRepo,
 }
 
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -117,7 +185,7 @@ fn parse_pipeline_spec() {
         Input::Atom {
             uri: "gs://example-bucket/books/".to_owned(),
             repo: "books".to_owned(),
-            glob: "/*".to_owned(),
+            glob: Glob::TopLevelDirectoryEntries,
         }
     );
     assert_eq!(parsed.egress.uri, "gs://example-bucket/words/");
