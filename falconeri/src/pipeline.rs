@@ -8,67 +8,92 @@ use bson::{bson, doc};
 use falconeri_common::{prelude::*, secret::Secret};
 use magnet_derive::BsonSchema;
 
-/// Represents a pipeline *.json file.
+/// Represents a pipeline `*.json` file.
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineSpec {
+    /// Metadata about this pipeline.
     pub pipeline: Pipeline,
+    /// Instructions on how to transform the data.
     pub transform: Transform,
+    /// How much parallelism should we use?
     pub parallelism_spec: ParallelismSpec,
+    /// How many resources should we allocate for each worker?
     pub resource_requests: ResourceRequests,
-    // EXTENSION: Kubernetes node selectors describing the nodes where we can
-    // run this job.
+    /// EXTENSION: Kubernetes node selectors describing the nodes where we can
+    /// run this job.
     #[serde(default)]
     pub node_selector: HashMap<String, String>,
+    /// Specify our input data.
     pub input: Input,
+    /// Where to put the data when we're done with it.
     pub egress: Egress,
 }
 
+/// Metadata about this pipeline.
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pipeline {
+    /// The name of this pipeline. Also may be used to default various things.
     pub name: String,
 }
 
+/// Instructions on how to transform the data.
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Transform {
+    /// The command to run, with arguments.
     pub cmd: Vec<String>,
+    /// The Docker image to run.
     pub image: String,
+    /// Extra environment variables to pass in.
     #[serde(default)]
     pub env: HashMap<String, String>,
-    // TODO: We currently also use this for secrets needed to access buckets,
-    // but that's not really a complete or well-thought-out solution, and we may
-    // want to declare secrets as part of our `Input::Atom` values.
+    /// Kubernetes secrets to make available to our Docker containers.
+    ///
+    /// TODO: We currently also use this for secrets needed to access buckets,
+    /// but that's not really a complete or well-thought-out solution, and we may
+    /// want to declare secrets as part of our `Input::Atom` values.
     #[serde(default)]
     pub secrets: Vec<Secret>,
     /// The Kubernetes service account to use for this job.
     pub service_account: Option<String>,
 }
 
+/// How much parallelism should we use?
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParallelismSpec {
+    /// The number of workers to run.
     pub constant: u32,
 }
 
+/// How many resources should we allocate for each worker?
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ResourceRequests {
+    /// The amount of memory to allocate for each worker. A hard limit. Uses
+    /// standard `docker-compose` memory strings like `"200M"` (I think).
     pub memory: String,
+    /// The amount of CPU to allocate for each worker. A soft limit; we can go
+    /// above if more CPU is available.
     pub cpu: f32,
 }
 
+/// Specify our input data.
 #[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum Input {
     /// Input from a cloud storage bucket.
     #[serde(alias = "pfs")]
     Atom {
-        // EXTENSION: URI from which to fetch input data.
+        /// EXTENSION: URI from which to fetch input data.
         #[serde(rename = "URI")]
         uri: String,
+        /// The repo name, used as to construct a path of the form
+        /// `/pfs/$repo/`, which will be used to hold the downloaded data.
         repo: String,
+        /// How to distribute the files in the repo over our workers.
         glob: Glob,
     },
     /// Cross product of two other inputs, producing every possible combination.
@@ -76,6 +101,29 @@ pub enum Input {
     /// Union of two other inputs
     Union(Vec<Input>),
 }
+
+/// How to distribute files from an input across workers. We only support two
+/// kinds of glob patterns for now.
+#[derive(BsonSchema, Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+pub enum Glob {
+    /// Put each top-level directory entry (file, subdir) its own datum.
+    #[serde(rename = "/*")]
+    TopLevelDirectoryEntries,
+
+    /// Put the entire repo in a single datum.
+    #[serde(rename = "/")]
+    WholeRepo,
+}
+
+/// Where to put the data when we're done with it.
+#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case", deny_unknown_fields)]
+pub struct Egress {
+    /// A cloud bucket URI in which to place our output data.
+    #[serde(rename = "URI")]
+    pub uri: String,
+}
+
 
 #[test]
 fn parse_nested_inputs() {
@@ -125,25 +173,6 @@ fn parse_nested_inputs() {
         ]),
     ]);
     assert_eq!(parsed, expected);
-}
-
-/// We only support two kinds of glob patterns for now.
-#[derive(BsonSchema, Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
-pub enum Glob {
-    /// Put each top-level directory entry (file, subdir) its own datum.
-    #[serde(rename = "/*")]
-    TopLevelDirectoryEntries,
-
-    /// Put the entire repo in a single datum.
-    #[serde(rename = "/")]
-    WholeRepo,
-}
-
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case", deny_unknown_fields)]
-pub struct Egress {
-    #[serde(rename = "URI")]
-    pub uri: String,
 }
 
 #[test]
