@@ -124,7 +124,7 @@ fn atom_to_datums_helper(
     // to verify that we can actually list the contents of a `Glob::WholeRepo`
     // _before_ spinning up a big cluster job.
     let storage = CloudStorage::for_uri(&uri, secrets)?;
-    let paths = storage.list(uri)?;
+    let file_uris = storage.list(uri)?;
 
     match glob {
         // Our input file is just the entire repo, as a directory.
@@ -139,11 +139,11 @@ fn atom_to_datums_helper(
         // a separate datum.
         Glob::TopLevelDirectoryEntries => {
             let mut datums = vec![];
-            for path in paths {
-                let local_path = uri_to_local_path(&base, repo)?;
+            for file_uri in file_uris {
+                let local_path = uri_to_local_path(&file_uri, repo)?;
                 datums.push(DatumData {
                     input_files: vec![InputFileData {
-                        uri: path,
+                        uri: file_uri,
                         local_path,
                     }],
                 });
