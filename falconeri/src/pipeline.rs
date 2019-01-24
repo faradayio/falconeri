@@ -124,7 +124,6 @@ pub struct Egress {
     pub uri: String,
 }
 
-
 #[test]
 fn parse_nested_inputs() {
     let json = r#"

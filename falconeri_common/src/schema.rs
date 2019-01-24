@@ -1,10 +1,6 @@
-#![allow(missing_docs, unused_imports)]
-
-use crate::models::sql_types::Status;
-use diesel::sql_types::*;
-
 table! {
-    use super::*;
+    use diesel::sql_types::*;
+    use crate::models::sql_types::Status;
 
     datums (id) {
         id -> Uuid,
@@ -15,11 +11,13 @@ table! {
         error_message -> Nullable<Text>,
         node_name -> Nullable<Text>,
         pod_name -> Nullable<Text>,
+        backtrace -> Nullable<Text>,
+        output -> Nullable<Text>,
     }
 }
 
 table! {
-    use super::*;
+    use diesel::sql_types::*;
 
     input_files (id) {
         id -> Uuid,
@@ -32,7 +30,8 @@ table! {
 }
 
 table! {
-    use super::*;
+    use diesel::sql_types::*;
+    use crate::models::sql_types::Status;
 
     jobs (id) {
         id -> Uuid,
@@ -47,7 +46,8 @@ table! {
 }
 
 table! {
-    use super::*;
+    use diesel::sql_types::*;
+    use crate::models::sql_types::Status;
 
     output_files (id) {
         id -> Uuid,
