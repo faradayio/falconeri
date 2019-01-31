@@ -131,7 +131,7 @@ fn atom_to_datums_helper(
         Glob::WholeRepo => Ok(vec![DatumData {
             input_files: vec![InputFileData {
                 uri: base,
-                local_path: format!("/pfs/{}", repo),
+                local_path: format!("/pfs/{}/", repo),
             }],
         }]),
 
@@ -140,7 +140,7 @@ fn atom_to_datums_helper(
         Glob::TopLevelDirectoryEntries => {
             let mut datums = vec![];
             for file_uri in file_uris {
-                let local_path = uri_to_local_path(&file_uri, repo)?;
+                let local_path = uri_to_local_path(uri, &file_uri, repo)?;
                 datums.push(DatumData {
                     input_files: vec![InputFileData {
                         uri: file_uri,
@@ -200,23 +200,35 @@ fn cross_to_datums_helper(
 
 /// Given a URI and a repo name, construct a local path starting with "/pfs"
 /// pointing to where we should download the file.
-///
-/// TODO: This will need to get fancier if we actually implement globs
-/// correctly.
-fn uri_to_local_path(uri: &str, repo: &str) -> Result<String> {
-    let pos = uri
-        .rfind('/')
-        .ok_or_else(|| format_err!("No '/' in {:?}", uri))?;
-    let basename = &uri[pos..];
-    if basename.is_empty() {
+fn uri_to_local_path(base_uri: &str, uri: &str, repo: &str) -> Result<String> {
+    // Check some preconditions. These could probably be assertions; other code
+    // should ensure that these are always true.
+    if !base_uri.ends_with('/') {
+        return Err(format_err!("expected {} to end with a '/'", base_uri));
+    }
+    if !uri.starts_with(base_uri) {
+        return Err(format_err!("expected {} to be in {}", uri, base_uri));
+    }
+
+    // Extract just the local portion of `uri` not included in `base_uri`.
+    let rel_uri = &uri[base_uri.len()..];
+    if rel_uri.is_empty() {
         Err(format_err!("{:?} ends with '/'", uri))
     } else {
-        Ok(format!("/pfs/{}{}", repo, basename))
+        Ok(format!("/pfs/{}/{}", repo, rel_uri))
     }
 }
 
 #[test]
 fn uri_to_local_path_works() {
-    let path = uri_to_local_path("gs://bucket/path/data1.csv", "myrepo").unwrap();
+    let path =
+        uri_to_local_path("gs://bucket/path/", "gs://bucket/path/data1.csv", "myrepo")
+            .unwrap();
     assert_eq!(path, "/pfs/myrepo/data1.csv");
+
+    // Directories use this convention for now?
+    let dpath =
+        uri_to_local_path("gs://bucket/path/", "gs://bucket/path/data1/", "myrepo")
+            .unwrap();
+    assert_eq!(dpath, "/pfs/myrepo/data1/");
 }

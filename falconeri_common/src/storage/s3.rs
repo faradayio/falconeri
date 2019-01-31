@@ -4,7 +4,7 @@ use failure::ResultExt;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json;
-use std::process;
+use std::{fs, process};
 
 use super::CloudStorage;
 use crate::kubernetes::{base64_encoded_secret_string, kubectl_secret};
@@ -120,11 +120,18 @@ impl CloudStorage for S3Storage {
 
     fn sync_down(&self, uri: &str, local_path: &Path) -> Result<()> {
         trace!("downloading {} to {}", uri, local_path.display());
-
-        // We assume that we only need to support files.
+        if uri.ends_with('/') {
+            fs::create_dir_all(local_path)
+                .context("cannot create local download directory")?;
+        } else {
+            if let Some(parent) = local_path.parent() {
+                fs::create_dir_all(parent)
+                    .context("cannot create local download directory")?;
+            }
+        }
         let status = self
             .aws_command()
-            .args(&["s3", "cp"])
+            .args(&["s3", "sync"])
             .arg(uri)
             .arg(local_path)
             .status()

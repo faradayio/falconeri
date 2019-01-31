@@ -16,6 +16,11 @@ pub trait CloudStorage {
     /// existing destination files. The contents of `uri` should be exactly
     /// represented in `local_path`, without the trailing subdirectory name
     /// being inserted—this is a straight directory-to-directory sync.
+    ///
+    /// To sync down a file, neither `uri` nor `local_path` should end in `/`.
+    /// To sync down a directory, _both_ `uri` and `local_path` must end in `/`.
+    /// Any other combination is allowed to fail or panic at the discretion of
+    /// the implementation.
     fn sync_down(&self, uri: &str, local_path: &Path) -> Result<()>;
 
     /// Synchronize `local_path` to `uri` recursively. Does not delete any
