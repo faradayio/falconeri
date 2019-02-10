@@ -111,8 +111,6 @@ impl CloudStorage for S3Storage {
         Ok(s3_output
             .contents
             .into_iter()
-            // Only include files.
-            .filter(|obj| !obj.key.ends_with('/'))
             // Convert to URLs.
             .map(|obj| format!("s3://{}/{}", bucket, obj.key))
             .collect::<Vec<_>>())
@@ -135,7 +133,7 @@ impl CloudStorage for S3Storage {
             .arg(uri)
             .arg(local_path)
             .status()
-            .context("could not run gsutil")?;
+            .context("could not run aws s3")?;
         if !status.success() {
             return Err(format_err!("could not download {:?}: {}", uri, status));
         }

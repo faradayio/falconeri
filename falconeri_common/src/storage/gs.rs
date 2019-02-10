@@ -62,7 +62,7 @@ impl CloudStorage for GoogleCloudStorage {
                 return Err(format_err!("could not download {:?}: {}", uri, status));
             }
         } else {
-            // We have a file.
+            // We have a file. We can't use `gsutil rsync` for this case.
             trace!("downloading {} to {}", uri, local_path.display());
             if let Some(parent) = local_path.parent() {
                 fs::create_dir_all(parent)
