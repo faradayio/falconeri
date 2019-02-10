@@ -10,7 +10,7 @@ mod describe;
 mod list;
 mod retry;
 mod run;
-mod schema;
+//mod schema;
 
 /// The `job` subcommand.
 #[derive(Debug, StructOpt)]
@@ -40,10 +40,11 @@ pub enum Opt {
         #[structopt(parse(from_os_str))]
         pipeline_json: PathBuf,
     },
-
-    /// Output a JSON schema for a falconeri job.
-    #[structopt(name = "schema")]
-    Schema,
+    // Disabled because `BsonSchema` doesn't handle recursive types.
+    //
+    // /// Output a JSON schema for a falconeri job.
+    // #[structopt(name = "schema")]
+    // Schema,
 }
 
 /// Run the `job` subcommand.
@@ -59,6 +60,6 @@ pub fn run(opt: &Opt) -> Result<()> {
                 .context("can't parse pipeline JSON file")?;
             run::run(&pipeline_spec)
         }
-        Opt::Schema => schema::run(),
+        //Opt::Schema => schema::run(),
     }
 }
