@@ -56,11 +56,20 @@ If you're running on Google, and you have a cluster named `falconeri` in `$CLUST
 
 ```sh
 gcloud container node-pools create falconeri-workers \
-    --cluster=falconeri --disk-size=1000 --enable-autorepair \
-    --machine-type=n1-standard-8 --node-version=1.10.5-gke.0 \
-    --node-labels=node_type=falconeri_worker --disk-type pd-ssd \
+    --cluster=falconeri --disk-size=500 --enable-autorepair \
+    --machine-type=n1-standard-8 --node-version=1.11.6-gke.6 \
+    --node-taints=fdy.io/falconeri=worker:NoExecute \
+    --node-labels=fdy.io/falconeri=worker --disk-type pd-ssd \
     --num-nodes=0 --enable-autoscaling --min-nodes=0 --max-nodes=25 \
     --zone=$CLUSTER_ZONE --scopes=gke-default,storage-rw
+```
+
+Then, add the following to each of your pipeline JSON files:
+
+```json
+  "node_selector": {
+    "fdy.io/falconeri": "worker"
+  },
 ```
 
 Strictly speaking, this is optional. But in practice, autoscaling is extremely convenient, and isolating the workers to a separate node pool will reduce the risk of a runaway worker process "evicting" critical Kubernetes infrastructure.
