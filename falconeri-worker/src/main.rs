@@ -226,20 +226,35 @@ fn tee_output(
 
 /// Reset our working directories to a default, clean state.
 fn reset_work_dirs() -> Result<()> {
-    reset_work_dir("/pfs/*")?;
+    reset_work_dir(Path::new("/pfs/"))?;
     fs::create_dir("/pfs/out").context("cannot create /pfs/out")?;
-    reset_work_dir("/scratch/*")?;
+    reset_work_dir(Path::new("/scratch/"))?;
     Ok(())
 }
 
 /// Restore a directory to a default, clean state.
-fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
-    let paths = glob::glob(work_dir_glob)
-        .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
-    for path in paths {
-        let path = path
-            .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
-        trace!("deleting: {}", path.display());
+fn reset_work_dir(work_dir: &Path) -> Result<()> {
+    debug!("resetting work dir {}", work_dir.display());
+
+    // Make sure our work dir still exists.
+    if !work_dir.is_dir() {
+        return Err(format_err!(
+            "the directory {} does not exist, but `falconeri_worker` expects it",
+            work_dir.display()
+        ));
+    }
+
+    // Delete everything in our work dir.
+    let entries = work_dir
+        .read_dir()
+        .with_context(|_| format!("error listing directory {}", work_dir.display()))?;
+    for entry in entries {
+        let path = entry
+            .with_context(|_| {
+                format!("error listing directory {}", work_dir.display())
+            })?
+            .path();
+        trace!("deleting {}", path.display());
         if path.is_dir() {
             fs::remove_dir_all(&path)
                 .with_context(|_| format!("cannot delete {}", path.display()))?;
@@ -248,6 +263,9 @@ fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
                 .with_context(|_| format!("cannot delete {}", path.display()))?;
         }
     }
+
+    // Make sure we haven't deleted our work dir accidentally.
+    assert!(work_dir.is_dir());
     Ok(())
 }
 
