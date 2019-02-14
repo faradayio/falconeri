@@ -47,8 +47,12 @@ spec:
             cpu: 100m
             memory: 500Mi
         volumeMounts:
+          # To prevent data loss, it's critically important to mount onto
+          # `../data`. But we can only do that using `subPath` or PostgreSQL
+          # will error out.
           - name: pgdata
-            mountPath: /var/lib/postgresql
+            mountPath: /var/lib/postgresql/data
+            subPath: postgres
         env:
         - name: POSTGRES_PASSWORD
           valueFrom:
