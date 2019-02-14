@@ -40,12 +40,13 @@ spec:
       - name: falconeri-postgres
         image: postgres
         # Deliberately ridiculously high until we add a server, because we have
-        # lots of lightly-used connections.
-        args: ["postgres", "-c", "max_connections=500"]
+        # lots of lightly-used connections. The correct fix here is to write a
+        # falconeri daemon that talks to PostgreSQL for us.
+        args: ["postgres", "-c", "max_connections=2000"]
         resources:
           requests:
             cpu: 100m
-            memory: 500Mi
+            memory: 2Gi
         volumeMounts:
           # To prevent data loss, it's critically important to mount onto
           # `../data`. But we can only do that using `subPath` or PostgreSQL
