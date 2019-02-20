@@ -3,7 +3,7 @@
 use base64;
 use falconeri_common::{
     kubernetes,
-    prefix::*,
+    prelude::*,
     rand::{distributions::Alphanumeric, rngs::EntropyRng, Rng},
 };
 use std::iter;

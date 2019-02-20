@@ -1,11 +1,19 @@
+use crossbeam::{self, thread::Scope};
 use env_logger;
 use falconeri_common::{
-    common_failures::display::DisplayCausesAndBacktraceExt, db, prefix::*,
+    common_failures::display::DisplayCausesAndBacktraceExt, db, prelude::*,
     storage::CloudStorage,
 };
 use glob;
 use openssl_probe;
-use std::{env, fs, process, thread::sleep, time::Duration};
+use std::{
+    env, fs,
+    io::{self, prelude::*},
+    process,
+    sync::{Arc, RwLock},
+    thread::sleep,
+    time::Duration,
+};
 
 /// Instructions on how to use this program.
 const USAGE: &str = "Usage: falconeri-worker <job id>";
@@ -46,7 +54,14 @@ fn main() -> Result<()> {
 
         // Get the next datum and process it.
         if let Some((mut datum, files)) = job.reserve_next_datum(&conn)? {
-            let result = process_datum(&job, &datum, &files, &job.command);
+            // Process our datum, capturing its output.
+            let output = Arc::new(RwLock::new(vec![]));
+            let result =
+                process_datum(&job, &datum, &files, &job.command, output.clone());
+            let output_str = String::from_utf8_lossy(
+                &output.read().expect("background thread panic"),
+            )
+            .into_owned();
 
             // Reconnect to the database after processing the datum, in case our DB
             // connection has timed out or something horrible like that.
@@ -54,14 +69,14 @@ fn main() -> Result<()> {
 
             // Handle the processing results.
             match result {
-                Ok(()) => datum.mark_as_done(&conn)?,
+                Ok(()) => datum.mark_as_done(output_str.as_ref(), &conn)?,
                 Err(err) => {
                     error!(
                         "failed to process datum {}: {}",
                         datum.id,
                         err.display_causes_and_backtrace(),
                     );
-                    datum.mark_as_error(&err, &conn)?
+                    datum.mark_as_error(output_str.as_ref(), &err, &conn)?
                 }
             }
         } else {
@@ -91,6 +106,7 @@ fn process_datum(
     datum: &Datum,
     files: &[InputFile],
     cmd: &[String],
+    to_record: Arc<RwLock<dyn Write + Send + Sync>>,
 ) -> Result<()> {
     debug!("processing datum {}", datum.id);
 
@@ -103,40 +119,144 @@ fn process_datum(
         storage.sync_down(&file.uri, Path::new(&file.local_path))?;
     }
 
-    // Run our command.
-    if cmd.is_empty() {
-        return Err(format_err!("job {} command is empty", job.id));
-    }
-    let status = process::Command::new(&cmd[0])
-        .args(&cmd[1..])
-        .status()
-        .with_context(|_| format!("could not run {:?}", &cmd[0]))?;
-    if !status.success() {
-        return Err(format_err!("could not run {:?}", cmd));
-    }
+    // Set up a worker thread scope so that we can handle background I/O.
+    crossbeam::scope(|scope| -> Result<()> {
+        // Run our command.
+        if cmd.is_empty() {
+            return Err(format_err!("job {} command is empty", job.id));
+        }
+        let mut child = process::Command::new(&cmd[0])
+            .args(&cmd[1..])
+            .stdout(process::Stdio::piped())
+            .stderr(process::Stdio::piped())
+            .spawn()
+            .with_context(|_| format!("could not run {:?}", &cmd[0]))?;
 
-    // Finish up.
-    upload_outputs(job, datum).context("could not upload outputs")?;
-    reset_work_dirs()?;
+        // Listen on stdout.
+        tee_child(scope, &mut child, to_record)?;
+
+        let status = child
+            .wait()
+            .with_context(|_| format!("error running {:?}", &cmd[0]))?;
+        if !status.success() {
+            return Err(format_err!(
+                "command {:?} failed with status {}",
+                cmd,
+                status
+            ));
+        }
+
+        // Finish up.
+        upload_outputs(job, datum).context("could not upload outputs")?;
+        reset_work_dirs()?;
+        Ok(())
+    })
+    .expect("background panic")
+}
+
+/// Copy the stdout and stderr of `child` to either stdout or stderr,
+/// respectively, and write a copy to `to_record`.
+///
+/// This function will panic if `child` does not have a `stdout` or `stderr`.
+fn tee_child<'a>(
+    scope: &'a Scope,
+    child: &mut process::Child,
+    to_record: Arc<RwLock<dyn Write + Send + Sync>>,
+) -> Result<()> {
+    // Tee `stdout`.
+    let mut stdout = child
+        .stdout
+        .take()
+        .expect("child should always have a stdout");
+    let to_record_for_stdout = to_record.clone();
+    let stdout_handle = scope.spawn(move |_| {
+        tee_output(&mut stdout, &mut io::stdout(), to_record_for_stdout)
+    });
+
+    // Tee `stderr`.
+    let mut stderr = child
+        .stderr
+        .take()
+        .expect("child should always have a stderr");
+    let to_record_for_stderr = to_record.clone();
+    let stderr_handle = scope.spawn(move |_| {
+        tee_output(&mut stderr, &mut io::stderr(), to_record_for_stderr)
+    });
+
+    // Wait for our child process to close `stdout` and `stderr`, or at least
+    // for Rust to return 0-byte reads and writes.
+    stdout_handle.join().expect("background panic")?;
+    stderr_handle.join().expect("background panic")?;
+
     Ok(())
+}
+
+/// Copy output from `from_child` to `to_console` and `to_record`.
+fn tee_output(
+    from_child: &mut dyn Read,
+    to_console: &mut dyn Write,
+    to_record: Arc<RwLock<dyn Write>>,
+) -> Result<()> {
+    // Use a small buffer, because I/O performance doesn't matter for reading
+    // output to the user.
+    let mut buf = vec![0; 4 * 1024];
+    loop {
+        match from_child.read(&mut buf) {
+            // No more output, so give up.
+            Ok(0) => return Ok(()),
+            // We have output, so print it.
+            Ok(count) => {
+                let data = &buf[..count];
+                to_console.write(data).context("error writing to console")?;
+                to_record
+                    .write()
+                    .expect("background panic")
+                    .write(data)
+                    .context("error writing to record")?;
+            }
+            // Retry if reading was interrupted by kernal shenigans.
+            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {}
+            // An actual error occurred.
+            Err(e) => {
+                return Err(e)
+                    .context("error reading from child process")
+                    .map_err(|e| e.into());
+            }
+        }
+    }
 }
 
 /// Reset our working directories to a default, clean state.
 fn reset_work_dirs() -> Result<()> {
-    reset_work_dir("/pfs/*")?;
+    reset_work_dir(Path::new("/pfs/"))?;
     fs::create_dir("/pfs/out").context("cannot create /pfs/out")?;
-    reset_work_dir("/scratch/*")?;
+    reset_work_dir(Path::new("/scratch/"))?;
     Ok(())
 }
 
 /// Restore a directory to a default, clean state.
-fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
-    let paths = glob::glob(work_dir_glob)
-        .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
-    for path in paths {
-        let path = path
-            .with_context(|_| format!("error listing directory {}", work_dir_glob))?;
-        trace!("deleting: {}", path.display());
+fn reset_work_dir(work_dir: &Path) -> Result<()> {
+    debug!("resetting work dir {}", work_dir.display());
+
+    // Make sure our work dir still exists.
+    if !work_dir.is_dir() {
+        return Err(format_err!(
+            "the directory {} does not exist, but `falconeri_worker` expects it",
+            work_dir.display()
+        ));
+    }
+
+    // Delete everything in our work dir.
+    let entries = work_dir
+        .read_dir()
+        .with_context(|_| format!("error listing directory {}", work_dir.display()))?;
+    for entry in entries {
+        let path = entry
+            .with_context(|_| {
+                format!("error listing directory {}", work_dir.display())
+            })?
+            .path();
+        trace!("deleting {}", path.display());
         if path.is_dir() {
             fs::remove_dir_all(&path)
                 .with_context(|_| format!("cannot delete {}", path.display()))?;
@@ -145,6 +265,9 @@ fn reset_work_dir(work_dir_glob: &str) -> Result<()> {
                 .with_context(|_| format!("cannot delete {}", path.display()))?;
         }
     }
+
+    // Make sure we haven't deleted our work dir accidentally.
+    assert!(work_dir.is_dir());
     Ok(())
 }
 

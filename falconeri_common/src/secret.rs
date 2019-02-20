@@ -3,7 +3,7 @@
 use bson::{bson, doc};
 use magnet_derive::BsonSchema;
 
-use crate::prefix::*;
+use crate::prelude::*;
 
 /// A Kubernetes-managed secret used to access some resource, and how we should
 /// map it into a container. Kubernetes secrets contain key-value pairs.

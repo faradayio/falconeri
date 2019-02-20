@@ -1,6 +1,6 @@
 use common_failures::display::DisplayCausesAndBacktraceExt;
 
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::schema::*;
 
 /// A single chunk of work, consisting of one or more files.
@@ -23,6 +23,10 @@ pub struct Datum {
     pub node_name: Option<String>,
     /// The Kubernetes pod which is running / ran this job.
     pub pod_name: Option<String>,
+    /// The backtrace associated with `error_message`, if any.
+    pub backtrace: Option<String>,
+    /// Combined stdout and stderr of the code which processed the datum.
+    pub output: Option<String>,
 }
 
 impl Datum {
@@ -43,9 +47,9 @@ impl Datum {
     }
 
     /// Mark this datum as having been successfully processed.
-    pub fn mark_as_done(&mut self, conn: &PgConnection) -> Result<()> {
+    pub fn mark_as_done(&mut self, output: &str, conn: &PgConnection) -> Result<()> {
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
-            .set(datums::status.eq(&Status::Done))
+            .set((datums::status.eq(&Status::Done), datums::output.eq(output)))
             .get_result(conn)
             .context("can't mark datum as done")?;
         Ok(())
@@ -54,14 +58,18 @@ impl Datum {
     /// Mark this datum as having been unsuccessfully processed.
     pub fn mark_as_error(
         &mut self,
-        error_message: &dyn DisplayCausesAndBacktraceExt,
+        output: &str,
+        err: &Error,
         conn: &PgConnection,
     ) -> Result<()> {
+        let error_message = format!("{}", err.display_causes_without_backtrace());
+        let backtrace = format!("{}", err.backtrace());
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
                 datums::status.eq(&Status::Error),
-                datums::error_message
-                    .eq(&format!("{}", error_message.display_causes_and_backtrace(),)),
+                datums::output.eq(output),
+                datums::error_message.eq(&error_message),
+                datums::backtrace.eq(&backtrace),
             ))
             .get_result(conn)
             .context("can't mark datum as having failed")?;
@@ -80,6 +88,8 @@ impl Datum {
             error_message: None,
             node_name: None,
             pod_name: None,
+            backtrace: None,
+            output: None,
         }
     }
 }

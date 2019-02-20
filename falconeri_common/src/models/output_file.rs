@@ -1,4 +1,4 @@
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::schema::*;
 
 /// An output file uploaded from a worker.

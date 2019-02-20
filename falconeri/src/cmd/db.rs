@@ -1,6 +1,6 @@
 //! `db` subcommand for interaction with the database.
 
-use falconeri_common::{db, prefix::*};
+use falconeri_common::{db, prelude::*};
 use std::process;
 use structopt::StructOpt;
 

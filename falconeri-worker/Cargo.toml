@@ -5,6 +5,7 @@ authors = ["Eric Kidd <git@randomhacks.net>"]
 edition = "2018"
 
 [dependencies]
+crossbeam = "0.6.0"
 env_logger = "0.6"
 failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }

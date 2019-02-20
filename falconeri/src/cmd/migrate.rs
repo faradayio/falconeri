@@ -1,6 +1,6 @@
 //! The `migrate` subcommand.
 
-use falconeri_common::{db, prefix::*};
+use falconeri_common::{db, prelude::*};
 
 /// Run the `migrate` subcommand.
 pub fn run() -> Result<()> {

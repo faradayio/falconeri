@@ -1,4 +1,4 @@
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::schema::*;
 
 /// An input file which needs to be downloaded to the worker container.

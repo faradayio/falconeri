@@ -2,7 +2,7 @@
 
 use diesel::{deserialize, pg::Pg, serialize};
 
-use crate::prefix::*;
+use crate::prelude::*;
 
 mod datum;
 mod input_file;

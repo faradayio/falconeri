@@ -1,9 +1,9 @@
 //! Support for Google Cloud Storage.
 
-use std::{collections::HashSet, io::BufRead, process};
+use std::{collections::HashSet, fs, io::BufRead, process};
 
 use super::CloudStorage;
-use crate::prefix::*;
+use crate::prelude::*;
 use crate::secret::Secret;
 
 /// Backend for talking to Google Cloud Storage, currently based on `gsutil`.
@@ -42,15 +42,41 @@ impl CloudStorage for GoogleCloudStorage {
     }
 
     fn sync_down(&self, uri: &str, local_path: &Path) -> Result<()> {
-        trace!("downloading {} to {}", uri, local_path.display());
-        let status = process::Command::new("gsutil")
-            .args(&["-m", "cp", "-r"])
-            .arg(uri)
-            .arg(local_path)
-            .status()
-            .context("could not run gsutil")?;
-        if !status.success() {
-            return Err(format_err!("could not download {:?}: {}", uri, status));
+        if uri.ends_with('/') {
+            // We have a directory. If our source URI ends in `/`, so should our
+            // `local_path`, since we generate these ourselves.
+            assert!(local_path
+                .to_str()
+                .expect("path should be UTF-8")
+                .ends_with('/'));
+            trace!("syncing {} to {}", uri, local_path.display());
+            fs::create_dir_all(local_path)
+                .context("cannot create local download directory")?;
+            let status = process::Command::new("gsutil")
+                .args(&["-m", "rsync"])
+                .arg(uri)
+                .arg(local_path)
+                .status()
+                .context("could not run gsutil rsync")?;
+            if !status.success() {
+                return Err(format_err!("could not download {:?}: {}", uri, status));
+            }
+        } else {
+            // We have a file. We can't use `gsutil rsync` for this case.
+            trace!("downloading {} to {}", uri, local_path.display());
+            if let Some(parent) = local_path.parent() {
+                fs::create_dir_all(parent)
+                    .context("cannot create local download directory")?;
+            }
+            let status = process::Command::new("gsutil")
+                .args(&["-m", "cp", "-r"])
+                .arg(uri)
+                .arg(local_path)
+                .status()
+                .context("could not run gsutil cp")?;
+            if !status.success() {
+                return Err(format_err!("could not download {:?}: {}", uri, status));
+            }
         }
         Ok(())
     }

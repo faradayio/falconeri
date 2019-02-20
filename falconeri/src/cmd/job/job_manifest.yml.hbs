@@ -19,6 +19,11 @@ spec:
 {{#if pipeline_spec.transform.service_account}}
       serviceAccountName: "{{pipeline_spec.transform.service_account}}"
 {{/if}}
+      tolerations:
+      - key: "fdy.io/falconeri"
+        operator: "Equal"
+        value: "worker"
+        effect: "NoExecute"
       nodeSelector:
 {{#each pipeline_spec.node_selector}}
         "{{@key}}": "{{this}}"

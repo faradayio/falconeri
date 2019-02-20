@@ -1,6 +1,6 @@
 //! The `proxy` subcommand.
 
-use falconeri_common::{kubernetes, prefix::*};
+use falconeri_common::{kubernetes, prelude::*};
 
 /// Run our proxy.
 pub fn run() -> Result<()> {

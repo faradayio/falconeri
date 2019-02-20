@@ -11,8 +11,6 @@ pub extern crate diesel;
 #[macro_use]
 pub extern crate diesel_migrations;
 
-use backoff;
-use base64;
 pub use cast;
 pub use chrono;
 pub use common_failures;
@@ -27,7 +25,7 @@ pub mod secret;
 pub mod storage;
 
 /// Common imports used by many modules.
-pub mod prefix {
+pub mod prelude {
     pub use chrono::{NaiveDateTime, Utc};
     pub use diesel::{self, prelude::*, PgConnection};
     pub use failure::{format_err, ResultExt};

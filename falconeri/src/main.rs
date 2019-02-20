@@ -1,11 +1,11 @@
-use base64;
 use env_logger;
-use falconeri_common::prefix::*;
+use falconeri_common::prelude::*;
 use openssl_probe;
 use structopt::StructOpt;
 
 mod cmd;
 mod description;
+mod inputs;
 mod manifest;
 mod pipeline;
 

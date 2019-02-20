@@ -1,6 +1,6 @@
 //! The `datum` subcommand.
 
-use falconeri_common::prefix::*;
+use falconeri_common::prelude::*;
 use structopt::StructOpt;
 
 mod describe;

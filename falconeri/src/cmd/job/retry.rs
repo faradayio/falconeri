@@ -1,6 +1,6 @@
 //! The `job retry` subcommand.
 
-use falconeri_common::{cast, db, diesel::Connection, prefix::*};
+use falconeri_common::{cast, db, diesel::Connection, prelude::*};
 use serde_json;
 use std::cmp::min;
 
@@ -31,6 +31,7 @@ pub fn run(job_name: &str) -> Result<()> {
         // Create a new job record.
         let job_name = unique_kubernetes_job_name(&pipeline_spec.pipeline.name);
         let new_job = NewJob {
+            id: Uuid::new_v4(),
             pipeline_spec: job.pipeline_spec.clone(),
             job_name,
             command: job.command.clone(),
