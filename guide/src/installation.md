@@ -56,12 +56,20 @@ If you're running on Google, and you have a cluster named `falconeri` in `$CLUST
 
 ```sh
 gcloud container node-pools create falconeri-workers \
-    --cluster=falconeri --disk-size=500 --enable-autorepair \
-    --machine-type=n1-standard-8 --node-version=1.11.6-gke.6 \
+    --cluster=falconeri \
+    --disk-size=500 \
+    --enable-autorepair \
+    --machine-type=n1-standard-8 \
+    --node-version=1.11.6-gke.6 \
     --node-taints=fdy.io/falconeri=worker:NoExecute \
-    --node-labels=fdy.io/falconeri=worker --disk-type pd-ssd \
-    --num-nodes=0 --enable-autoscaling --min-nodes=0 --max-nodes=25 \
-    --zone=$CLUSTER_ZONE --scopes=gke-default,storage-rw
+    --node-labels=fdy.io/falconeri=worker \
+    --disk-type pd-ssd \
+    --num-nodes=0 \
+    --enable-autoscaling \
+    --min-nodes=0 \
+    --max-nodes=25 \
+    --zone=$CLUSTER_ZONE \
+    --scopes=gke-default,storage-rw
 ```
 
 Then, add the following to each of your pipeline JSON files:

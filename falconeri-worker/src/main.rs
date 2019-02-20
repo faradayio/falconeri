@@ -197,8 +197,10 @@ fn tee_output(
     to_console: &mut dyn Write,
     to_record: Arc<RwLock<dyn Write>>,
 ) -> Result<()> {
+    // Use a small buffer, because I/O performance doesn't matter for reading
+    // output to the user.
+    let mut buf = vec![0; 4 * 1024];
     loop {
-        let mut buf = vec![0; 4 * 1024];
         match from_child.read(&mut buf) {
             // No more output, so give up.
             Ok(0) => return Ok(()),

@@ -10,7 +10,9 @@ mod describe;
 mod list;
 mod retry;
 mod run;
-//mod schema;
+// Disabled because it's broken by recurive `"input"` types.
+//
+// mod schema;
 
 /// The `job` subcommand.
 #[derive(Debug, StructOpt)]
@@ -60,6 +62,8 @@ pub fn run(opt: &Opt) -> Result<()> {
                 .context("can't parse pipeline JSON file")?;
             run::run(&pipeline_spec)
         }
-        //Opt::Schema => schema::run(),
+        // Disabled because it's broken by recurive `"input"` types.
+        //
+        // Opt::Schema => schema::run(),
     }
 }
