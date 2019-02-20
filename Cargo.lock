@@ -342,13 +342,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "falconeri"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "base64 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bson 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "falconeri_common 0.1.8",
+ "falconeri_common 0.1.9",
  "handlebars 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "magnet_derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -366,12 +366,12 @@ dependencies = [
 
 [[package]]
 name = "falconeri-worker"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "crossbeam 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "falconeri_common 0.1.8",
+ "falconeri_common 0.1.9",
  "glob 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.10.16 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -381,7 +381,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri_common"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "backoff 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
