@@ -1,3 +1,6 @@
+// Needed for static linking to work right on Linux.
+extern crate openssl;
+
 use env_logger;
 use falconeri_common::prelude::*;
 use openssl_probe;
