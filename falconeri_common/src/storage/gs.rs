@@ -36,7 +36,7 @@ impl CloudStorage for GoogleCloudStorage {
         let mut paths = HashSet::new();
         for line in output.stdout.lines() {
             let line = line?;
-            paths.insert(line.trim_right().to_owned());
+            paths.insert(line.trim_end().to_owned());
         }
         Ok(paths.into_iter().collect())
     }
