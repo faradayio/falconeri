@@ -59,11 +59,10 @@ impl Datum {
     pub fn mark_as_error(
         &mut self,
         output: &str,
-        err: &Error,
+        error_message: &str,
+        backtrace: &str,
         conn: &PgConnection,
     ) -> Result<()> {
-        let error_message = format!("{}", err.display_causes_without_backtrace());
-        let backtrace = format!("{}", err.backtrace());
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
                 datums::status.eq(&Status::Error),
@@ -108,7 +107,7 @@ pub struct NewDatum {
 }
 
 impl NewDatum {
-    /// Insert a new job into the database.
+    /// Insert new datums into the database.
     pub fn insert_all(datums: &[Self], conn: &PgConnection) -> Result<()> {
         diesel::insert_into(datums::table)
             .values(datums)

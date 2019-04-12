@@ -26,6 +26,7 @@ pub mod sql_types {
 #[derive(
     AsExpression,
     Debug,
+    Deserialize,
     Clone,
     Copy,
     Eq,

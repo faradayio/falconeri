@@ -79,7 +79,15 @@ fn main() -> Result<()> {
                         datum.id,
                         err.display_causes_and_backtrace(),
                     );
-                    datum.mark_as_error(output_str.as_ref(), &err, &conn)?
+                    let error_message =
+                        format!("{}", err.display_causes_without_backtrace());
+                    let backtrace = format!("{}", err.backtrace());
+                    datum.mark_as_error(
+                        output_str.as_ref(),
+                        &error_message,
+                        &backtrace,
+                        &conn,
+                    )?
                 }
             }
         } else {
@@ -309,12 +317,14 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
         uri.push_str(&rel_path_str);
 
         // Create a database record for the file we're about to upload.
-        NewOutputFile {
-            datum_id: datum.id,
-            job_id: job.id,
-            uri: uri.clone(),
-        }
-        .insert(&conn)?;
+        NewOutputFile::insert_all(
+            &[NewOutputFile {
+                datum_id: datum.id,
+                job_id: job.id,
+                uri: uri.clone(),
+            }],
+            &conn,
+        )?;
     }
 
     // Upload all our files in a batch, for maximum performance, and record
@@ -322,8 +332,8 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
     let storage = CloudStorage::for_uri(&job.egress_uri, &[])?;
     let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
     match result {
-        Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
-        Err(_) => OutputFile::mark_as_error(datum, &conn)?,
+        Ok(()) => OutputFile::mark_all_as_done(datum, &conn)?,
+        Err(_) => OutputFile::mark_all_as_error(datum, &conn)?,
     }
     result
 }

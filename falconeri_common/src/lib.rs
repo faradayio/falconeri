@@ -15,6 +15,7 @@ pub use cast;
 pub use chrono;
 pub use common_failures;
 pub use rand;
+pub use semver;
 pub use serde_json;
 
 pub mod db;
@@ -50,3 +51,11 @@ pub type Error = failure::Error;
 
 /// Result type for this crate's functions.
 pub type Result<T> = ::std::result::Result<T, Error>;
+
+/// The version of `falconeri_common` that we're using. This can be used
+/// to make sure that our various clients and servers match.
+pub fn falconeri_common_version() -> semver::Version {
+    env!("CARGO_PKG_VERSION")
+        .parse::<semver::Version>()
+        .expect("could not parse built-in version")
+}
