@@ -1,7 +1,6 @@
 use cast;
 use diesel::dsl;
 use serde_json;
-use std::env;
 
 use crate::prelude::*;
 use crate::schema::*;
