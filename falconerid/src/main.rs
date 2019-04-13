@@ -3,13 +3,13 @@
 #[macro_use]
 extern crate rocket;
 
-use falconeri_common::{db, falconeri_common_version, prelude::*};
+use falconeri_common::{falconeri_common_version, prelude::*};
 use rocket::http::Status as HttpStatus;
 use rocket_contrib::json::Json;
 
 mod util;
 
-use util::UuidParam;
+use util::{DbConn, UuidParam};
 
 /// Return our `falconeri_common` version, which should match the client
 /// exactly (for now).
@@ -20,8 +20,7 @@ fn version() -> String {
 
 /// Look up a job and return it as JSON.
 #[get("/jobs/<job_id>")]
-fn job(job_id: UuidParam) -> Result<Json<Job>> {
-    let conn = db::connect(db::ConnectVia::Cluster)?;
+fn job(conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     Ok(Json(job))
 }
@@ -44,10 +43,10 @@ struct ReservationResponse {
 /// of input files.
 #[post("/jobs/<job_id>/reserve_next_datum", data = "<request>")]
 fn job_reserve_next_datum(
+    conn: DbConn,
     job_id: UuidParam,
     request: Json<ReservationRequest>,
 ) -> Result<Json<Option<ReservationResponse>>> {
-    let conn = db::connect(db::ConnectVia::Cluster)?;
     let job = Job::find(job_id.into_inner(), &conn)?;
     let reserved =
         job.reserve_next_datum(&request.node_name, &request.pod_name, &conn)?;
@@ -69,8 +68,11 @@ struct DatumPatch {
 
 /// Update a datum when it's done.
 #[patch("/datums/<datum_id>", data = "<patch>")]
-fn patch_datum(datum_id: UuidParam, patch: Json<DatumPatch>) -> Result<Json<Datum>> {
-    let conn = db::connect(db::ConnectVia::Cluster)?;
+fn patch_datum(
+    conn: DbConn,
+    datum_id: UuidParam,
+    patch: Json<DatumPatch>,
+) -> Result<Json<Datum>> {
     let mut datum = Datum::find(datum_id.into_inner(), &conn)?;
 
     // We only support a few very specific types of patches.
@@ -113,9 +115,9 @@ fn patch_datum(datum_id: UuidParam, patch: Json<DatumPatch>) -> Result<Json<Datu
 /// move to our URL at some point.
 #[post("/output_files", data = "<new_output_files>")]
 fn create_output_files(
+    conn: DbConn,
     new_output_files: Json<Vec<NewOutputFile>>,
 ) -> Result<Json<Vec<OutputFile>>> {
-    let conn = db::connect(db::ConnectVia::Cluster)?;
     let created = NewOutputFile::insert_all(&new_output_files, &conn)?;
     Ok(Json(created))
 }
@@ -130,10 +132,9 @@ struct OutputFilePatch {
 /// Update a batch of output files.
 #[patch("/output_files", data = "<output_file_patches>")]
 fn patch_output_files(
+    conn: DbConn,
     output_file_patches: Json<Vec<OutputFilePatch>>,
 ) -> Result<HttpStatus> {
-    let conn = db::connect(db::ConnectVia::Cluster)?;
-
     // Separate patches by status.
     let mut done_ids = vec![];
     let mut error_ids = vec![];
@@ -159,6 +160,8 @@ fn patch_output_files(
 
 fn main() {
     rocket::ignite()
+        // Attach our custom connection pool.
+        .attach(DbConn::fairing())
         .mount(
             "/",
             routes![

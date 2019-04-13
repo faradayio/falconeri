@@ -1,6 +1,8 @@
 //! Database utilities.
 
 use backoff::{self, ExponentialBackoff, Operation};
+use diesel::r2d2::ConnectionManager as DieselConnectionManager;
+use r2d2;
 use std::{env, fs::read_to_string, io, result};
 
 use crate::kubernetes::{base64_encoded_secret_string, kubectl_secret};
@@ -110,6 +112,24 @@ pub fn connect(via: ConnectVia) -> Result<PgConnection> {
         })
         .with_context(|_| format!("Error connecting to {}", database_url))?;
     Ok(conn)
+}
+
+/// A database connection pool.
+pub type Pool = r2d2::Pool<DieselConnectionManager<PgConnection>>;
+
+/// A connection using our connection pool.
+pub type PooledConnection =
+    r2d2::PooledConnection<DieselConnectionManager<PgConnection>>;
+
+/// Create a connection pool using the specified parameters.
+pub fn pool(pool_size: u32, via: ConnectVia) -> Result<Pool> {
+    let database_url = database_url(via)?;
+    let manager = DieselConnectionManager::new(database_url);
+    let pool = r2d2::Pool::builder()
+        .max_size(pool_size)
+        .build(manager)
+        .context("could not create database pool")?;
+    Ok(pool)
 }
 
 /// Run any pending migrations, and print to standard output.
