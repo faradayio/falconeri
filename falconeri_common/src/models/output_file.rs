@@ -2,7 +2,7 @@ use crate::prelude::*;
 use crate::schema::*;
 
 /// An output file uploaded from a worker.
-#[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
+#[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
 #[belongs_to(Datum, foreign_key = "datum_id")]
 #[belongs_to(Job, foreign_key = "job_id")]
 pub struct OutputFile {
@@ -50,7 +50,6 @@ impl OutputFile {
         Ok(())
     }
 
-
     /// Mark the output files of this datum as having been successfully
     /// processed.
     pub fn mark_as_done_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
@@ -73,7 +72,7 @@ impl OutputFile {
 }
 
 /// Data required to create a new `OutputFile`.
-#[derive(Debug, Deserialize, Insertable)]
+#[derive(Debug, Deserialize, Insertable, Serialize)]
 #[table_name = "output_files"]
 pub struct NewOutputFile {
     /// The job which created this file.

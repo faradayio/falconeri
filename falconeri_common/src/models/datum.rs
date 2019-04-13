@@ -2,7 +2,7 @@ use crate::prelude::*;
 use crate::schema::*;
 
 /// A single chunk of work, consisting of one or more files.
-#[derive(Associations, Debug, Identifiable, Queryable, Serialize)]
+#[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
 #[belongs_to(Job, foreign_key = "job_id")]
 pub struct Datum {
     /// The unique ID of this datum.
