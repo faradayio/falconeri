@@ -192,21 +192,23 @@ impl Client {
     /// PATCH /output_files
     pub fn patch_output_files(&self, patches: &[OutputFilePatch]) -> Result<()> {
         let url = self.url.join("output_files")?;
-        let resp = self
-            .client
-            .patch(url.clone())
-            .json(patches)
-            .send()
-            .with_context(|_| format!("error patching {}", url))?;
-        if resp.status().is_success() {
-            Ok(())
-        } else {
-            Err(format_err!(
-                "unexpected HTTP status {} for {}",
-                resp.status(),
-                url
-            ))
-        }
+        self.via.retry_if_appropriate(|| {
+            let resp = self
+                .client
+                .patch(url.clone())
+                .json(patches)
+                .send()
+                .with_context(|_| format!("error patching {}", url))?;
+            if resp.status().is_success() {
+                Ok(())
+            } else {
+                Err(format_err!(
+                    "unexpected HTTP status {} for {}",
+                    resp.status(),
+                    url
+                ))
+            }
+        })
     }
 
     /// Check the HTTP status code and parse a JSON response.
