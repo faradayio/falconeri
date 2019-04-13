@@ -58,12 +58,10 @@ impl Job {
     /// `"processing"`. This is intended to be atomic from an SQL perspective.
     pub fn reserve_next_datum(
         &self,
+        node_name: &str,
+        pod_name: &str,
         conn: &PgConnection,
     ) -> Result<Option<(Datum, Vec<InputFile>)>> {
-        let node_name = env::var("FALCONERI_NODE_NAME")
-            .context("couldn't get FALCONERI_NODE_NAME")?;
-        let pod_name = env::var("FALCONERI_POD_NAME")
-            .context("couldn't get FALCONERI_POD_NAME")?;
         conn.transaction(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)

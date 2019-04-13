@@ -25,21 +25,33 @@ fn job(job_id: UuidParam) -> Result<Json<Job>> {
     Ok(Json(job))
 }
 
+/// Request the reservation of a datum.
+#[derive(Debug, Deserialize)]
+struct ReservationRequest {
+    node_name: String,
+    pod_name: String,
+}
+
 /// Information about a reserved datum.
-#[derive(Serialize)]
-struct Reservation {
+#[derive(Debug, Serialize)]
+struct ReservationResponse {
     datum: Datum,
     input_files: Vec<InputFile>,
 }
 
 /// Reserve the next available datum for a job, and return it along with a list
 /// of input files.
-#[post("/jobs/<job_id>/datums/reservations")]
-fn job_datums_reserve_next(job_id: UuidParam) -> Result<Json<Option<Reservation>>> {
+#[post("/jobs/<job_id>/reserve_next_datum", data = "<request>")]
+fn job_reserve_next_datum(
+    job_id: UuidParam,
+    request: Json<ReservationRequest>,
+) -> Result<Json<Option<ReservationResponse>>> {
     let conn = db::connect(db::ConnectVia::Cluster)?;
     let job = Job::find(job_id.into_inner(), &conn)?;
-    if let Some((datum, input_files)) = job.reserve_next_datum(&conn)? {
-        Ok(Json(Some(Reservation { datum, input_files })))
+    let reserved =
+        job.reserve_next_datum(&request.node_name, &request.pod_name, &conn)?;
+    if let Some((datum, input_files)) = reserved {
+        Ok(Json(Some(ReservationResponse { datum, input_files })))
     } else {
         Ok(Json(None))
     }
@@ -142,7 +154,7 @@ fn main() {
             routes![
                 version,
                 job,
-                job_datums_reserve_next,
+                job_reserve_next_datum,
                 patch_datum,
                 create_output_files,
             ],

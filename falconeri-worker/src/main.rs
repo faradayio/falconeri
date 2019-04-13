@@ -4,7 +4,10 @@ extern crate openssl;
 use crossbeam::{self, thread::Scope};
 use env_logger;
 use falconeri_common::{
-    common_failures::display::DisplayCausesAndBacktraceExt, db, prelude::*,
+    common_failures::display::DisplayCausesAndBacktraceExt,
+    db,
+    kubernetes::{node_name, pod_name},
+    prelude::*,
     storage::CloudStorage,
 };
 use glob;
@@ -46,6 +49,10 @@ fn main() -> Result<()> {
     // Connect to the database.
     let mut conn = db::connect(db::ConnectVia::Cluster)?;
 
+    // Look up the Kubernetes node and pod we're running under.
+    let node_name = node_name()?;
+    let pod_name = pod_name()?;
+
     // Loop until there are no more datums.
     loop {
         // Fetch our job, and make sure that it's still running.
@@ -56,7 +63,9 @@ fn main() -> Result<()> {
         }
 
         // Get the next datum and process it.
-        if let Some((mut datum, files)) = job.reserve_next_datum(&conn)? {
+        if let Some((mut datum, files)) =
+            job.reserve_next_datum(&node_name, &pod_name, &conn)?
+        {
             // Process our datum, capturing its output.
             let output = Arc::new(RwLock::new(vec![]));
             let result =
