@@ -21,6 +21,7 @@ pub use serde_json;
 pub mod db;
 pub mod kubernetes;
 pub mod models;
+pub mod rest_api;
 mod schema;
 pub mod secret;
 pub mod storage;

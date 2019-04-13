@@ -3,7 +3,13 @@
 #[macro_use]
 extern crate rocket;
 
-use falconeri_common::{falconeri_common_version, prelude::*};
+use falconeri_common::{
+    falconeri_common_version,
+    prelude::*,
+    rest_api::{
+        DatumPatch, DatumReservationRequest, DatumReservationResponse, OutputFilePatch,
+    },
+};
 use rocket::http::Status as HttpStatus;
 use rocket_contrib::json::Json;
 
@@ -25,45 +31,22 @@ fn job(conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
     Ok(Json(job))
 }
 
-/// Request the reservation of a datum.
-#[derive(Debug, Deserialize)]
-struct ReservationRequest {
-    node_name: String,
-    pod_name: String,
-}
-
-/// Information about a reserved datum.
-#[derive(Debug, Serialize)]
-struct ReservationResponse {
-    datum: Datum,
-    input_files: Vec<InputFile>,
-}
-
 /// Reserve the next available datum for a job, and return it along with a list
 /// of input files.
 #[post("/jobs/<job_id>/reserve_next_datum", data = "<request>")]
 fn job_reserve_next_datum(
     conn: DbConn,
     job_id: UuidParam,
-    request: Json<ReservationRequest>,
-) -> Result<Json<Option<ReservationResponse>>> {
+    request: Json<DatumReservationRequest>,
+) -> Result<Json<Option<DatumReservationResponse>>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     let reserved =
         job.reserve_next_datum(&request.node_name, &request.pod_name, &conn)?;
     if let Some((datum, input_files)) = reserved {
-        Ok(Json(Some(ReservationResponse { datum, input_files })))
+        Ok(Json(Some(DatumReservationResponse { datum, input_files })))
     } else {
         Ok(Json(None))
     }
-}
-
-/// Information about a datum that we can update.
-#[derive(Debug, Deserialize)]
-struct DatumPatch {
-    status: Status,
-    output: String,
-    error_message: Option<String>,
-    backtrace: Option<String>,
 }
 
 /// Update a datum when it's done.
@@ -120,13 +103,6 @@ fn create_output_files(
 ) -> Result<Json<Vec<OutputFile>>> {
     let created = NewOutputFile::insert_all(&new_output_files, &conn)?;
     Ok(Json(created))
-}
-
-/// Information about an output file that we can update.
-#[derive(Debug, Deserialize)]
-struct OutputFilePatch {
-    id: Uuid,
-    status: Status,
 }
 
 /// Update a batch of output files.
