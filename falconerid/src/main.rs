@@ -4,6 +4,7 @@
 extern crate rocket;
 
 use falconeri_common::{db, falconeri_common_version, prelude::*};
+use rocket::http::Status as HttpStatus;
 use rocket_contrib::json::Json;
 
 mod util;
@@ -122,30 +123,39 @@ fn create_output_files(
 /// Information about an output file that we can update.
 #[derive(Debug, Deserialize)]
 struct OutputFilePatch {
+    id: Uuid,
     status: Status,
 }
 
-/*
-
-Do we really want to do this like this? Or with a bulk patch API of some sort?
-
-#[post("/output_files/<output_file_id>", data = "<output_file_patch>")]
-fn patch_output_file(
-    output_file_id: UuidParam,
-    output_file_patch: Json<OutputFilePatch>,
-) -> Result<Json<OutputFile>> {
+/// Update a batch of output files.
+#[patch("/output_files", data = "<output_file_patches>")]
+fn patch_output_files(
+    output_file_patches: Json<Vec<OutputFilePatch>>,
+) -> Result<HttpStatus> {
     let conn = db::connect(db::ConnectVia::Cluster)?;
-    let mut output_file = OutputFile::find(output_file_id.into_inner(), &conn)?;
 
-    match output_file_patch.status {
-        Status::Done => output_file.mark_as_done(&conn)?,
-        Status::Done => output_file.mark_as_error(&conn)?,
-
+    // Separate patches by status.
+    let mut done_ids = vec![];
+    let mut error_ids = vec![];
+    for patch in output_file_patches.into_inner() {
+        match patch.status {
+            Status::Done => done_ids.push(patch.id),
+            Status::Error => error_ids.push(patch.id),
+            _ => {
+                return Err(format_err!("cannot patch output file with {:?}", patch));
+            }
+        }
     }
 
-    Ok(Json(output_file))
+    // Apply our updates.
+    conn.transaction(|| -> Result<()> {
+        OutputFile::mark_ids_as_done(&done_ids, &conn)?;
+        OutputFile::mark_ids_as_error(&error_ids, &conn)?;
+        Ok(())
+    })?;
+
+    Ok(HttpStatus::NoContent)
 }
-*/
 
 fn main() {
     rocket::ignite()
@@ -157,6 +167,7 @@ fn main() {
                 job_reserve_next_datum,
                 patch_datum,
                 create_output_files,
+                patch_output_files,
             ],
         )
         .launch();

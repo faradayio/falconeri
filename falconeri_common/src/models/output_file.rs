@@ -32,8 +32,28 @@ impl OutputFile {
             .with_context(|_| format!("could not load output file {}", id))?)
     }
 
-    /// Mark this datum as having been successfully processed.
-    pub fn mark_all_as_done(datum: &Datum, conn: &PgConnection) -> Result<()> {
+    /// Mark the specified output files as having been successfully processed.
+    pub fn mark_ids_as_done(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
+        diesel::update(output_files::table.filter(output_files::id.eq_any(ids)))
+            .set(output_files::status.eq(&Status::Done))
+            .execute(conn)
+            .context("can't mark output file as done")?;
+        Ok(())
+    }
+
+    /// Mark the specified output files as having been successfully processed.
+    pub fn mark_ids_as_error(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
+        diesel::update(output_files::table.filter(output_files::id.eq_any(ids)))
+            .set(output_files::status.eq(&Status::Error))
+            .execute(conn)
+            .context("can't mark output file as done")?;
+        Ok(())
+    }
+
+
+    /// Mark the output files of this datum as having been successfully
+    /// processed.
+    pub fn mark_as_done_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
         diesel::update(OutputFile::belonging_to(datum))
             .set(output_files::status.eq(&Status::Done))
             .execute(conn)
@@ -41,8 +61,9 @@ impl OutputFile {
         Ok(())
     }
 
-    /// Mark this datum as having been unsuccessfully processed.
-    pub fn mark_all_as_error(datum: &Datum, conn: &PgConnection) -> Result<()> {
+    /// Mark the output files of this datum as having been unsuccessfully
+    /// processed.
+    pub fn mark_as_error_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
         diesel::update(OutputFile::belonging_to(datum))
             .set(output_files::status.eq(&Status::Error))
             .execute(conn)

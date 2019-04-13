@@ -341,8 +341,8 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
     let storage = CloudStorage::for_uri(&job.egress_uri, &[])?;
     let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
     match result {
-        Ok(()) => OutputFile::mark_all_as_done(datum, &conn)?,
-        Err(_) => OutputFile::mark_all_as_error(datum, &conn)?,
+        Ok(()) => OutputFile::mark_as_done_by_datum(datum, &conn)?,
+        Err(_) => OutputFile::mark_as_error_by_datum(datum, &conn)?,
     }
     result
 }
