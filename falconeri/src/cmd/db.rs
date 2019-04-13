@@ -25,7 +25,7 @@ pub fn run(opt: &Opt) -> Result<()> {
 
 /// Connect to the database console.
 fn run_console() -> Result<()> {
-    let url = db::database_url(db::ConnectVia::Proxy)?;
+    let url = db::database_url(ConnectVia::Proxy)?;
     let status = process::Command::new("psql")
         .arg(&url)
         .status()
@@ -38,7 +38,7 @@ fn run_console() -> Result<()> {
 
 /// Print out the database URL.
 fn run_url() -> Result<()> {
-    let url = db::database_url(db::ConnectVia::Proxy)?;
+    let url = db::database_url(ConnectVia::Proxy)?;
     println!("{}", url);
     Ok(())
 }

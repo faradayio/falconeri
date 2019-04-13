@@ -18,6 +18,7 @@ pub use rand;
 pub use semver;
 pub use serde_json;
 
+pub mod connect_via;
 pub mod db;
 pub mod kubernetes;
 pub mod models;
@@ -43,6 +44,7 @@ pub mod prelude {
     };
     pub use uuid::Uuid;
 
+    pub use super::connect_via::ConnectVia;
     pub use super::models::*;
     pub use super::{Error, Result};
 }

@@ -47,7 +47,7 @@ fn main() -> Result<()> {
     debug!("job ID: {}", job_id);
 
     // Connect to the database.
-    let mut conn = db::connect(db::ConnectVia::Cluster)?;
+    let mut conn = db::connect(ConnectVia::Cluster)?;
 
     // Look up the Kubernetes node and pod we're running under.
     let node_name = node_name()?;
@@ -77,7 +77,7 @@ fn main() -> Result<()> {
 
             // Reconnect to the database after processing the datum, in case our DB
             // connection has timed out or something horrible like that.
-            conn = db::connect(db::ConnectVia::Cluster)?;
+            conn = db::connect(ConnectVia::Cluster)?;
 
             // Handle the processing results.
             match result {
@@ -297,7 +297,7 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
 
     // Make a new database connection, because any one we created before running
     // our command might have expired.
-    let conn = db::connect(db::ConnectVia::Cluster)?;
+    let conn = db::connect(ConnectVia::Cluster)?;
 
     // Create records describing the files we're going to upload.
     let local_paths = glob::glob("/pfs/out/**/*").context("error listing /pfs/out")?;

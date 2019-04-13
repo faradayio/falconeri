@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::schema::*;
 
 /// A distributed data processing job.
-#[derive(Debug, Identifiable, Queryable, Serialize)]
+#[derive(Debug, Deserialize, Identifiable, Queryable, Serialize)]
 pub struct Job {
     /// The unique ID of this job.
     pub id: Uuid,

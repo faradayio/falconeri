@@ -9,7 +9,7 @@ use crate::pipeline::PipelineSpec;
 
 /// The `job retry` subcommand.
 pub fn run(job_name: &str) -> Result<()> {
-    let conn = db::connect(db::ConnectVia::Proxy)?;
+    let conn = db::connect(ConnectVia::Proxy)?;
     let (pipeline_spec, new_job) = conn.transaction(|| -> Result<_> {
         // Load the original job, failed datums, and input files.
         let job = Job::find_by_job_name(job_name, &conn)?;

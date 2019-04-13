@@ -1,4 +1,7 @@
-//! Types used in `falconerid`'s REST API.
+//! The REST API for `falconerid`, including data types and a client.
+
+use reqwest;
+use url::Url;
 
 use crate::prelude::*;
 
@@ -44,4 +47,56 @@ pub struct OutputFilePatch {
     /// The status of the output file. Must be either `Status::Done` or
     /// `Status::Error`.
     pub status: Status,
+}
+
+/// A client for talking to `falconerid`.
+pub struct Client {
+    via: ConnectVia,
+    url: Url,
+    client: reqwest::Client,
+}
+
+impl Client {
+    /// Create a new client, connecting to `falconerid` as specified.
+    pub fn new(via: ConnectVia) -> Result<Client> {
+        // Choose an appropriate URL.
+        let url = match via {
+            ConnectVia::Cluster => "http://falconerid/",
+            ConnectVia::Proxy => "http://localhost:8089/",
+        }
+        .parse()
+        .expect("could not parse URL in source code");
+
+        // Create our HTTP client.
+        let client = reqwest::Client::builder()
+            .build()
+            .context("cannot build HTTP client")?;
+
+        Ok(Client { via, url, client })
+    }
+
+    /// Fetch a job by ID.
+    pub fn job(&self, id: Uuid) -> Result<Job> {
+        let url = self.url.join(&format!("jobs/{}", id))?;
+        self.via.retry_if_appropriate(|| {
+            let mut resp = self
+                .client
+                .get(url.clone())
+                .send()
+                .with_context(|_| format!("error getting {}", url))?;
+            if resp.status().is_success() {
+                let job = resp
+                    .json()
+                    .with_context(|_| format!("error parsing {}", url))?;
+                Ok(job)
+            } else {
+                Err(format_err!("unexpected HTTP status {}", resp.status()))
+            }
+        })
+    }
+
+    // POST /jobs/<job_id>/reserve_next_datum
+    // PATCH /datums/<datum_id>
+    // POST /output_files
+    // PATCH /output_files
 }

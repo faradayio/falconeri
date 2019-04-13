@@ -57,7 +57,7 @@ impl DbConn {
     /// Rocket server.
     pub fn fairing() -> impl fairing::Fairing {
         fairing::AdHoc::on_attach("DbConn", |rocket| {
-            match db::pool(rocket.config().workers.into(), db::ConnectVia::Cluster) {
+            match db::pool(rocket.config().workers.into(), ConnectVia::Cluster) {
                 Ok(pool) => Ok(rocket.manage(DbPool(pool))),
                 Err(err) => {
                     logger::error("failed to initialize database pool");
