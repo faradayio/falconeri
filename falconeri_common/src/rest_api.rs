@@ -4,6 +4,7 @@ use reqwest;
 use serde::de::DeserializeOwned;
 use url::Url;
 
+use crate::db;
 use crate::kubernetes::{node_name, pod_name};
 use crate::prelude::*;
 
@@ -55,6 +56,8 @@ pub struct OutputFilePatch {
 pub struct Client {
     via: ConnectVia,
     url: Url,
+    username: String,
+    password: String,
     client: reqwest::Client,
 }
 
@@ -69,12 +72,23 @@ impl Client {
         .parse()
         .expect("could not parse URL in source code");
 
+        // Get our credentials. For now, we use our database password for API
+        // access, too.
+        let username = "falconeri".to_owned();
+        let password = db::postgres_password(via)?;
+
         // Create our HTTP client.
         let client = reqwest::Client::builder()
             .build()
             .context("cannot build HTTP client")?;
 
-        Ok(Client { via, url, client })
+        Ok(Client {
+            via,
+            url,
+            username,
+            password,
+            client,
+        })
     }
 
     /// Fetch a job by ID.
@@ -86,6 +100,7 @@ impl Client {
             let resp = self
                 .client
                 .get(url.clone())
+                .basic_auth(&self.username, Some(&self.password))
                 .send()
                 .with_context(|_| format!("error getting {}", url))?;
             self.handle_json_response(&url, resp)
@@ -106,6 +121,7 @@ impl Client {
                 let resp = self
                     .client
                     .post(url.clone())
+                    .basic_auth(&self.username, Some(&self.password))
                     .json(&DatumReservationRequest {
                         node_name: node_name()?,
                         pod_name: pod_name()?,
@@ -155,6 +171,7 @@ impl Client {
             let resp = self
                 .client
                 .patch(url.clone())
+                .basic_auth(&self.username, Some(&self.password))
                 .json(patch)
                 .send()
                 .with_context(|_| format!("error patching {}", url))?;
@@ -180,6 +197,7 @@ impl Client {
             let resp = self
                 .client
                 .post(url.clone())
+                .basic_auth(&self.username, Some(&self.password))
                 .json(files)
                 .send()
                 .with_context(|_| format!("error posting {}", url))?;
@@ -196,6 +214,7 @@ impl Client {
             let resp = self
                 .client
                 .patch(url.clone())
+                .basic_auth(&self.username, Some(&self.password))
                 .json(patches)
                 .send()
                 .with_context(|_| format!("error patching {}", url))?;
