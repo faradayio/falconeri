@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 falconeri_common = { path = "../falconeri_common" }
+headers = "0.2"
 rocket = "0.4.0"
 rocket_contrib = { version = "0.4.0", features = ["uuid"] }
 serde = "1.0"

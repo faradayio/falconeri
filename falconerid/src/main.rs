@@ -15,7 +15,7 @@ use rocket_contrib::json::Json;
 
 mod util;
 
-use util::{DbConn, UuidParam};
+use util::{DbConn, User, UuidParam};
 
 /// Return our `falconeri_common` version, which should match the client
 /// exactly (for now).
@@ -26,7 +26,7 @@ fn version() -> String {
 
 /// Look up a job and return it as JSON.
 #[get("/jobs/<job_id>")]
-fn job(conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
+fn job(_user: User, conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     Ok(Json(job))
 }
@@ -35,6 +35,7 @@ fn job(conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
 /// of input files.
 #[post("/jobs/<job_id>/reserve_next_datum", data = "<request>")]
 fn job_reserve_next_datum(
+    _user: User,
     conn: DbConn,
     job_id: UuidParam,
     request: Json<DatumReservationRequest>,
@@ -52,6 +53,7 @@ fn job_reserve_next_datum(
 /// Update a datum when it's done.
 #[patch("/datums/<datum_id>", data = "<patch>")]
 fn patch_datum(
+    _user: User,
     conn: DbConn,
     datum_id: UuidParam,
     patch: Json<DatumPatch>,
@@ -98,6 +100,7 @@ fn patch_datum(
 /// move to our URL at some point.
 #[post("/output_files", data = "<new_output_files>")]
 fn create_output_files(
+    _user: User,
     conn: DbConn,
     new_output_files: Json<Vec<NewOutputFile>>,
 ) -> Result<Json<Vec<OutputFile>>> {
@@ -108,6 +111,7 @@ fn create_output_files(
 /// Update a batch of output files.
 #[patch("/output_files", data = "<output_file_patches>")]
 fn patch_output_files(
+    _user: User,
     conn: DbConn,
     output_file_patches: Json<Vec<OutputFilePatch>>,
 ) -> Result<HttpStatus> {

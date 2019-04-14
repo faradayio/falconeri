@@ -25,7 +25,7 @@ struct FalconeriSecretData {
 }
 
 /// Look up our PostgreSQL password in our cluster's `falconeri` secret.
-fn postgres_password(via: ConnectVia) -> Result<String> {
+pub fn postgres_password(via: ConnectVia) -> Result<String> {
     match via {
         ConnectVia::Proxy => {
             trace!("Fetching POSTGRES_PASSWORD from secret `falconeri`");

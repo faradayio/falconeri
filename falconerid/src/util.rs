@@ -1,6 +1,7 @@
 //! Various Rocket-related utilities.
 
 use falconeri_common::{db, prelude::*};
+use headers::{authorization::Basic, Authorization, Header, HeaderValue};
 use rocket::{
     fairing,
     http::{RawStr, Status},
@@ -105,3 +106,75 @@ impl ops::DerefMut for DbConn {
 
 /// This holds a `db::Pool` and it can be attached to a Rocket server.
 struct DbPool(db::Pool);
+
+/// The administrator password for `falconeri`. This is looked up once and
+/// stored in our server state.
+struct AdminPassword(String);
+
+/// An authenticated user. For now, this carries no identity information,
+/// because we only distinguish between "authenticated" and "not authenticated",
+/// and we therefore just need a placeholder that represents authentication.
+pub struct User;
+
+impl User {
+    /// Return a "fairing" which can be used to set up authentication.
+    pub fn fairing() -> impl fairing::Fairing {
+        fairing::AdHoc::on_attach("User", |rocket| {
+            match db::postgres_password(ConnectVia::Cluster) {
+                Ok(password) => Ok(rocket.manage(AdminPassword(password))),
+                Err(err) => {
+                    logger::error("failed to look up admin password");
+                    logger::error_(&format!("{:?}", err));
+                    Err(rocket)
+                }
+            }
+        })
+    }
+}
+
+impl<'a, 'r> FromRequest<'a, 'r> for User {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
+        // Get our auth header.
+        let auth = match basic_auth_from_request(request) {
+            Ok(Some(auth)) => auth,
+            Ok(None) => {
+                // TODO: Should send `WWW-Authenticate: Basic
+                // realm="falconeri"`.
+                return Outcome::Failure((Status::Unauthorized, ()));
+            }
+            Err(_) => return Outcome::Failure((Status::BadRequest, ())),
+        };
+
+        // Get the admin password for our server.
+        let password = request.guard::<State<AdminPassword>>()?;
+
+        // Validate our user.
+        if auth.0.username() == "falconeri" && auth.0.password() == password.0 {
+            Outcome::Success(User)
+        } else {
+            Outcome::Failure((Status::Unauthorized, ()))
+        }
+    }
+}
+
+/// Extract HTTP Basic Auth credentials from a request.
+fn basic_auth_from_request(
+    request: &Request<'_>,
+) -> Result<Option<Authorization<Basic>>> {
+    // Extract our `Authorization` headers as a `Vec<HeaderValue>`.
+    let auth_headers = request
+        .headers()
+        .get(Authorization::<Basic>::name().as_str())
+        .map(|s| HeaderValue::from_str(s))
+        .collect::<result::Result<Vec<HeaderValue>, _>>()?;
+
+    if auth_headers.is_empty() {
+        Ok(None)
+    } else {
+        let auth = Authorization::<Basic>::decode(&mut auth_headers.iter())
+            .map_err(|_| format_err!("expected Authorization Basic header"))?;
+        Ok(Some(auth))
+    }
+}
