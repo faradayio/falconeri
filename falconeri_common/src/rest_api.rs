@@ -112,11 +112,14 @@ impl Client {
     /// pod.
     ///
     /// `POST /jobs/<job_id>/reserve_next_datum`
-    pub fn reserve_next_datum(&self, job: &Job) -> Result<(Datum, Vec<InputFile>)> {
+    pub fn reserve_next_datum(
+        &self,
+        job: &Job,
+    ) -> Result<Option<(Datum, Vec<InputFile>)>> {
         let url = self
             .url
             .join(&format!("jobs/{}/reserve_next_datum", job.id))?;
-        let resv_resp: DatumReservationResponse =
+        let resv_resp: Option<DatumReservationResponse> =
             self.via.retry_if_appropriate(|| {
                 let resp = self
                     .client
@@ -130,7 +133,7 @@ impl Client {
                     .with_context(|_| format!("error posting {}", url))?;
                 self.handle_json_response(&url, resp)
             })?;
-        Ok((resv_resp.datum, resv_resp.input_files))
+        Ok(resv_resp.map(|r| (r.datum, r.input_files)))
     }
 
     /// Mark `datum` as done, and record the output of the commands we ran.
