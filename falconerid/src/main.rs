@@ -1,8 +1,13 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+// Needed for static linking to work right on Linux.
+extern crate openssl;
+
+// Include all of Rocket's macros.
 #[macro_use]
 extern crate rocket;
 
+use env_logger;
 use falconeri_common::{
     falconeri_common_version,
     prelude::*,
@@ -10,6 +15,7 @@ use falconeri_common::{
         DatumPatch, DatumReservationRequest, DatumReservationResponse, OutputFilePatch,
     },
 };
+use openssl_probe;
 use rocket::http::Status as HttpStatus;
 use rocket_contrib::json::Json;
 
@@ -139,6 +145,9 @@ fn patch_output_files(
 }
 
 fn main() {
+    env_logger::init();
+    openssl_probe::init_ssl_cert_env_vars();
+
     rocket::ignite()
         // Attach our custom connection pool.
         .attach(DbConn::fairing())
