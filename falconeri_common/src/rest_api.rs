@@ -2,6 +2,7 @@
 
 use reqwest;
 use serde::de::DeserializeOwned;
+use std::usize;
 use url::Url;
 
 use crate::db;
@@ -77,8 +78,20 @@ impl Client {
         let username = "falconeri".to_owned();
         let password = db::postgres_password(via)?;
 
+        // Decide how long to keep connections open.
+        let max_idle = match via {
+            // If we're running on the cluster, connection startup is cheap but
+            // we may have hundreds of inbound connections, so drop connections
+            // as fast as possible. This could be improved by putting an async
+            // proxy server in front of `falconerid`, if we want that.
+            ConnectVia::Cluster => 0,
+            // Otherwise allow the maximum possible number of connections.
+            ConnectVia::Proxy => usize::MAX,
+        };
+
         // Create our HTTP client.
         let client = reqwest::Client::builder()
+            .max_idle_per_host(max_idle)
             .build()
             .context("cannot build HTTP client")?;
 
