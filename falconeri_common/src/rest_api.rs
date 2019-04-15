@@ -67,7 +67,7 @@ impl Client {
     pub fn new(via: ConnectVia) -> Result<Client> {
         // Choose an appropriate URL.
         let url = match via {
-            ConnectVia::Cluster => "http://falconerid/",
+            ConnectVia::Cluster => "http://falconerid:8089/",
             ConnectVia::Proxy => "http://localhost:8089/",
         }
         .parse()
