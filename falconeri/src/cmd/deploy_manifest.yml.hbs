@@ -99,9 +99,11 @@ spec:
     spec:
       containers:
       - name: falconerid
-        image: falconeri
 {{#if config.use_local_image}}
+        image: falconeri
         imagePullPolicy: Never
+{{else}}
+        image: faraday/falconeri:{{config.version}}
 {{/if}}
         args: ["falconerid"]
         env:

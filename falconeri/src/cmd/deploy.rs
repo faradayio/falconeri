@@ -40,6 +40,8 @@ struct Config {
     /// Should we get our `falconeri` image from `minikube`'s internal Docker
     /// daemon?
     use_local_image: bool,
+    /// The version of `falconeri`.
+    version: String,
 }
 
 /// Parameters used to generate a deploy manifest.
@@ -118,6 +120,7 @@ fn default_config(development: bool) -> Config {
             falconerid_memory: "64Mi".to_string(),
             falconerid_cpu: "100m".to_string(),
             use_local_image: true,
+            version: env!("CARGO_PKG_VERSION").to_string(),
         }
     } else {
         Config {
@@ -127,7 +130,8 @@ fn default_config(development: bool) -> Config {
             postgres_cpu: "900m".to_string(),
             falconerid_memory: "256Mi".to_string(),
             falconerid_cpu: "1".to_string(),
-            use_local_image: true,
+            use_local_image: false,
+            version: env!("CARGO_PKG_VERSION").to_string(),
         }
     }
 }
