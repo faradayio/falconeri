@@ -10,4 +10,4 @@ log = "normal"
 [production]
 address = "0.0.0.0"
 workers = 64
-log = "critical"
+log = "normal"
