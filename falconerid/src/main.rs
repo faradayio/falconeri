@@ -149,6 +149,8 @@ fn main() {
     rocket::ignite()
         // Attach our custom connection pool.
         .attach(DbConn::fairing())
+        // Attach our basic authentication.
+        .attach(User::fairing())
         .mount(
             "/",
             routes![
