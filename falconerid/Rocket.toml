@@ -2,7 +2,8 @@
 port = 8089
 
 [development]
-address = "localhost"
+# We only run inside a container, so bind on a public port.
+address = "0.0.0.0"
 workers = 4
 log = "normal"
 
