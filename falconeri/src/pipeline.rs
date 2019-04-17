@@ -46,6 +46,8 @@ pub struct Transform {
     pub cmd: Vec<String>,
     /// The Docker image to run.
     pub image: String,
+    /// EXTENSION: When should we pull this image?
+    pub image_pull_policy: Option<String>,
     /// Extra environment variables to pass in.
     #[serde(default)]
     pub env: HashMap<String, String>,
