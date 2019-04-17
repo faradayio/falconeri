@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 base64 = "0.10"
 bson = "0.13.0"
+crossbeam = "0.6.0"
 env_logger = "0.6"
 failure = "0.1.1"
 falconeri_common = { path = "../falconeri_common" }

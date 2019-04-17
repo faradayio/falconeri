@@ -535,6 +535,7 @@ version = "0.1.9"
 dependencies = [
  "base64 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bson 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crossbeam 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "falconeri_common 0.1.9",
