@@ -7,7 +7,6 @@ extern crate openssl;
 #[macro_use]
 extern crate rocket;
 
-use env_logger;
 use falconeri_common::{
     falconeri_common_version,
     prelude::*,
@@ -145,7 +144,6 @@ fn patch_output_files(
 }
 
 fn main() {
-    env_logger::init();
     openssl_probe::init_ssl_cert_env_vars();
 
     rocket::ignite()
