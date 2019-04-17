@@ -88,7 +88,7 @@ impl CloudStorage for S3Storage {
             .arg("--bucket")
             .arg(bucket)
             .arg("--prefix")
-            .arg(prefix)
+            .arg(prefix.clone())
             .stderr(process::Stdio::inherit())
             .output()
             .context("could not run gsutil")?;
@@ -111,6 +111,8 @@ impl CloudStorage for S3Storage {
         Ok(s3_output
             .contents
             .into_iter()
+            // Remove the directory itself.
+            .filter(|obj| obj.key != prefix)
             // Convert to URLs.
             .map(|obj| format!("s3://{}/{}", bucket, obj.key))
             .collect::<Vec<_>>())
