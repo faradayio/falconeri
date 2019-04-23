@@ -14,4 +14,4 @@ log = "0.4.3"
 # Needed for ekidd/rust-musl-builder.
 openssl = "*"
 openssl-probe = "0.1.2"
-uuid = { version = "0.6", features = ["serde", "v4"] }
+uuid = { version = "0.7", features = ["serde", "v4"] }

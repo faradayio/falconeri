@@ -16,11 +16,11 @@ use falconeri_common::{
 };
 use openssl_probe;
 use rocket::http::Status as HttpStatus;
-use rocket_contrib::json::Json;
+use rocket_contrib::{json::Json, uuid::Uuid};
 
 mod util;
 
-use util::{DbConn, User, UuidParam};
+use util::{DbConn, User};
 
 /// Return our `falconeri_common` version, which should match the client
 /// exactly (for now).
@@ -31,7 +31,7 @@ fn version() -> String {
 
 /// Look up a job and return it as JSON.
 #[get("/jobs/<job_id>")]
-fn job(_user: User, conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
+fn job(_user: User, conn: DbConn, job_id: Uuid) -> Result<Json<Job>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     Ok(Json(job))
 }
@@ -42,7 +42,7 @@ fn job(_user: User, conn: DbConn, job_id: UuidParam) -> Result<Json<Job>> {
 fn job_reserve_next_datum(
     _user: User,
     conn: DbConn,
-    job_id: UuidParam,
+    job_id: Uuid,
     request: Json<DatumReservationRequest>,
 ) -> Result<Json<Option<DatumReservationResponse>>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
@@ -60,7 +60,7 @@ fn job_reserve_next_datum(
 fn patch_datum(
     _user: User,
     conn: DbConn,
-    datum_id: UuidParam,
+    datum_id: Uuid,
     patch: Json<DatumPatch>,
 ) -> Result<Json<Datum>> {
     let mut datum = Datum::find(datum_id.into_inner(), &conn)?;
