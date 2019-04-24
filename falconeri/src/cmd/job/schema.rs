@@ -1,7 +1,6 @@
 //! The `job schema` subcommand.
 
 use falconeri_common::prelude::*;
-use magnet_schema::BsonSchema;
 use serde_json;
 use std::io::stdout;
 

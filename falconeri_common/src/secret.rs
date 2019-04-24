@@ -1,8 +1,5 @@
 //! Secrets used to access various resources.
 
-use bson::{bson, doc};
-use magnet_derive::BsonSchema;
-
 use crate::prelude::*;
 
 /// A Kubernetes-managed secret used to access some resource, and how we should
@@ -10,7 +7,7 @@ use crate::prelude::*;
 ///
 /// Note that this is used directly as part of the `PipelineSpec` format, so it
 /// can't be changed without breaking a user-facing file format.
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, untagged)]
 pub enum Secret {
     /// A secret that should be mounted as a directory of files.

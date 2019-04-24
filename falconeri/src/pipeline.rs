@@ -4,12 +4,10 @@
 //!
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
-use bson::{bson, doc};
 use falconeri_common::{prelude::*, secret::Secret};
-use magnet_derive::BsonSchema;
 
 /// Represents a pipeline `*.json` file.
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineSpec {
     /// Metadata about this pipeline.
@@ -31,7 +29,7 @@ pub struct PipelineSpec {
 }
 
 /// Metadata about this pipeline.
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pipeline {
     /// The name of this pipeline. Also may be used to default various things.
@@ -39,7 +37,7 @@ pub struct Pipeline {
 }
 
 /// Instructions on how to transform the data.
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Transform {
     /// The command to run, with arguments.
@@ -63,7 +61,7 @@ pub struct Transform {
 }
 
 /// How much parallelism should we use?
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParallelismSpec {
     /// The number of workers to run.
@@ -71,7 +69,7 @@ pub struct ParallelismSpec {
 }
 
 /// How many resources should we allocate for each worker?
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ResourceRequests {
     /// The amount of memory to allocate for each worker. A hard limit. Uses
@@ -83,7 +81,7 @@ pub struct ResourceRequests {
 }
 
 /// Specify our input data.
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum Input {
     /// Input from a cloud storage bucket.
@@ -106,7 +104,7 @@ pub enum Input {
 
 /// How to distribute files from an input across workers. We only support two
 /// kinds of glob patterns for now.
-#[derive(BsonSchema, Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Glob {
     /// Put each top-level directory entry (file, subdir) its own datum.
     #[serde(rename = "/*")]
@@ -118,7 +116,7 @@ pub enum Glob {
 }
 
 /// Where to put the data when we're done with it.
-#[derive(BsonSchema, Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub struct Egress {
     /// A cloud bucket URI in which to place our output data.
