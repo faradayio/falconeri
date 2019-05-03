@@ -19,15 +19,17 @@ spec:
 {{/if}}
 
 ---
-# PostgreSQL replica set: Keeps one PostgreSQL server running.
+# PostgreSQL deployment: Keeps one PostgreSQL server running.
 apiVersion: apps/v1
-kind: ReplicaSet
+kind: Deployment
 metadata:
   name: falconeri-postgres
   labels:
     app: falconeri-postgres
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: falconeri-postgres
