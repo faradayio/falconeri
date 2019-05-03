@@ -47,4 +47,4 @@ gh-pages: _build_falconeri_container
 
 # Our `falconeri` Docker image.
 image: static-bin
-    docker build --build-arg MODE={{mode}} -t falconeri .
+    docker build --build-arg MODE={{mode}} -t faraday/falconeri .
