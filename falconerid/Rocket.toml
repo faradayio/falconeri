@@ -1,6 +1,10 @@
 [global]
 port = 8089
 
+[global.limits]
+# Allow large JSON data, mostly for submitting output logs from workers.
+json = 20971520
+
 [development]
 # We only run inside a container, so bind on a public port.
 address = "0.0.0.0"
