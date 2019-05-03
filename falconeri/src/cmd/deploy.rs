@@ -126,10 +126,10 @@ fn default_config(development: bool) -> Config {
         Config {
             env: "production".to_string(),
             postgres_storage: "10Gi".to_string(),
-            postgres_memory: "2Gi".to_string(),
-            postgres_cpu: "900m".to_string(),
+            postgres_memory: "1Gi".to_string(),
+            postgres_cpu: "500m".to_string(),
             falconerid_memory: "256Mi".to_string(),
-            falconerid_cpu: "1".to_string(),
+            falconerid_cpu: "450m".to_string(),
             use_local_image: false,
             version: env!("CARGO_PKG_VERSION").to_string(),
         }
