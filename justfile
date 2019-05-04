@@ -8,6 +8,9 @@
 # the command line to perform a release build.
 mode = "debug"
 
+# Look up our CLI version (which should match our other package versions).
+version = `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "falconeri") | .version'`
+
 # The docker image `build-falconeri`, which we use to compile things.
 _build_falconeri_image:
     docker build -f Dockerfile.build -t build-falconeri .
@@ -47,4 +50,11 @@ gh-pages: _build_falconeri_container
 
 # Our `falconeri` Docker image.
 image: static-bin
-    docker build --build-arg MODE={{mode}} -t faraday/falconeri .
+    docker build --build-arg MODE={{mode}} -t faraday/falconeri:{{version}} .
+
+# This will publish our image to Docker Hub. Obviously, this requires an
+# authorized account.
+#
+# Before doing this, update version in _all_ Cargo.toml files to a new version.
+publish-image:
+    docker push faraday/falconeri:{{version}}
