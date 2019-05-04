@@ -514,13 +514,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "falconeri"
-version = "0.1.9"
+version = "0.2.0-alpha.1"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "falconeri_common 0.1.9",
+ "falconeri_common 0.2.0-alpha.1",
  "handlebars 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.10.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -536,12 +536,12 @@ dependencies = [
 
 [[package]]
 name = "falconeri-worker"
-version = "0.1.9"
+version = "0.2.0-alpha.1"
 dependencies = [
  "crossbeam 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "falconeri_common 0.1.9",
+ "falconeri_common 0.2.0-alpha.1",
  "glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.10.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -551,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri_common"
-version = "0.1.9"
+version = "0.2.0-alpha.1"
 dependencies = [
  "backoff 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -577,10 +577,10 @@ dependencies = [
 
 [[package]]
 name = "falconerid"
-version = "0.1.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "falconeri_common 0.1.9",
+ "falconeri_common 0.2.0-alpha.1",
  "headers 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.10.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl-probe 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
