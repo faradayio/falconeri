@@ -11,6 +11,19 @@ mode = "debug"
 # Look up our CLI version (which should match our other package versions).
 version = `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "falconeri") | .version'`
 
+# Update all versions. Usage:
+#
+#     just set-version 0.2.1
+#
+# TEMPORARY: This will have to be improved before we can make crate releases,
+# because it doesn't update inter-crate dependencies.
+set-version VERSION:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for TOML in falconeri*/Cargo.toml; do
+        (cd "$(dirname "$TOML")" && cargo bump {{VERSION}})
+    done
+
 # The docker image `build-falconeri`, which we use to compile things.
 _build_falconeri_image:
     docker build -f Dockerfile.build -t build-falconeri .
