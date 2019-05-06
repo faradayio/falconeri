@@ -81,5 +81,38 @@ image: static-bin
 # authorized account.
 #
 # Before doing this, update version in _all_ Cargo.toml files to a new version.
-publish-image:
+publish-image: image
     docker push faraday/falconeri:{{VERSION}}
+
+# Check to make sure that we're in releasable shape.
+check:
+    cargo fmt -- --check
+    cargo audit
+    cargo clippy -- -D warnings
+    cargo test --all
+
+# Check to make sure our working copy is clean.
+check-clean:
+    git diff-index --quiet HEAD --
+
+# PLEASE DO NOT RUN WITHOUT SIGN-OFF FROM emk. This is not a complete set of
+# things that need to be done for a valid release. Some other things:
+#
+# 1. The top-most commit must be a valid release commit in a consistent
+#    format.
+# 2. We must follow an as-yet-incomplete semver policy.
+#
+# If you need to make an internal testing release, you should instead:
+#
+#     just set-version x.y.z-alpha.n
+#     just publish-image
+#     # Copy falconeri-worker from bin/debug
+#
+# Call this as:
+#
+#     just MODE=release release
+#
+release: check check-clean publish-image
+    git tag v{{VERSION}}
+    git push
+    git push --tags

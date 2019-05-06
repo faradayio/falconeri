@@ -43,7 +43,6 @@ impl ConnectVia {
         // `backoff::Error` on failure.
         let mut operation = || -> result::Result<T, backoff::Error<Error>> {
             f().map_err(|err| {
-                let err = err.into();
                 if self.should_retry_by_default() {
                     backoff::Error::Transient(err)
                 } else {

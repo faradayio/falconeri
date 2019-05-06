@@ -235,7 +235,7 @@ fn tee_output(
             Err(e) => {
                 return Err(e)
                     .context("error reading from child process")
-                    .map_err(|e| e.into());
+                    .map_err(Into::into);
             }
         }
     }
