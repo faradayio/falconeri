@@ -11,7 +11,7 @@ spec:
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 10Gi
+      storage: "{{config.postgres_storage}}"
   # You'll need to have an appropriate storage class defined on your cluster.
   # This is defined by default on GKE, and it will allocated and deallocate
   # persistent cloud volumes.
@@ -19,15 +19,17 @@ spec:
 {{/if}}
 
 ---
-# PostgreSQL replica set: Keeps one PostgreSQL server running.
+# PostgreSQL deployment: Keeps one PostgreSQL server running.
 apiVersion: apps/v1
-kind: ReplicaSet
+kind: Deployment
 metadata:
   name: falconeri-postgres
   labels:
     app: falconeri-postgres
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: falconeri-postgres
@@ -39,14 +41,14 @@ spec:
       containers:
       - name: falconeri-postgres
         image: postgres
-        # Deliberately ridiculously high until we add a server, because we have
-        # lots of lightly-used connections. The correct fix here is to write a
-        # falconeri daemon that talks to PostgreSQL for us.
-        args: ["postgres", "-c", "max_connections=2000"]
+        # We no longer need a huge number of connections thanks to falconerid,
+        # but we might want to tune shared_buffers and maybe kernel.shmmax as
+        # well.
+        args: ["postgres"]
         resources:
           requests:
-            cpu: 100m
-            memory: 2Gi
+            cpu: "{{config.postgres_cpu}}"
+            memory: "{{config.postgres_memory}}"
         volumeMounts:
           # To prevent data loss, it's critically important to mount onto
           # `../data`. But we can only do that using `subPath` or PostgreSQL
@@ -78,3 +80,60 @@ spec:
     app: falconeri-postgres
   ports:
   - port: 5432
+
+---
+# falconerid deployment: Keeps some falconerid servers running.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: falconerid
+  labels:
+    app: falconerid
+spec:
+  # It's OK to increase this.
+  replicas: 2
+  selector:
+    matchLabels:
+      app: falconerid
+  template:
+    metadata:
+      labels:
+        app: falconerid
+    spec:
+      containers:
+      - name: falconerid
+        image: faraday/falconeri:{{config.version}}
+{{#if config.use_local_image}}
+        imagePullPolicy: Never
+{{/if}}
+        args: ["falconerid"]
+        env:
+        - name: ROCKET_ENV
+          value: "{{config.env}}"
+        resources:
+          requests:
+            cpu: "{{config.falconerid_cpu}}"
+            memory: "{{config.falconerid_memory}}"
+          limits:
+            memory: "{{config.falconerid_memory}}"
+        ports:
+        - containerPort: 8089
+        volumeMounts:
+        - mountPath: /etc/falconeri/secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: falconeri
+
+---
+# falconerid service: Provides DNS lookup for falconerid.
+kind: Service
+apiVersion: v1
+metadata:
+  name: falconerid
+spec:
+  selector:
+    app: falconerid
+  ports:
+  - port: 8089

@@ -28,7 +28,7 @@ pub fn run(pipeline_spec: &PipelineSpec) -> Result<()> {
     )?;
 
     // Insert everthing into the database.
-    let conn = db::connect(db::ConnectVia::Proxy)?;
+    let conn = db::connect(ConnectVia::Proxy)?;
     let job = conn.transaction(|| -> Result<Job> {
         let job = new_job.insert(&conn)?;
         NewDatum::insert_all(&new_datums, &conn)?;

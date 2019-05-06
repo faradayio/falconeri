@@ -1,1 +1,4 @@
-/target
+gh-pages
+guide/book
+justfile
+target

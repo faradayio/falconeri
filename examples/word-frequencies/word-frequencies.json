@@ -1,0 +1,41 @@
+{
+    "pipeline": {
+        "name": "word_frequencies"
+    },
+    "transform": {
+        "image": "word-frequencies",
+        "image_pull_policy": "Never",
+        "cmd": [
+            "word-frequencies.sh"
+        ],
+        "secrets": [
+            {
+                "name": "s3",
+                "key": "AWS_ACCESS_KEY_ID",
+                "env_var": "AWS_ACCESS_KEY_ID"
+            },
+            {
+                "name": "s3",
+                "key": "AWS_SECRET_ACCESS_KEY",
+                "env_var": "AWS_SECRET_ACCESS_KEY"
+            }
+        ]
+    },
+    "parallelism_spec": {
+        "constant": 1
+    },
+    "resource_requests": {
+        "memory": "128Mi",
+        "cpu": 0.1
+    },
+    "input": {
+        "atom": {
+          "repo": "texts",
+          "URI": "s3://fdy-falconeri-test/texts/",
+          "glob": "/*"
+        }
+    },
+    "egress": {
+        "URI": "s3://fdy-falconeri-test/word-frequencies/"
+    }
+}

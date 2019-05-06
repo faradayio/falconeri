@@ -5,7 +5,7 @@ use rand::{thread_rng, Rng};
 use serde::de::{Deserialize, DeserializeOwned};
 use serde_json;
 use std::{
-    iter,
+    env, iter,
     process::{Command, Stdio},
 };
 
@@ -141,4 +141,14 @@ pub fn resource_tag() -> String {
         .map(|()| rng.sample(Alphanumeric))
         .take(5)
         .collect::<String>()
+}
+
+/// Get the name of the current Kubernetes node.
+pub fn node_name() -> Result<String> {
+    Ok(env::var("FALCONERI_NODE_NAME").context("couldn't get FALCONERI_NODE_NAME")?)
+}
+
+/// Get the name of the current Kubernetes pod.
+pub fn pod_name() -> Result<String> {
+    Ok(env::var("FALCONERI_POD_NAME").context("couldn't get FALCONERI_POD_NAME")?)
 }

@@ -88,7 +88,7 @@ impl CloudStorage for S3Storage {
             .arg("--bucket")
             .arg(bucket)
             .arg("--prefix")
-            .arg(prefix)
+            .arg(prefix.clone())
             .stderr(process::Stdio::inherit())
             .output()
             .context("could not run gsutil")?;
@@ -111,6 +111,8 @@ impl CloudStorage for S3Storage {
         Ok(s3_output
             .contents
             .into_iter()
+            // Remove the directory itself.
+            .filter(|obj| obj.key != prefix)
             // Convert to URLs.
             .map(|obj| format!("s3://{}/{}", bucket, obj.key))
             .collect::<Vec<_>>())
@@ -121,21 +123,31 @@ impl CloudStorage for S3Storage {
         if uri.ends_with('/') {
             fs::create_dir_all(local_path)
                 .context("cannot create local download directory")?;
+            let status = self
+                .aws_command()
+                .args(&["s3", "sync"])
+                .arg(uri)
+                .arg(local_path)
+                .status()
+                .context("could not run aws s3")?;
+            if !status.success() {
+                return Err(format_err!("could not download {:?}: {}", uri, status));
+            }
         } else {
             if let Some(parent) = local_path.parent() {
                 fs::create_dir_all(parent)
                     .context("cannot create local download directory")?;
             }
-        }
-        let status = self
-            .aws_command()
-            .args(&["s3", "sync"])
-            .arg(uri)
-            .arg(local_path)
-            .status()
-            .context("could not run aws s3")?;
-        if !status.success() {
-            return Err(format_err!("could not download {:?}: {}", uri, status));
+            let status = self
+                .aws_command()
+                .args(&["s3", "cp"])
+                .arg(uri)
+                .arg(local_path)
+                .status()
+                .context("could not run aws s3")?;
+            if !status.success() {
+                return Err(format_err!("could not download {:?}: {}", uri, status));
+            }
         }
         Ok(())
     }

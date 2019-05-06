@@ -1,9 +1,14 @@
-FROM ekidd/rust-musl-builder
+# Use Alpine as a base image, because it's small.
+FROM alpine:latest
 
-# We need to add the source code to the image because `rust-musl-builder`
-# assumes a UID of 1000, but TravisCI has switched to 2000.
-ADD . ./
-RUN sudo chown -R rust:rust .
+# Run our webserver out of /app.
+WORKDIR /app
 
-# Build all binaries when on Linux.
-CMD cargo build --all --release && cd guide && mdbook build
+# Configure our Rocket webserver.
+ADD falconerid/Rocket.toml .
+
+# Build target.
+ARG MODE=debug
+
+# Copy static executables into container.
+ADD bin/${MODE}/falconerid bin/${MODE}/falconeri-worker /usr/local/bin/

@@ -1,3 +1,4 @@
 /target
 /guide/book/
 **/*.rs.bk
+/bin/

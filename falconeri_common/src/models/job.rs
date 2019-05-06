@@ -1,13 +1,12 @@
 use cast;
 use diesel::dsl;
 use serde_json;
-use std::env;
 
 use crate::prelude::*;
 use crate::schema::*;
 
 /// A distributed data processing job.
-#[derive(Debug, Identifiable, Queryable, Serialize)]
+#[derive(Debug, Deserialize, Identifiable, Queryable, Serialize)]
 pub struct Job {
     /// The unique ID of this job.
     pub id: Uuid,
@@ -58,12 +57,65 @@ impl Job {
     /// `"processing"`. This is intended to be atomic from an SQL perspective.
     pub fn reserve_next_datum(
         &self,
+        node_name: &str,
+        pod_name: &str,
         conn: &PgConnection,
     ) -> Result<Option<(Datum, Vec<InputFile>)>> {
-        let node_name = env::var("FALCONERI_NODE_NAME")
-            .context("couldn't get FALCONERI_NODE_NAME")?;
-        let pod_name = env::var("FALCONERI_POD_NAME")
-            .context("couldn't get FALCONERI_POD_NAME")?;
+        // Check for existing reservation (which shouldn't happen unless
+        // a reservation got lost somewhere between `falconeri-postgres` and
+        // `falconeri-worker`), and if none exists, make a new one.
+        let mut datum = self.find_already_reserved_datum(pod_name, conn)?;
+        if let Some(ref datum) = datum {
+            warn!(
+                "pod {} tried to reserve datum {} more than once",
+                pod_name, datum.id,
+            );
+        } else {
+            datum = self.actually_reserve_next_datum(node_name, pod_name, conn)?;
+        }
+
+        // If we've got a datum, get the `input_files` to go with it.
+        if let Some(datum) = datum {
+            let files = InputFile::belonging_to(&datum)
+                .load(conn)
+                .context("cannot load file information")?;
+            Ok(Some((datum, files)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Find any datum which has already been assignd to `pod_name`. This can
+    /// happen if an HTTP client calls `reserve_next_datum`, the reservation
+    /// succeeds at the database layer, but the HTTP response never reaches the
+    /// client.
+    ///
+    /// But if the reservation has been made at the database layer, we can make
+    /// the reservation idempotent by looking for an existing reservation.
+    fn find_already_reserved_datum(
+        &self,
+        pod_name: &str,
+        conn: &PgConnection,
+    ) -> Result<Option<Datum>> {
+        Ok(datums::table
+            .filter(
+                datums::job_id
+                    .eq(&self.id)
+                    .and(datums::pod_name.eq(pod_name))
+                    .and(datums::status.eq(Status::Running)),
+            )
+            .get_result(conn)
+            .optional()?)
+    }
+
+    /// Internal helper for `reserve_next_datum` which performs the actual
+    /// atomic reservation part itself, if we actually need to do so.
+    fn actually_reserve_next_datum(
+        &self,
+        node_name: &str,
+        pod_name: &str,
+        conn: &PgConnection,
+    ) -> Result<Option<Datum>> {
         conn.transaction(|| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
@@ -87,10 +139,7 @@ impl Job {
                     ))
                     .get_result(conn)
                     .context("cannot mark datum as 'processing'")?;
-                let files = InputFile::belonging_to(&datum)
-                    .load(conn)
-                    .context("cannot load file information")?;
-                Ok(Some((datum, files)))
+                Ok(Some(datum))
             } else {
                 Ok(None)
             }

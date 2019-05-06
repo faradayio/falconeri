@@ -19,7 +19,7 @@ struct Params {
 /// The `job describe` subcommand.
 pub fn run(job_name: &str) -> Result<()> {
     // Load the data we want to display.
-    let conn = db::connect(db::ConnectVia::Proxy)?;
+    let conn = db::connect(ConnectVia::Proxy)?;
     let job = Job::find_by_job_name(job_name, &conn)?;
     let datum_status_counts = job.datum_status_counts(&conn)?;
     let running_datums = job.datums_with_status(Status::Running, &conn)?;

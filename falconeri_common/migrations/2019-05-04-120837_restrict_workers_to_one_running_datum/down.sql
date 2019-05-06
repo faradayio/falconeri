@@ -1,0 +1,1 @@
+DROP INDEX one_running_datum_per_pod_name;

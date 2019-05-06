@@ -4,7 +4,9 @@ extern crate openssl;
 use crossbeam::{self, thread::Scope};
 use env_logger;
 use falconeri_common::{
-    common_failures::display::DisplayCausesAndBacktraceExt, db, prelude::*,
+    common_failures::display::DisplayCausesAndBacktraceExt,
+    prelude::*,
+    rest_api::{Client, OutputFilePatch},
     storage::CloudStorage,
 };
 use glob;
@@ -43,48 +45,57 @@ fn main() -> Result<()> {
     let job_id = args[1].parse::<Uuid>().context("can't parse job ID")?;
     debug!("job ID: {}", job_id);
 
-    // Connect to the database.
-    let mut conn = db::connect(db::ConnectVia::Cluster)?;
+    // Create a REST client.
+    let client = Client::new(ConnectVia::Cluster)?;
 
     // Loop until there are no more datums.
     loop {
         // Fetch our job, and make sure that it's still running.
-        let mut job = Job::find(job_id, &conn)?;
+        let mut job = client.job(job_id)?;
         trace!("job: {:?}", job);
         if job.status != Status::Running {
             break;
         }
 
         // Get the next datum and process it.
-        if let Some((mut datum, files)) = job.reserve_next_datum(&conn)? {
+        if let Some((mut datum, files)) = client.reserve_next_datum(&job)? {
             // Process our datum, capturing its output.
             let output = Arc::new(RwLock::new(vec![]));
-            let result =
-                process_datum(&job, &datum, &files, &job.command, output.clone());
+            let result = process_datum(
+                &client,
+                &job,
+                &datum,
+                &files,
+                &job.command,
+                output.clone(),
+            );
             let output_str = String::from_utf8_lossy(
                 &output.read().expect("background thread panic"),
             )
             .into_owned();
 
-            // Reconnect to the database after processing the datum, in case our DB
-            // connection has timed out or something horrible like that.
-            conn = db::connect(db::ConnectVia::Cluster)?;
-
             // Handle the processing results.
             match result {
-                Ok(()) => datum.mark_as_done(output_str.as_ref(), &conn)?,
+                Ok(()) => client.mark_datum_as_done(&mut datum, output_str)?,
                 Err(err) => {
                     error!(
                         "failed to process datum {}: {}",
                         datum.id,
                         err.display_causes_and_backtrace(),
                     );
-                    datum.mark_as_error(output_str.as_ref(), &err, &conn)?
+                    let error_message =
+                        format!("{}", err.display_causes_without_backtrace());
+                    let backtrace = format!("{}", err.backtrace());
+                    client.mark_datum_as_error(
+                        &mut datum,
+                        output_str,
+                        error_message,
+                        backtrace,
+                    )?
                 }
             }
         } else {
             debug!("no more datums to process");
-            job.update_status_if_done(&conn)?;
 
             // Don't exit until all the other workers are ready to exit, because
             // we might be getting run as a Kubernetes `Job`, and if so, a 0
@@ -93,7 +104,7 @@ fn main() -> Result<()> {
             while job.status == Status::Running {
                 trace!("waiting for job to finish");
                 sleep(Duration::from_secs(30));
-                job = Job::find(job_id, &conn)?;
+                job = client.job(job_id)?;
             }
             debug!("all workers have finished");
             break;
@@ -105,6 +116,7 @@ fn main() -> Result<()> {
 
 /// Process a single datum.
 fn process_datum(
+    client: &Client,
     job: &Job,
     datum: &Datum,
     files: &[InputFile],
@@ -150,7 +162,7 @@ fn process_datum(
         }
 
         // Finish up.
-        upload_outputs(job, datum).context("could not upload outputs")?;
+        upload_outputs(&client, job, datum).context("could not upload outputs")?;
         reset_work_dirs()?;
         Ok(())
     })
@@ -275,14 +287,11 @@ fn reset_work_dir(work_dir: &Path) -> Result<()> {
 }
 
 /// Upload `/pfs/out` to our output bucket.
-fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
+fn upload_outputs(client: &Client, job: &Job, datum: &Datum) -> Result<()> {
     debug!("uploading outputs");
 
-    // Make a new database connection, because any one we created before running
-    // our command might have expired.
-    let conn = db::connect(db::ConnectVia::Cluster)?;
-
     // Create records describing the files we're going to upload.
+    let mut new_output_files = vec![];
     let local_paths = glob::glob("/pfs/out/**/*").context("error listing /pfs/out")?;
     for local_path in local_paths {
         let local_path = local_path.context("error listing /pfs/out")?;
@@ -309,21 +318,28 @@ fn upload_outputs(job: &Job, datum: &Datum) -> Result<()> {
         uri.push_str(&rel_path_str);
 
         // Create a database record for the file we're about to upload.
-        NewOutputFile {
+        new_output_files.push(NewOutputFile {
             datum_id: datum.id,
             job_id: job.id,
             uri: uri.clone(),
-        }
-        .insert(&conn)?;
+        });
     }
+    let output_files = client.create_output_files(&new_output_files)?;
 
-    // Upload all our files in a batch, for maximum performance, and record
-    // what happened.
+    // Upload all our files in a batch, for maximum performance.
     let storage = CloudStorage::for_uri(&job.egress_uri, &[])?;
     let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
-    match result {
-        Ok(()) => OutputFile::mark_as_done(datum, &conn)?,
-        Err(_) => OutputFile::mark_as_error(datum, &conn)?,
-    }
+    let status = match result {
+        Ok(()) => Status::Done,
+        Err(_) => Status::Error,
+    };
+
+    // Record what happened.
+    let patches = output_files
+        .iter()
+        .map(|f| OutputFilePatch { id: f.id, status })
+        .collect::<Vec<_>>();
+    client.patch_output_files(&patches)?;
+
     result
 }

@@ -22,14 +22,37 @@ struct SecretManifestParams {
     postgres_password: String,
 }
 
+/// Per-environment configuration.
+#[derive(Serialize)]
+struct Config {
+    /// The name of the environment. Should be `development` or `production`.
+    env: String,
+    /// The amount of disk to allocate for PostgreSQL.
+    postgres_storage: String,
+    /// The amount of RAM to request for PostgreSQL.
+    postgres_memory: String,
+    /// The number of CPUs to request for PostgreSQL.
+    postgres_cpu: String,
+    /// The amount of RAM to request for `falconerid`.
+    falconerid_memory: String,
+    /// The number of CPUs to request for `falconerid`.
+    falconerid_cpu: String,
+    /// Should we get our `falconeri` image from `minikube`'s internal Docker
+    /// daemon?
+    use_local_image: bool,
+    /// The version of `falconeri`.
+    version: String,
+}
+
 /// Parameters used to generate a deploy manifest.
 #[derive(Serialize)]
 struct DeployManifestParams {
     all: bool,
+    config: Config,
 }
 
 /// Deploy `falconeri` to the current Kubernetes cluster.
-pub fn run(dry_run: bool) -> Result<()> {
+pub fn run(dry_run: bool, development: bool) -> Result<()> {
     // Generate a password using the system's "secure" random number generator.
     let mut rng = EntropyRng::new();
     let postgres_password = iter::repeat(())
@@ -44,7 +67,10 @@ pub fn run(dry_run: bool) -> Result<()> {
     let secret_manifest = render_manifest(SECRET_MANIFEST, &secret_params)?;
 
     // Generate our deploy manifest.
-    let deploy_params = DeployManifestParams { all: true };
+    let deploy_params = DeployManifestParams {
+        all: true,
+        config: default_config(development),
+    };
     let deploy_manifest = render_manifest(DEPLOY_MANIFEST, &deploy_params)?;
 
     // Combine our manifests, only including the secret if we need it.
@@ -66,7 +92,12 @@ pub fn run(dry_run: bool) -> Result<()> {
 /// Undeploy `falconeri`, removing it from the cluster.
 pub fn run_undeploy(all: bool) -> Result<()> {
     // Clean up things declared by our regular manifest.
-    let params = DeployManifestParams { all };
+    let params = DeployManifestParams {
+        all,
+        // We can always use the production config, because we don't
+        // care about the details of the resources we're deleting.
+        config: default_config(false),
+    };
     let manifest = render_manifest(DEPLOY_MANIFEST, &params)?;
     kubernetes::undeploy(&manifest)?;
 
@@ -76,4 +107,31 @@ pub fn run_undeploy(all: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Get our default deployment config.
+fn default_config(development: bool) -> Config {
+    if development {
+        Config {
+            env: "development".to_string(),
+            postgres_storage: "100Mi".to_string(),
+            postgres_memory: "256Mi".to_string(),
+            postgres_cpu: "100m".to_string(),
+            falconerid_memory: "64Mi".to_string(),
+            falconerid_cpu: "100m".to_string(),
+            use_local_image: true,
+            version: env!("CARGO_PKG_VERSION").to_string(),
+        }
+    } else {
+        Config {
+            env: "production".to_string(),
+            postgres_storage: "10Gi".to_string(),
+            postgres_memory: "1Gi".to_string(),
+            postgres_cpu: "500m".to_string(),
+            falconerid_memory: "256Mi".to_string(),
+            falconerid_cpu: "450m".to_string(),
+            use_local_image: false,
+            version: env!("CARGO_PKG_VERSION").to_string(),
+        }
+    }
 }

@@ -31,6 +31,9 @@ spec:
       containers:
       - name: worker
         image: "{{pipeline_spec.transform.image}}"
+{{#if pipeline_spec.transform.image_pull_policy}}
+        imagePullPolicy: "{{pipeline_spec.transform.image_pull_policy}}"
+{{/if}}
         command: ["/usr/local/bin/falconeri-worker", "{{job.id}}"]
         resources:
           requests:

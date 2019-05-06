@@ -6,7 +6,7 @@ use prettytable::{cell, format::consts::FORMAT_CLEAN, row, Table};
 /// The `job list` subcommand.
 pub fn run() -> Result<()> {
     // Look up the information to display.
-    let conn = db::connect(db::ConnectVia::Proxy)?;
+    let conn = db::connect(ConnectVia::Proxy)?;
     let jobs = Job::list(&conn)?;
 
     // Create a new table. This library makes some rather unusual API choices,
