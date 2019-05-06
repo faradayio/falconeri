@@ -3,13 +3,25 @@
 # install using `cargo install -f just`.
 #
 # To see a list of available commands, run `just --list`.
+#
+# To make an alpha release:
+#
+# 1. Run `just set-version 0.x.y-alpha.z`, where `0.x.y` will be the next
+#    release.
+# 2. Run `just publish-image`.
+# 3. Grab `bin/debug/falconeri-worker` and rebuild your worker image.
+# 4. Run `cargo run -p falconeri -- deploy` to update `falconerid`.
 
 # This should be either "debug" or "release". You can pass `mode=release` on
 # the command line to perform a release build.
-mode = "debug"
+MODE = "debug"
 
 # Look up our CLI version (which should match our other package versions).
-version = `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "falconeri") | .version'`
+VERSION = `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "falconeri") | .version'`
+
+# Print the current version.
+version:
+    @echo "{{VERSION}}"
 
 # Update all versions. Usage:
 #
@@ -17,11 +29,11 @@ version = `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name
 #
 # TEMPORARY: This will have to be improved before we can make crate releases,
 # because it doesn't update inter-crate dependencies.
-set-version VERSION:
+set-version NEW_VERSION:
     #!/usr/bin/env bash
     set -euo pipefail
     for TOML in falconeri*/Cargo.toml; do
-        (cd "$(dirname "$TOML")" && cargo bump {{VERSION}})
+        (cd "$(dirname "$TOML")" && cargo bump {{NEW_VERSION}})
     done
 
 # The docker image `build-falconeri`, which we use to compile things.
@@ -35,7 +47,7 @@ _build_falconeri_container: _build_falconeri_image
     #!/usr/bin/env bash
     set -euo pipefail
     docker rm build-falconeri-container || true
-    if [ "{{mode}}" == debug ]; then
+    if [ "{{MODE}}" == debug ]; then
         docker run \
             -v falconeri-cargo-git:/home/rust/.cargo/git \
             -v falconeri-cargo-git:/home/rust/.cargo/registry \
@@ -49,12 +61,12 @@ _build_falconeri_container: _build_falconeri_image
             build-falconeri
     fi
 
-# Create a `bin/{{mode}}/` directory with our various binaries.
+# Create a `bin/{{MODE}}/` directory with our various binaries.
 static-bin: _build_falconeri_container
-    mkdir -p 'bin/{{mode}}'
-    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{mode}}/falconeri' 'bin/{{mode}}/falconeri'
-    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{mode}}/falconerid' 'bin/{{mode}}/falconerid'
-    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{mode}}/falconeri-worker' 'bin/{{mode}}/falconeri-worker'
+    mkdir -p 'bin/{{MODE}}'
+    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
+    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
+    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
 
 # Create a `gh-pages` directory with our "GitHub pages" documentation.
 gh-pages: _build_falconeri_container
@@ -63,11 +75,11 @@ gh-pages: _build_falconeri_container
 
 # Our `falconeri` Docker image.
 image: static-bin
-    docker build --build-arg MODE={{mode}} -t faraday/falconeri:{{version}} .
+    docker build --build-arg MODE={{MODE}} -t faraday/falconeri:{{VERSION}} .
 
 # This will publish our image to Docker Hub. Obviously, this requires an
 # authorized account.
 #
 # Before doing this, update version in _all_ Cargo.toml files to a new version.
 publish-image:
-    docker push faraday/falconeri:{{version}}
+    docker push faraday/falconeri:{{VERSION}}
