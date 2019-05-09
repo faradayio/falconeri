@@ -15,7 +15,6 @@ deploy:
     file: "falconeri-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.*"
     skip_cleanup: true
     on:
-      rust: stable
       tags: true
   - provider: pages
     skip-cleanup: true
