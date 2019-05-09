@@ -23,5 +23,4 @@ deploy:
     keep-history: true
     github-token: $GITHUB_TOKEN
     on:
-      rust: stable
       condition: $TRAVIS_OS_NAME = linux
