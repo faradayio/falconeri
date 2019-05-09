@@ -57,7 +57,9 @@ pub fn database_url(via: ConnectVia) -> Result<String> {
     let password = postgres_password(via)?;
     match via {
         ConnectVia::Proxy => {
-            Ok(format!("postgres://postgres:{}@localhost:5432/", password))
+            let host = env::var("FALCONERI_PROXY_HOST")
+                .unwrap_or_else(|_| "localhost".to_string());
+            Ok(format!("postgres://postgres:{}@{}:5432/", password, host))
         }
         ConnectVia::Cluster => Ok(format!(
             "postgres://postgres:{}@falconeri-postgres:5432/",
