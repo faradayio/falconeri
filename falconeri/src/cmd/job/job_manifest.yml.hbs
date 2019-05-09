@@ -10,6 +10,7 @@ metadata:
   labels:
     "created-by": "falconeri"
 spec:
+  completions: {{pipeline_spec.parallelism_spec.constant}}
   parallelism: {{pipeline_spec.parallelism_spec.constant}}
   template:
     metadata:
