@@ -6,7 +6,7 @@ ADD . ./
 RUN sudo chown -R rust:rust .
 
 # Extra arguments to pass to cargo.
-ENV CARGO_ARGS=
+ARG CARGO_ARGS=
 
 # Build all binaries.
 CMD if [ -d target ]; then sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; fi && \
