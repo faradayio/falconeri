@@ -2,3 +2,4 @@
 /guide/book/
 **/*.rs.bk
 /bin/
+/examples/word-frequencies/falconeri-worker
