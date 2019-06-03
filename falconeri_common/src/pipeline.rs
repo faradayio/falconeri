@@ -4,7 +4,7 @@
 //!
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
-use falconeri_common::{prelude::*, secret::Secret};
+use crate::{prelude::*, secret::Secret};
 
 /// Represents a pipeline `*.json` file.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

@@ -9,6 +9,7 @@ extern crate rocket;
 
 use falconeri_common::{
     falconeri_common_version,
+    pipeline::PipelineSpec,
     prelude::*,
     rest_api::{
         DatumPatch, DatumReservationRequest, DatumReservationResponse, OutputFilePatch,
@@ -18,8 +19,11 @@ use openssl_probe;
 use rocket::http::Status as HttpStatus;
 use rocket_contrib::{json::Json, uuid::Uuid};
 
+pub(crate) mod inputs;
+mod start_job;
 mod util;
 
+use start_job::{retry_job, run_job};
 use util::{DbConn, User};
 
 /// Return our `falconeri_common` version, which should match the client
@@ -29,11 +33,35 @@ fn version() -> String {
     falconeri_common_version().to_string()
 }
 
+/// Create a new job from a JSON pipeline spec.
+#[post("/jobs", data = "<pipeline_spec>")]
+fn post_job(
+    _user: User,
+    conn: DbConn,
+    pipeline_spec: Json<PipelineSpec>,
+) -> Result<Json<Job>> {
+    Ok(Json(run_job(&pipeline_spec, &conn)?))
+}
+
+/// Look up a job and return it as JSON.
+#[get("/jobs?<job_name>")]
+fn get_job_by_name(_user: User, conn: DbConn, job_name: String) -> Result<Json<Job>> {
+    let job = Job::find_by_job_name(&job_name, &conn)?;
+    Ok(Json(job))
+}
+
 /// Look up a job and return it as JSON.
 #[get("/jobs/<job_id>")]
-fn job(_user: User, conn: DbConn, job_id: Uuid) -> Result<Json<Job>> {
+fn get_job(_user: User, conn: DbConn, job_id: Uuid) -> Result<Json<Job>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     Ok(Json(job))
+}
+
+/// Retry a job, and return the new job as JSON.
+#[post("/jobs/<job_id>/retry")]
+fn job_retry(_user: User, conn: DbConn, job_id: Uuid) -> Result<Json<Job>> {
+    let job = Job::find(job_id.into_inner(), &conn)?;
+    Ok(Json(retry_job(&job, &conn)?))
 }
 
 /// Reserve the next available datum for a job, and return it along with a list
@@ -155,8 +183,11 @@ fn main() {
             "/",
             routes![
                 version,
-                job,
+                post_job,
+                get_job,
+                get_job_by_name,
                 job_reserve_next_datum,
+                job_retry,
                 patch_datum,
                 create_output_files,
                 patch_output_files,

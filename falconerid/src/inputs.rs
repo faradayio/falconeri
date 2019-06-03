@@ -2,12 +2,11 @@
 
 use falconeri_common::{
     models::{NewDatum, NewInputFile},
+    pipeline::{Glob, Input},
     prelude::*,
     secret::Secret,
     storage::CloudStorage,
 };
-
-use crate::pipeline::{Glob, Input};
 
 /// (Local helper type.) This is essentially just a `NewDatum` and a
 /// `Vec<NewInputFile>`, but in a more convenient format that works better with

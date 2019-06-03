@@ -3,12 +3,11 @@
 use base64;
 use falconeri_common::{
     kubernetes,
+    manifest::render_manifest,
     prelude::*,
     rand::{distributions::Alphanumeric, rngs::EntropyRng, Rng},
 };
 use std::iter;
-
-use crate::manifest::render_manifest;
 
 /// The manifest defining secrets for `falconeri`.
 const SECRET_MANIFEST: &str = include_str!("secret_manifest.yml.hbs");

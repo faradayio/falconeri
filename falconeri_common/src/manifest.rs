@@ -1,7 +1,8 @@
 //! Tools for manipulating Kubernetes manifests.
 
-use falconeri_common::prelude::*;
 use handlebars::Handlebars;
+
+use crate::prelude::*;
 
 /// Render the specified YAML manifest, filling in the supplied values
 /// using [Handlebars][].
