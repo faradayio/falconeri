@@ -48,6 +48,7 @@ pub enum Opt {
     // Schema,
     /// Wait for the specified job to finish, either successfully or with an
     /// error.
+    #[structopt(name = "wait")]
     Wait {
         /// The name of the job to wait for.
         job_name: String,
