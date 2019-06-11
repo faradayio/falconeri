@@ -107,3 +107,35 @@ Finally, update your database to the latest schema:
 ```sh
 falconeri migrate
 ```
+
+## Setting up an HTTP ingress
+
+`falconerid` provides a simple REST API, allowing it to be used as a service by other applications. (This is not documented yet, but you could look at `faraday_common/src/rest_api.rs` for the details.) Within a Kubernetes cluster, you should be able to access the HTTP endpoint associated with `service/falconeri`.
+
+You can also create a Kubernetes `Ingress` resource which exposes `falconerid` from outside the cluster and binds a DNS name to it. For example, using [aws-alb-ingress-controller][], you could expose `falconerid` as follows (untested):
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: falconerid
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/subnets: subnet-00000000,subnet-00000001
+    alb.ingress.kubernetes.io/tags: Environment=production,Team=test
+spec:
+  rules:
+    - host: falconerid.cluster-subzone.example.com
+      port: '8089'
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: falconerid
+              servicePort: 8089
+```
+
+Note that if you make `falconerid` available over the internet, you **must** set up HTTPS certificates for your load balancer.
+
+[aws-alb-ingress-controller]: https://github.com/kubernetes-sigs/aws-alb-ingress-controller/
