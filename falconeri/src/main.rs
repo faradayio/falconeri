@@ -2,7 +2,7 @@
 extern crate openssl;
 
 use env_logger;
-use falconeri_common::prelude::*;
+use falconeri_common::{common_failures::quick_main, prelude::*};
 use openssl_probe;
 use structopt::StructOpt;
 
@@ -58,7 +58,9 @@ enum Opt {
     },
 }
 
-fn main() -> Result<()> {
+quick_main!(run);
+
+fn run() -> Result<()> {
     env_logger::init();
     openssl_probe::init_ssl_cert_env_vars();
     let opt = Opt::from_args();

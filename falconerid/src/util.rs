@@ -1,15 +1,18 @@
 //! Various Rocket-related utilities.
 
-use falconeri_common::{db, prelude::*};
+use falconeri_common::{
+    common_failures::display::DisplayCausesAndBacktraceExt, db, prelude::*,
+};
 use headers::{authorization::Basic, Authorization, Header, HeaderValue};
 use rocket::{
-    fairing,
+    self, fairing,
     http::Status,
     logger,
     request::{self, FromRequest, Request},
+    response::{self, Responder, Response},
     Outcome, State,
 };
-use std::{ops, result};
+use std::{io, ops, result};
 
 /// A connection to our database, using a connection pool.
 ///
@@ -151,3 +154,34 @@ fn basic_auth_from_request(
         Ok(Some(auth))
     }
 }
+
+/// An error type for `falconerid`. Ideally, this should be an enum with members
+/// like `NotFound` and `Other`, which would allow us to send 404 responses,
+/// etc. But for now it's just a wrapper.
+#[derive(Debug)]
+pub struct FalconeridError(Error);
+
+impl<'r> Responder<'r> for FalconeridError {
+    fn respond_to(self, _: &Request) -> response::Result<'r> {
+        // Log our full error, including the backtrace.
+        logger::error(&format!("{}", self.0.display_causes_without_backtrace()));
+
+        // Put the error message in the payload for now. This might become JSON
+        // in the future.
+        let payload = format!("{}", self.0.display_causes_without_backtrace());
+        Response::build()
+            .sized_body(io::Cursor::new(payload))
+            .header(rocket::http::ContentType::Plain)
+            .status(Status::InternalServerError)
+            .ok()
+    }
+}
+
+impl From<Error> for FalconeridError {
+    fn from(err: Error) -> Self {
+        FalconeridError(err)
+    }
+}
+
+/// The result type of `falconerid` handler.
+pub type FalconeridResult<T> = result::Result<T, FalconeridError>;

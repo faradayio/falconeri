@@ -279,7 +279,7 @@ impl Client {
     /// PATCH /output_files
     pub fn patch_output_files(&self, patches: &[OutputFilePatch]) -> Result<()> {
         let url = self.url.join("output_files")?;
-        self.via.retry_if_appropriate(|| {
+        self.via.retry_if_appropriate(|| -> Result<()> {
             let resp = self
                 .client
                 .patch(url.clone())
@@ -287,15 +287,7 @@ impl Client {
                 .json(patches)
                 .send()
                 .with_context(|_| format!("error patching {}", url))?;
-            if resp.status().is_success() {
-                Ok(())
-            } else {
-                Err(format_err!(
-                    "unexpected HTTP status {} for {}",
-                    resp.status(),
-                    url
-                ))
-            }
+            self.handle_empty_response(&url, resp)
         })
     }
 
@@ -314,11 +306,29 @@ impl Client {
                 .with_context(|_| format!("error parsing {}", url))?;
             Ok(value)
         } else {
-            Err(format_err!(
-                "unexpected HTTP status {} for {}",
+            Err(self.handle_error_response(url, resp))
+        }
+    }
+
+    /// Check the HTTP status code and parse a JSON response.
+    fn handle_empty_response(&self, url: &Url, resp: reqwest::Response) -> Result<()> {
+        if resp.status().is_success() {
+            Ok(())
+        } else {
+            Err(self.handle_error_response(url, resp))
+        }
+    }
+
+    /// Extract an error from an HTTP respone payload.
+    fn handle_error_response(&self, url: &Url, mut resp: reqwest::Response) -> Error {
+        match resp.text() {
+            Ok(body) => format_err!(
+                "unexpected HTTP status {} for {}:\n{}",
                 resp.status(),
-                url
-            ))
+                url,
+                body,
+            ),
+            Err(err) => err.into(),
         }
     }
 }
