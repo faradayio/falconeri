@@ -31,7 +31,9 @@ RUN echo http://dl-cdn.alpinelinux.org/alpine/edge/testing/ >> /etc/apk/reposito
     apk --no-cache --update add aws-cli
 
 # Install `kubectl`.
-ADD https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl /usr/local/bin/kubectl
+ARG KUBERNETES_VERSION=1.13.4
+ENV KUBERNETES_VERSION=$KUBERNETES_VERSION
+ADD https://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kubectl
 
 # Run our webserver out of /app.
