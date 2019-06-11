@@ -3,12 +3,12 @@
 use base64;
 use falconeri_common::{
     kubernetes,
+    manifest::render_manifest,
     prelude::*,
     rand::{distributions::Alphanumeric, rngs::EntropyRng, Rng},
 };
 use std::iter;
-
-use crate::manifest::render_manifest;
+use structopt::StructOpt;
 
 /// The manifest defining secrets for `falconeri`.
 const SECRET_MANIFEST: &str = include_str!("secret_manifest.yml.hbs");
@@ -33,6 +33,8 @@ struct Config {
     postgres_memory: String,
     /// The number of CPUs to request for PostgreSQL.
     postgres_cpu: String,
+    /// The number of copies of `falconerid` to run.
+    falconerid_replicas: u16,
     /// The amount of RAM to request for `falconerid`.
     falconerid_memory: String,
     /// The number of CPUs to request for `falconerid`.
@@ -51,8 +53,45 @@ struct DeployManifestParams {
     config: Config,
 }
 
+/// Commands for interacting with the database.
+#[derive(Debug, StructOpt)]
+#[structopt(name = "deploy", about = "Commands for interacting with the database.")]
+pub struct Opt {
+    /// Just print out the manifest without deploying it.
+    #[structopt(long = "dry-run")]
+    dry_run: bool,
+
+    /// Deploy a development server (for minikube).
+    #[structopt(long = "development")]
+    development: bool,
+
+    /// The amount of disk to allocate for PostgreSQL.
+    #[structopt(long = "postgres-storage")]
+    postgres_storage: Option<String>,
+
+    /// The amount of RAM to request for PostgreSQL.
+    #[structopt(long = "postgres-memory")]
+    postgres_memory: Option<String>,
+
+    /// The number of CPUs to request for PostgreSQL.
+    #[structopt(long = "postgres-cpu")]
+    postgres_cpu: Option<String>,
+
+    /// The number of copies of `falconerid` to run.
+    #[structopt(long = "falconerid-replicas")]
+    falconerid_replicas: Option<u16>,
+
+    /// The amount of RAM to request for `falconerid`.
+    #[structopt(long = "falconerid-memory")]
+    falconerid_memory: Option<String>,
+
+    /// The number of CPUs to request for `falconerid`.
+    #[structopt(long = "falconerid-cpu")]
+    falconerid_cpu: Option<String>,
+}
+
 /// Deploy `falconeri` to the current Kubernetes cluster.
-pub fn run(dry_run: bool, development: bool) -> Result<()> {
+pub fn run(opt: &Opt) -> Result<()> {
     // Generate a password using the system's "secure" random number generator.
     let mut rng = EntropyRng::new();
     let postgres_password = iter::repeat(())
@@ -66,11 +105,29 @@ pub fn run(dry_run: bool, development: bool) -> Result<()> {
     };
     let secret_manifest = render_manifest(SECRET_MANIFEST, &secret_params)?;
 
+    // Figure out our configuration.
+    let mut config = default_config(opt.development);
+    if let Some(postgres_storage) = &opt.postgres_storage {
+        config.postgres_storage = postgres_storage.to_owned();
+    }
+    if let Some(postgres_memory) = &opt.postgres_memory {
+        config.postgres_memory = postgres_memory.to_owned();
+    }
+    if let Some(postgres_cpu) = &opt.postgres_cpu {
+        config.postgres_cpu = postgres_cpu.to_owned();
+    }
+    if let Some(falconerid_replicas) = opt.falconerid_replicas {
+        config.falconerid_replicas = falconerid_replicas;
+    }
+    if let Some(falconerid_memory) = &opt.falconerid_memory {
+        config.falconerid_memory = falconerid_memory.to_owned();
+    }
+    if let Some(falconerid_cpu) = &opt.falconerid_cpu {
+        config.falconerid_cpu = falconerid_cpu.to_owned();
+    }
+
     // Generate our deploy manifest.
-    let deploy_params = DeployManifestParams {
-        all: true,
-        config: default_config(development),
-    };
+    let deploy_params = DeployManifestParams { all: true, config };
     let deploy_manifest = render_manifest(DEPLOY_MANIFEST, &deploy_params)?;
 
     // Combine our manifests, only including the secret if we need it.
@@ -80,7 +137,7 @@ pub fn run(dry_run: bool, development: bool) -> Result<()> {
     }
     manifest.push_str(&deploy_manifest);
 
-    if dry_run {
+    if opt.dry_run {
         // Print out our manifests.
         print!("{}", manifest);
     } else {
@@ -117,6 +174,7 @@ fn default_config(development: bool) -> Config {
             postgres_storage: "100Mi".to_string(),
             postgres_memory: "256Mi".to_string(),
             postgres_cpu: "100m".to_string(),
+            falconerid_replicas: 1,
             falconerid_memory: "64Mi".to_string(),
             falconerid_cpu: "100m".to_string(),
             use_local_image: true,
@@ -128,6 +186,7 @@ fn default_config(development: bool) -> Config {
             postgres_storage: "10Gi".to_string(),
             postgres_memory: "1Gi".to_string(),
             postgres_cpu: "500m".to_string(),
+            falconerid_replicas: 2,
             falconerid_memory: "256Mi".to_string(),
             falconerid_cpu: "450m".to_string(),
             use_local_image: false,

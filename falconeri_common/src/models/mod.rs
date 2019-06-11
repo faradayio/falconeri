@@ -52,6 +52,17 @@ pub enum Status {
     Canceled,
 }
 
+impl Status {
+    /// Return true if this has completed successfully, failed beyond recovery,
+    /// or been cancelled.
+    pub fn has_finished(self) -> bool {
+        match self {
+            Status::Ready | Status::Running => false,
+            Status::Done | Status::Error | Status::Canceled => true,
+        }
+    }
+}
+
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match *self {

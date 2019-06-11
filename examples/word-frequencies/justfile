@@ -10,7 +10,7 @@ minikube:
 
 # Build our image.
 image:
-    cp ../../bin/debug/falconeri-worker
+    cp ../../bin/debug/falconeri-worker .
     docker build -t word-frequencies .
 
 # Create a secret using credentials from a vault server, if you have one.

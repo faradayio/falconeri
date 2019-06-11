@@ -1,0 +1,103 @@
+---
+# Batch job template for falconeri jobs.
+#
+# This is a YAML file processed using handlebars. See
+# https://docs.rs/handlebars and https://handlebarsjs.com/
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{job.job_name}}"
+  labels:
+    "created-by": "falconeri"
+spec:
+  parallelism: {{pipeline_spec.parallelism_spec.constant}}
+  template:
+    metadata:
+      labels:
+        "created-by": "falconeri"
+    spec:
+{{#if pipeline_spec.transform.service_account}}
+      serviceAccountName: "{{pipeline_spec.transform.service_account}}"
+{{/if}}
+      tolerations:
+      - key: "fdy.io/falconeri"
+        operator: "Equal"
+        value: "worker"
+        effect: "NoExecute"
+      nodeSelector:
+{{#each pipeline_spec.node_selector}}
+        "{{@key}}": "{{this}}"
+{{/each}}
+      containers:
+      - name: worker
+        image: "{{pipeline_spec.transform.image}}"
+{{#if pipeline_spec.transform.image_pull_policy}}
+        imagePullPolicy: "{{pipeline_spec.transform.image_pull_policy}}"
+{{/if}}
+        command: ["/usr/local/bin/falconeri-worker", "{{job.id}}"]
+        resources:
+          requests:
+            memory: "{{pipeline_spec.resource_requests.memory}}"
+            cpu: {{pipeline_spec.resource_requests.cpu}}
+          limits:
+            # Should always default to the same as the request, to prevent
+            # surprise evictions.
+            memory: "{{pipeline_spec.resource_requests.memory}}"
+        env:
+        - name: RUST_BACKTRACE
+          value: "1"
+        - name: RUST_LOG
+          value: "falconeri_common=trace,falconeri_worker=trace"
+        - name: FALCONERI_NODE_NAME
+          valueFrom:
+            fieldRef:
+              # This does not seem to currently work.
+              fieldPath: spec.nodeName
+        - name: FALCONERI_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+{{#each pipeline_spec.transform.env}}
+        - name: "{{@key}}"
+          value: "{{this}}"
+{{/each}}
+{{#each pipeline_spec.transform.secrets}}
+{{! Use lookup to avoid triggering a strict mode error when not defined. }}
+{{#if (lookup this "env_var")}}
+        - name: "{{env_var}}"
+          valueFrom:
+            secretKeyRef:
+              name: "{{name}}"
+              key: "{{key}}"
+{{/if}}
+{{/each}}
+        volumeMounts:
+        - mountPath: /etc/falconeri/secrets
+          name: secrets
+        - mountPath: /pfs
+          name: pfs
+        - mountPath: /scratch
+          name: scratch
+{{#each pipeline_spec.transform.secrets}}
+{{#if (lookup this "mount_path")}}
+        - mountPath: "{{mount_path}}"
+          name: "transform-secret-{{name}}"
+{{/if}}
+{{/each}}
+      restartPolicy: Never
+      volumes:
+      - name: pfs
+        emptyDir: {}
+      - name: scratch
+        emptyDir: {}
+      - name: secrets
+        secret:
+          secretName: falconeri
+{{#each pipeline_spec.transform.secrets}}
+{{#if (lookup this "mount_path")}}
+      - name: "transform-secret-{{name}}"
+        secret:
+          secretName: "{{name}}"
+{{/if}}
+{{/each}}
+  backoffLimit: 4

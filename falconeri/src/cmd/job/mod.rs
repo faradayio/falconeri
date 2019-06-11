@@ -1,10 +1,8 @@
 //! The `job` subcommand.
 
-use falconeri_common::prelude::*;
+use falconeri_common::{pipeline::PipelineSpec, prelude::*};
 use serde_json;
 use structopt::StructOpt;
-
-use crate::pipeline::PipelineSpec;
 
 mod describe;
 mod list;
@@ -13,6 +11,7 @@ mod run;
 // Disabled because it's broken by recurive `"input"` types.
 //
 // mod schema;
+mod wait;
 
 /// The `job` subcommand.
 #[derive(Debug, StructOpt)]
@@ -47,6 +46,13 @@ pub enum Opt {
     // /// Output a JSON schema for a falconeri job.
     // #[structopt(name = "schema")]
     // Schema,
+    /// Wait for the specified job to finish, either successfully or with an
+    /// error.
+    #[structopt(name = "wait")]
+    Wait {
+        /// The name of the job to wait for.
+        job_name: String,
+    },
 }
 
 /// Run the `job` subcommand.
@@ -65,5 +71,6 @@ pub fn run(opt: &Opt) -> Result<()> {
         // Disabled because it's broken by recurive `"input"` types.
         //
         // Opt::Schema => schema::run(),
+        Opt::Wait { job_name } => wait::run(&job_name),
     }
 }

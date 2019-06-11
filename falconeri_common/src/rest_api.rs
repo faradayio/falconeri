@@ -7,6 +7,7 @@ use url::Url;
 
 use crate::db;
 use crate::kubernetes::{node_name, pod_name};
+use crate::pipeline::PipelineSpec;
 use crate::prelude::*;
 
 /// Request the reservation of a datum.
@@ -104,9 +105,26 @@ impl Client {
         })
     }
 
+    /// Create a job. This does not automatically retry on network failure,
+    /// because it's very expensive and not idempotent (and only called by
+    /// `falconeri` and never `falconeri-worker`).
+    ///
+    /// `POST /jobs`
+    pub fn new_job(&self, pipeline_spec: &PipelineSpec) -> Result<Job> {
+        let url = self.url.join("jobs")?;
+        let resp = self
+            .client
+            .post(url.clone())
+            .basic_auth(&self.username, Some(&self.password))
+            .json(pipeline_spec)
+            .send()
+            .with_context(|_| format!("error posting {}", url))?;
+        self.handle_json_response(&url, resp)
+    }
+
     /// Fetch a job by ID.
     ///
-    /// `GET /job/<job_id>`
+    /// `GET /jobs/<job_id>`
     pub fn job(&self, id: Uuid) -> Result<Job> {
         let url = self.url.join(&format!("jobs/{}", id))?;
         self.via.retry_if_appropriate(|| {
@@ -118,6 +136,41 @@ impl Client {
                 .with_context(|_| format!("error getting {}", url))?;
             self.handle_json_response(&url, resp)
         })
+    }
+
+    /// Fetch a job by name.
+    ///
+    /// `GET /jobs?job_name=$NAME`
+    pub fn find_job_by_name(&self, job_name: &str) -> Result<Job> {
+        let mut url = self.url.join("jobs")?;
+        url.query_pairs_mut()
+            .append_pair("job_name", job_name)
+            .finish();
+        self.via.retry_if_appropriate(|| {
+            let resp = self
+                .client
+                .get(url.clone())
+                .basic_auth(&self.username, Some(&self.password))
+                .send()
+                .with_context(|_| format!("error getting {}", url))?;
+            self.handle_json_response(&url, resp)
+        })
+    }
+
+    /// Retry a job by ID.
+    ///
+    /// Not idempotent because it's expensive and only called by `falconeri`.
+    ///
+    /// `POST /jobs/<job_id>/retry`
+    pub fn retry_job(&self, job: &Job) -> Result<Job> {
+        let url = self.url.join(&format!("job_id/{}/retry", job.id))?;
+        let resp = self
+            .client
+            .post(url.clone())
+            .basic_auth(&self.username, Some(&self.password))
+            .send()
+            .with_context(|_| format!("error posting {}", url))?;
+        self.handle_json_response(&url, resp)
     }
 
     /// Reserve the next available datum to process, and return it along with
@@ -226,7 +279,7 @@ impl Client {
     /// PATCH /output_files
     pub fn patch_output_files(&self, patches: &[OutputFilePatch]) -> Result<()> {
         let url = self.url.join("output_files")?;
-        self.via.retry_if_appropriate(|| {
+        self.via.retry_if_appropriate(|| -> Result<()> {
             let resp = self
                 .client
                 .patch(url.clone())
@@ -234,15 +287,7 @@ impl Client {
                 .json(patches)
                 .send()
                 .with_context(|_| format!("error patching {}", url))?;
-            if resp.status().is_success() {
-                Ok(())
-            } else {
-                Err(format_err!(
-                    "unexpected HTTP status {} for {}",
-                    resp.status(),
-                    url
-                ))
-            }
+            self.handle_empty_response(&url, resp)
         })
     }
 
@@ -261,11 +306,29 @@ impl Client {
                 .with_context(|_| format!("error parsing {}", url))?;
             Ok(value)
         } else {
-            Err(format_err!(
-                "unexpected HTTP status {} for {}",
+            Err(self.handle_error_response(url, resp))
+        }
+    }
+
+    /// Check the HTTP status code and parse a JSON response.
+    fn handle_empty_response(&self, url: &Url, resp: reqwest::Response) -> Result<()> {
+        if resp.status().is_success() {
+            Ok(())
+        } else {
+            Err(self.handle_error_response(url, resp))
+        }
+    }
+
+    /// Extract an error from an HTTP respone payload.
+    fn handle_error_response(&self, url: &Url, mut resp: reqwest::Response) -> Error {
+        match resp.text() {
+            Ok(body) => format_err!(
+                "unexpected HTTP status {} for {}:\n{}",
                 resp.status(),
-                url
-            ))
+                url,
+                body,
+            ),
+            Err(err) => err.into(),
         }
     }
 }

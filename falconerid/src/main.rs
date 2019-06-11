@@ -9,6 +9,7 @@ extern crate rocket;
 
 use falconeri_common::{
     falconeri_common_version,
+    pipeline::PipelineSpec,
     prelude::*,
     rest_api::{
         DatumPatch, DatumReservationRequest, DatumReservationResponse, OutputFilePatch,
@@ -18,9 +19,12 @@ use openssl_probe;
 use rocket::http::Status as HttpStatus;
 use rocket_contrib::{json::Json, uuid::Uuid};
 
+pub(crate) mod inputs;
+mod start_job;
 mod util;
 
-use util::{DbConn, User};
+use start_job::{retry_job, run_job};
+use util::{DbConn, FalconeridResult, User};
 
 /// Return our `falconeri_common` version, which should match the client
 /// exactly (for now).
@@ -29,11 +33,39 @@ fn version() -> String {
     falconeri_common_version().to_string()
 }
 
+/// Create a new job from a JSON pipeline spec.
+#[post("/jobs", data = "<pipeline_spec>")]
+fn post_job(
+    _user: User,
+    conn: DbConn,
+    pipeline_spec: Json<PipelineSpec>,
+) -> FalconeridResult<Json<Job>> {
+    Ok(Json(run_job(&pipeline_spec, &conn)?))
+}
+
+/// Look up a job and return it as JSON.
+#[get("/jobs?<job_name>")]
+fn get_job_by_name(
+    _user: User,
+    conn: DbConn,
+    job_name: String,
+) -> FalconeridResult<Json<Job>> {
+    let job = Job::find_by_job_name(&job_name, &conn)?;
+    Ok(Json(job))
+}
+
 /// Look up a job and return it as JSON.
 #[get("/jobs/<job_id>")]
-fn job(_user: User, conn: DbConn, job_id: Uuid) -> Result<Json<Job>> {
+fn get_job(_user: User, conn: DbConn, job_id: Uuid) -> FalconeridResult<Json<Job>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     Ok(Json(job))
+}
+
+/// Retry a job, and return the new job as JSON.
+#[post("/jobs/<job_id>/retry")]
+fn job_retry(_user: User, conn: DbConn, job_id: Uuid) -> FalconeridResult<Json<Job>> {
+    let job = Job::find(job_id.into_inner(), &conn)?;
+    Ok(Json(retry_job(&job, &conn)?))
 }
 
 /// Reserve the next available datum for a job, and return it along with a list
@@ -44,7 +76,7 @@ fn job_reserve_next_datum(
     conn: DbConn,
     job_id: Uuid,
     request: Json<DatumReservationRequest>,
-) -> Result<Json<Option<DatumReservationResponse>>> {
+) -> FalconeridResult<Json<Option<DatumReservationResponse>>> {
     let job = Job::find(job_id.into_inner(), &conn)?;
     let reserved =
         job.reserve_next_datum(&request.node_name, &request.pod_name, &conn)?;
@@ -62,7 +94,7 @@ fn patch_datum(
     conn: DbConn,
     datum_id: Uuid,
     patch: Json<DatumPatch>,
-) -> Result<Json<Datum>> {
+) -> FalconeridResult<Json<Datum>> {
     let mut datum = Datum::find(datum_id.into_inner(), &conn)?;
 
     // We only support a few very specific types of patches.
@@ -88,7 +120,9 @@ fn patch_datum(
         }
 
         // All other combinations are forbidden.
-        other => return Err(format_err!("cannot update datum with {:?}", other)),
+        other => {
+            return Err(format_err!("cannot update datum with {:?}", other).into())
+        }
     }
 
     // If there are no more datums, mark the job as finished (either done or
@@ -108,7 +142,7 @@ fn create_output_files(
     _user: User,
     conn: DbConn,
     new_output_files: Json<Vec<NewOutputFile>>,
-) -> Result<Json<Vec<OutputFile>>> {
+) -> FalconeridResult<Json<Vec<OutputFile>>> {
     let created = NewOutputFile::insert_all(&new_output_files, &conn)?;
     Ok(Json(created))
 }
@@ -119,7 +153,7 @@ fn patch_output_files(
     _user: User,
     conn: DbConn,
     output_file_patches: Json<Vec<OutputFilePatch>>,
-) -> Result<HttpStatus> {
+) -> FalconeridResult<HttpStatus> {
     // Separate patches by status.
     let mut done_ids = vec![];
     let mut error_ids = vec![];
@@ -128,7 +162,9 @@ fn patch_output_files(
             Status::Done => done_ids.push(patch.id),
             Status::Error => error_ids.push(patch.id),
             _ => {
-                return Err(format_err!("cannot patch output file with {:?}", patch));
+                return Err(
+                    format_err!("cannot patch output file with {:?}", patch).into()
+                );
             }
         }
     }
@@ -155,8 +191,11 @@ fn main() {
             "/",
             routes![
                 version,
-                job,
+                post_job,
+                get_job,
+                get_job_by_name,
                 job_reserve_next_datum,
+                job_retry,
                 patch_datum,
                 create_output_files,
                 patch_output_files,

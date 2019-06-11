@@ -90,8 +90,7 @@ metadata:
   labels:
     app: falconerid
 spec:
-  # It's OK to increase this.
-  replicas: 2
+  replicas: {{config.falconerid_replicas}}
   selector:
     matchLabels:
       app: falconerid
@@ -121,6 +120,7 @@ spec:
         volumeMounts:
         - mountPath: /etc/falconeri/secrets
           name: secrets
+      serviceAccountName: falconerid
       volumes:
       - name: secrets
         secret:
@@ -137,3 +137,50 @@ spec:
     app: falconerid
   ports:
   - port: 8089
+
+---
+# falconerid service account.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: falconerid
+
+---
+# falconerid role: Authorizes use of Kubernetes API.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: falconerid
+  labels:
+    app: falconerid
+rules:
+# We need read access to all secrets, because the user might ask us to make
+# aribtrary secrets available to jobs. We strongly recommend running falconeri
+# in its own namespace.
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+# We'll eventually need access to most operations on batch jobs, so just ask for
+# all of them.
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["*"]
+# We'll eventually need read-only access to pod and node information to manage
+# various monitoring and recovery tasks.
+- apiGroups: [""]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list", "watch"]
+
+---
+# falconerid role binding: Binds `falconerid` role to `falconerid` service account.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: falconerid
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: falconerid
+subjects:
+- kind: ServiceAccount
+  name: falconerid
