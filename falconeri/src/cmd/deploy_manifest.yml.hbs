@@ -90,8 +90,7 @@ metadata:
   labels:
     app: falconerid
 spec:
-  # It's OK to increase this.
-  replicas: 2
+  replicas: {{config.falconerid_replicas}}
   selector:
     matchLabels:
       app: falconerid

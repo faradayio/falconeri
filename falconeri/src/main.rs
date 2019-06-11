@@ -30,13 +30,8 @@ enum Opt {
     /// Deploy falconeri onto the current Docker cluster.
     #[structopt(name = "deploy")]
     Deploy {
-        /// Just print out the manifest without deploying it.
-        #[structopt(long = "dry-run")]
-        dry_run: bool,
-
-        /// Deploy a development server (for minikube).
-        #[structopt(long = "development")]
-        development: bool,
+        #[structopt(flatten)]
+        cmd: cmd::deploy::Opt,
     },
 
     /// Job-related commands.
@@ -72,10 +67,7 @@ fn main() -> Result<()> {
     match opt {
         Opt::Datum { ref cmd } => cmd::datum::run(cmd),
         Opt::Db { ref cmd } => cmd::db::run(cmd),
-        Opt::Deploy {
-            dry_run,
-            development,
-        } => cmd::deploy::run(dry_run, development),
+        Opt::Deploy { ref cmd } => cmd::deploy::run(cmd),
         Opt::Job { ref cmd } => cmd::job::run(cmd),
         Opt::Migrate => cmd::migrate::run(),
         Opt::Proxy => cmd::proxy::run(),
