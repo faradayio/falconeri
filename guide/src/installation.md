@@ -130,8 +130,7 @@ spec:
       port: '8089'
       http:
         paths:
-          - path: /
-            backend:
+          - backend:
               serviceName: falconerid
               servicePort: 8089
 ```
