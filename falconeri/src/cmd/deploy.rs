@@ -61,6 +61,10 @@ pub struct Opt {
     #[structopt(long = "dry-run")]
     dry_run: bool,
 
+    /// Don't include a secret in the manifest.
+    #[structopt(long = "skip-secret")]
+    skip_secret: bool,
+
     /// Deploy a development server (for minikube).
     #[structopt(long = "development")]
     development: bool,
@@ -132,7 +136,7 @@ pub fn run(opt: &Opt) -> Result<()> {
 
     // Combine our manifests, only including the secret if we need it.
     let mut manifest = String::new();
-    if !kubernetes::resource_exists("secret/falconeri")? {
+    if !opt.skip_secret && !kubernetes::resource_exists("secret/falconeri")? {
         manifest.push_str(&secret_manifest);
     }
     manifest.push_str(&deploy_manifest);
