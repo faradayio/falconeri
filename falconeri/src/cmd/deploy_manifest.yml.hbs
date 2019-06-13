@@ -161,14 +161,14 @@ rules:
   resources: ["secrets"]
   verbs: ["get"]
 # We'll eventually need access to most operations on batch jobs, so just ask for
-# all of them.
+# all the roles permitted by the standard `ClusterRole/admin` role.
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["*"]
-# We'll eventually need read-only access to pod and node information to manage
-# various monitoring and recovery tasks.
+  verbs: ["create", "delete", "deletecollection", "patch", "update", "get", "list", "watch"]
+# We'll eventually need read-only access to pod information to manage various
+# monitoring and recovery tasks.
 - apiGroups: [""]
-  resources: ["pods", "nodes"]
+  resources: ["pods"]
   verbs: ["get", "list", "watch"]
 
 ---

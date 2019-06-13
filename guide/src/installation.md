@@ -115,6 +115,21 @@ falconeri migrate
 You can also create a Kubernetes `Ingress` resource which exposes `falconerid` from outside the cluster and binds a DNS name to it. For example, using [aws-alb-ingress-controller][], you could expose `falconerid` as follows (untested):
 
 ```yaml
+---
+# External port mapping for `falconerid` with `type: NodePort`.
+kind: Service
+apiVersion: v1
+metadata:
+  name: falconerid-external
+spec:
+  selector:
+    app: falconerid
+  type: NodePort
+  ports:
+  - port: 8089
+
+---
+# Set up a VPC-internal load balancer and DNS mapping.
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -122,16 +137,18 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internal
+    # You must specify at least two subnets and they must have specific AWS
+    # tags. See the aws-alb-ingress-controller docs for details.
     alb.ingress.kubernetes.io/subnets: subnet-00000000,subnet-00000001
-    alb.ingress.kubernetes.io/tags: Environment=production,Team=test
+    alb.ingress.kubernetes.io/tags: Environment=production,Team=data
 spec:
   rules:
     - host: falconerid.cluster-subzone.example.com
-      port: '8089'
+      # We cannot yet set a custom port, only 80 for HTTP and 443 for HTTPS.
       http:
         paths:
           - backend:
-              serviceName: falconerid
+              serviceName: falconerid-external
               servicePort: 8089
 ```
 
