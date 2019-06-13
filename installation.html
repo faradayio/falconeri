@@ -212,23 +212,40 @@ gcloud container clusters get-credentials falconeri \
 <a class="header" href="#setting-up-an-http-ingress" id="setting-up-an-http-ingress"><h2>Setting up an HTTP ingress</h2></a>
 <p><code>falconerid</code> provides a simple REST API, allowing it to be used as a service by other applications. (This is not documented yet, but you could look at <code>faraday_common/src/rest_api.rs</code> for the details.) Within a Kubernetes cluster, you should be able to access the HTTP endpoint associated with <code>service/falconeri</code>.</p>
 <p>You can also create a Kubernetes <code>Ingress</code> resource which exposes <code>falconerid</code> from outside the cluster and binds a DNS name to it. For example, using <a href="https://github.com/kubernetes-sigs/aws-alb-ingress-controller/">aws-alb-ingress-controller</a>, you could expose <code>falconerid</code> as follows (untested):</p>
-<pre><code class="language-yaml">apiVersion: extensions/v1beta1
+<pre><code class="language-yaml">---
+# External port mapping for `falconerid` with `type: NodePort`.
+kind: Service
+apiVersion: v1
+metadata:
+  name: falconerid-external
+spec:
+  selector:
+    app: falconerid
+  type: NodePort
+  ports:
+  - port: 8089
+
+---
+# Set up a VPC-internal load balancer and DNS mapping.
+apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: falconerid
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internal
+    # You must specify at least two subnets and they must have specific AWS
+    # tags. See the aws-alb-ingress-controller docs for details.
     alb.ingress.kubernetes.io/subnets: subnet-00000000,subnet-00000001
-    alb.ingress.kubernetes.io/tags: Environment=production,Team=test
+    alb.ingress.kubernetes.io/tags: Environment=production,Team=data
 spec:
   rules:
     - host: falconerid.cluster-subzone.example.com
-      port: '8089'
+      # We cannot yet set a custom port, only 80 for HTTP and 443 for HTTPS.
       http:
         paths:
           - backend:
-              serviceName: falconerid
+              serviceName: falconerid-external
               servicePort: 8089
 </code></pre>
 <p>Note that if you make <code>falconerid</code> available over the internet, you <strong>must</strong> set up HTTPS certificates for your load balancer.</p>
