@@ -147,8 +147,7 @@ spec:
       # We cannot yet set a custom port, only 80 for HTTP and 443 for HTTPS.
       http:
         paths:
-          - path: /
-            backend:
+          - backend:
               serviceName: falconerid-external
               servicePort: 8089
 ```
