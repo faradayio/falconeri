@@ -163,7 +163,7 @@ impl Client {
     ///
     /// `POST /jobs/<job_id>/retry`
     pub fn retry_job(&self, job: &Job) -> Result<Job> {
-        let url = self.url.join(&format!("job_id/{}/retry", job.id))?;
+        let url = self.url.join(&format!("jobs/{}/retry", job.id))?;
         let resp = self
             .client
             .post(url.clone())
