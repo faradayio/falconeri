@@ -36,7 +36,6 @@ pub mod prelude {
     pub use failure::{format_err, ResultExt};
     pub use log::{debug, error, info, trace, warn};
     pub use serde::{Deserialize, Serialize};
-    pub use serde_derive::{Deserialize, Serialize};
     pub use std::{
         collections::HashMap,
         fmt,
