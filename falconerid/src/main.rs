@@ -8,7 +8,8 @@ extern crate openssl;
 extern crate rocket;
 
 use falconeri_common::{
-    falconeri_common_version,
+    common_failures::display::DisplayCausesAndBacktraceExt,
+    db, falconeri_common_version,
     pipeline::PipelineSpec,
     prelude::*,
     rest_api::{
@@ -18,6 +19,7 @@ use falconeri_common::{
 use openssl_probe;
 use rocket::http::Status as HttpStatus;
 use rocket_contrib::{json::Json, uuid::Uuid};
+use std::process::exit;
 
 pub(crate) mod inputs;
 mod start_job;
@@ -25,6 +27,16 @@ mod util;
 
 use start_job::{retry_job, run_job};
 use util::{DbConn, FalconeridResult, User};
+
+/// initialize the server at startup.
+fn initialize_server() -> Result<()> {
+    eprintln!("Connecting to database.");
+    let conn = db::connect(ConnectVia::Cluster)?;
+    eprintln!("Running any pending migrations.");
+    db::run_pending_migrations(&conn)?;
+    eprintln!("Finished migrations.");
+    Ok(())
+}
 
 /// Return our `falconeri_common` version, which should match the client
 /// exactly (for now).
@@ -181,6 +193,14 @@ fn patch_output_files(
 
 fn main() {
     openssl_probe::init_ssl_cert_env_vars();
+
+    if let Err(err) = initialize_server() {
+        eprintln!(
+            "Failed to initialize server:\n{}",
+            err.display_causes_and_backtrace()
+        );
+        exit(1);
+    }
 
     rocket::ignite()
         // Attach our custom connection pool.

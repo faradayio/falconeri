@@ -41,7 +41,7 @@ enum Opt {
         cmd: cmd::job::Opt,
     },
 
-    /// Migrate falconeri's database schema to the latest version.
+    /// Manaually migrate falconeri's database schema to the latest version.
     #[structopt(name = "migrate")]
     Migrate,
 

@@ -97,9 +97,22 @@ pub fn pool(pool_size: u32, via: ConnectVia) -> Result<Pool> {
     Ok(pool)
 }
 
+/// The ID of the advisory lock that we use for migrations. Random.
+const MIGRATION_LOCK_ID: i64 = 5_275_218_930_720_578_783;
+
 /// Run any pending migrations, and print to standard output.
 pub fn run_pending_migrations(conn: &PgConnection) -> Result<()> {
     debug!("Running pending migrations");
-    migrations::run_with_output(conn, &mut io::stdout())?;
+    conn.transaction(|| -> Result<()> {
+        // Take an advisory lock before running the migration. It's safe to
+        // generate this SQL by hand because MIGRATION_LOCK_ID is an integer.
+        conn.execute(&format!(
+            "SELECT pg_advisory_xact_lock({})",
+            MIGRATION_LOCK_ID
+        ))
+        .context("error taking advisory lock for migrations")?;
+        migrations::run_with_output(conn, &mut io::stdout())?;
+        Ok(())
+    })?;
     Ok(())
 }
