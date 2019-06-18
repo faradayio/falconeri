@@ -1,6 +1,6 @@
 [package]
 name = "falconeri_common"
-version = "0.2.9"
+version = "0.2.10"
 authors = ["Eric Kidd <git@randomhacks.net>"]
 edition = "2018"
 
