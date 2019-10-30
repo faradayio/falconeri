@@ -125,7 +125,7 @@ impl CloudStorage for S3Storage {
                 .context("cannot create local download directory")?;
             let status = self
                 .aws_command()
-                .args(&["s3", "sync"])
+                .args(&["s3", "sync", "--quiet"])
                 .arg(uri)
                 .arg(local_path)
                 .status()
@@ -158,7 +158,7 @@ impl CloudStorage for S3Storage {
         // We assume that we only need to support directories, namely /pfs/out.
         let status = self
             .aws_command()
-            .args(&["s3", "sync"])
+            .args(&["s3", "sync", "--quiet"])
             .arg(local_path)
             .arg(uri)
             .status()
