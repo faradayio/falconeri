@@ -24,7 +24,7 @@ For all setups, you will also need:
 On the Mac, you will also need to install OpenSSL shared libraries. You can do this using `brew`:
 
 ```sh
-brew install openssl
+brew install openssl@1.1
 ```
 
 [releases]: https://github.com/faradayio/falconeri/releases
