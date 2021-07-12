@@ -18,4 +18,4 @@ Running is similarly simple:
 falconeri job run my-job.json
 ```
 
-[guide]: https://faradayio.github.io/falconeri/
+[guide]: https://github.com/faradayio/falconeri/blob/master/guide/src/SUMMARY.md
