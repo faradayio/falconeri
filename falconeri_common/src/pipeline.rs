@@ -44,6 +44,17 @@ pub struct Transform {
     pub cmd: Vec<String>,
     /// The Docker image to run.
     pub image: String,
+    /// After how many seconds to kill the job. Sets activeDeadlineSeconds. See
+    /// https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup
+    /// CAVEAT: Since falconeri doesn't have a babysitter, it won't notice if
+    /// you time out jobs with activeDeadlineSeconds. This is still probably
+    /// better than the alternative - forever running jobs - but be warned that
+    /// you will have to manually clean up jobs that fail like this.
+    pub active_deadline_seconds: Option<String>,
+    /// After how many seconds to clean up completed jobs (so your cluster
+    /// backplane doesn't fill up.) Sets ttlSecondsAfterFinished. See
+    /// https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
+    pub ttl_seconds_after_finished: Option<String>,
     /// EXTENSION: When should we pull this image?
     pub image_pull_policy: Option<String>,
     /// Extra environment variables to pass in.

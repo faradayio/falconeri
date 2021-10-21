@@ -1,6 +1,6 @@
 [package]
 name = "falconeri-worker"
-version = "0.2.10"
+version = "0.2.11"
 authors = ["Eric Kidd <git@randomhacks.net>"]
 edition = "2018"
 

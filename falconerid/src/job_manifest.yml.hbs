@@ -10,6 +10,12 @@ metadata:
   labels:
     "created-by": "falconeri"
 spec:
+{{#if pipeline_spec.transform.active_deadline_seconds}}
+  activeDeadlineSeconds: {{pipeline_spec.transform.active_deadline_seconds}}
+{{/if}}
+{{#if pipeline_spec.transform.ttl_seconds_after_finished}}
+  ttlSecondsAfterFinished: {{pipeline_spec.transform.ttl_seconds_after_finished}}
+{{/if}}
   parallelism: {{pipeline_spec.parallelism_spec.constant}}
   template:
     metadata:
