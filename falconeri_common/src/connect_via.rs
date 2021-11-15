@@ -1,6 +1,6 @@
 //! How should we connect to PostgreSQL and `falconerid`?
 
-use backoff::{self, ExponentialBackoff, Operation};
+use backoff::{self, retry, ExponentialBackoff};
 use std::result;
 
 use crate::prelude::*;
@@ -16,6 +16,7 @@ pub enum ConnectVia {
 
 impl ConnectVia {
     /// Should we retry failed connections?
+    #[tracing::instrument(level = "trace")]
     pub fn should_retry_by_default(self) -> bool {
         match self {
             // When we're connected via a proxy from outside the cluster, it's
@@ -35,15 +36,17 @@ impl ConnectVia {
     /// Run the function `f`. If `self.should_retry_by_default()` is true, retry
     /// failures using exponential backoff. Return either the result or the final
     /// final failure.
+    #[tracing::instrument(skip(f), level = "trace")]
     pub fn retry_if_appropriate<F, T>(self, mut f: F) -> Result<T>
     where
         F: FnMut() -> Result<T>,
     {
         // Wrap `f` up into an operation that results am appropriate
         // `backoff::Error` on failure.
-        let mut operation = || -> result::Result<T, backoff::Error<Error>> {
+        let operation = || -> result::Result<T, backoff::Error<Error>> {
             f().map_err(|err| {
                 if self.should_retry_by_default() {
+                    error!("retrying after error: {}", err);
                     backoff::Error::Transient(err)
                 } else {
                     backoff::Error::Permanent(err)
@@ -52,11 +55,10 @@ impl ConnectVia {
         };
 
         // Specify what kind of backoff to use.
-        let mut backoff = ExponentialBackoff::default();
+        let backoff = ExponentialBackoff::default();
 
         // Run our operation, retrying if necessary.
-        let value = operation
-            .retry(&mut backoff)
+        let value = retry(backoff, operation)
             // Unwrap the backoff error into something we can handle. This should
             // have been built in.
             .map_err(|e| match e {

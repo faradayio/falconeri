@@ -1,6 +1,6 @@
 //! The REST API for `falconerid`, including data types and a client.
 
-use reqwest;
+use reqwest::blocking as reqwest;
 use serde::de::DeserializeOwned;
 use std::usize;
 use url::Url;
@@ -65,6 +65,7 @@ pub struct Client {
 
 impl Client {
     /// Create a new client, connecting to `falconerid` as specified.
+    #[tracing::instrument(level = "trace")]
     pub fn new(via: ConnectVia) -> Result<Client> {
         // Choose an appropriate URL.
         let url = match via {
@@ -92,7 +93,7 @@ impl Client {
 
         // Create our HTTP client.
         let client = reqwest::Client::builder()
-            .max_idle_per_host(max_idle)
+            .pool_max_idle_per_host(max_idle)
             .build()
             .context("cannot build HTTP client")?;
 
@@ -110,6 +111,7 @@ impl Client {
     /// `falconeri` and never `falconeri-worker`).
     ///
     /// `POST /jobs`
+    #[tracing::instrument(level = "trace")]
     pub fn new_job(&self, pipeline_spec: &PipelineSpec) -> Result<Job> {
         let url = self.url.join("jobs")?;
         let resp = self
@@ -118,13 +120,14 @@ impl Client {
             .basic_auth(&self.username, Some(&self.password))
             .json(pipeline_spec)
             .send()
-            .with_context(|_| format!("error posting {}", url))?;
+            .with_context(|| format!("error posting {}", url))?;
         self.handle_json_response(&url, resp)
     }
 
     /// Fetch a job by ID.
     ///
     /// `GET /jobs/<job_id>`
+    #[tracing::instrument(level = "trace")]
     pub fn job(&self, id: Uuid) -> Result<Job> {
         let url = self.url.join(&format!("jobs/{}", id))?;
         self.via.retry_if_appropriate(|| {
@@ -133,7 +136,7 @@ impl Client {
                 .get(url.clone())
                 .basic_auth(&self.username, Some(&self.password))
                 .send()
-                .with_context(|_| format!("error getting {}", url))?;
+                .with_context(|| format!("error getting {}", url))?;
             self.handle_json_response(&url, resp)
         })
     }
@@ -141,6 +144,7 @@ impl Client {
     /// Fetch a job by name.
     ///
     /// `GET /jobs?job_name=$NAME`
+    #[tracing::instrument(level = "trace")]
     pub fn find_job_by_name(&self, job_name: &str) -> Result<Job> {
         let mut url = self.url.join("jobs")?;
         url.query_pairs_mut()
@@ -152,7 +156,7 @@ impl Client {
                 .get(url.clone())
                 .basic_auth(&self.username, Some(&self.password))
                 .send()
-                .with_context(|_| format!("error getting {}", url))?;
+                .with_context(|| format!("error getting {}", url))?;
             self.handle_json_response(&url, resp)
         })
     }
@@ -162,6 +166,7 @@ impl Client {
     /// Not idempotent because it's expensive and only called by `falconeri`.
     ///
     /// `POST /jobs/<job_id>/retry`
+    #[tracing::instrument(level = "trace")]
     pub fn retry_job(&self, job: &Job) -> Result<Job> {
         let url = self.url.join(&format!("jobs/{}/retry", job.id))?;
         let resp = self
@@ -169,7 +174,7 @@ impl Client {
             .post(url.clone())
             .basic_auth(&self.username, Some(&self.password))
             .send()
-            .with_context(|_| format!("error posting {}", url))?;
+            .with_context(|| format!("error posting {}", url))?;
         self.handle_json_response(&url, resp)
     }
 
@@ -178,6 +183,7 @@ impl Client {
     /// pod.
     ///
     /// `POST /jobs/<job_id>/reserve_next_datum`
+    #[tracing::instrument(level = "trace")]
     pub fn reserve_next_datum(
         &self,
         job: &Job,
@@ -196,13 +202,14 @@ impl Client {
                         pod_name: pod_name()?,
                     })
                     .send()
-                    .with_context(|_| format!("error posting {}", url))?;
+                    .with_context(|| format!("error posting {}", url))?;
                 self.handle_json_response(&url, resp)
             })?;
         Ok(resv_resp.map(|r| (r.datum, r.input_files)))
     }
 
     /// Mark `datum` as done, and record the output of the commands we ran.
+    #[tracing::instrument(level = "trace")]
     pub fn mark_datum_as_done(&self, datum: &mut Datum, output: String) -> Result<()> {
         let patch = DatumPatch {
             status: Status::Done,
@@ -215,6 +222,7 @@ impl Client {
 
     /// Mark `datum` as having failed, and record the output and error
     /// information.
+    #[tracing::instrument(level = "trace")]
     pub fn mark_datum_as_error(
         &self,
         datum: &mut Datum,
@@ -234,6 +242,7 @@ impl Client {
     /// Apply `patch` to `datum`.
     ///
     /// `PATCH /datums/<datum_id>`
+    #[tracing::instrument(level = "trace")]
     fn patch_datum(&self, datum: &mut Datum, patch: &DatumPatch) -> Result<()> {
         let url = self.url.join(&format!("datums/{}", datum.id))?;
         let updated_datum = self.via.retry_if_appropriate(|| {
@@ -243,7 +252,7 @@ impl Client {
                 .basic_auth(&self.username, Some(&self.password))
                 .json(patch)
                 .send()
-                .with_context(|_| format!("error patching {}", url))?;
+                .with_context(|| format!("error patching {}", url))?;
             self.handle_json_response(&url, resp)
         })?;
         *datum = updated_datum;
@@ -253,6 +262,7 @@ impl Client {
     /// Create new output files.
     ///
     /// `POST /output_files`
+    #[tracing::instrument(level = "trace")]
     pub fn create_output_files(
         &self,
         files: &[NewOutputFile],
@@ -269,7 +279,7 @@ impl Client {
                 .basic_auth(&self.username, Some(&self.password))
                 .json(files)
                 .send()
-                .with_context(|_| format!("error posting {}", url))?;
+                .with_context(|| format!("error posting {}", url))?;
             self.handle_json_response(&url, resp)
         })
     }
@@ -277,6 +287,7 @@ impl Client {
     /// Update the status of existing output files.
     ///
     /// PATCH /output_files
+    #[tracing::instrument(level = "trace")]
     pub fn patch_output_files(&self, patches: &[OutputFilePatch]) -> Result<()> {
         let url = self.url.join("output_files")?;
         self.via.retry_if_appropriate(|| -> Result<()> {
@@ -286,24 +297,21 @@ impl Client {
                 .basic_auth(&self.username, Some(&self.password))
                 .json(patches)
                 .send()
-                .with_context(|_| format!("error patching {}", url))?;
+                .with_context(|| format!("error patching {}", url))?;
             self.handle_empty_response(&url, resp)
         })
     }
 
     /// Check the HTTP status code and parse a JSON response.
-    fn handle_json_response<T>(
-        &self,
-        url: &Url,
-        mut resp: reqwest::Response,
-    ) -> Result<T>
+    #[tracing::instrument(level = "trace")]
+    fn handle_json_response<T>(&self, url: &Url, resp: reqwest::Response) -> Result<T>
     where
         T: DeserializeOwned,
     {
         if resp.status().is_success() {
             let value = resp
                 .json()
-                .with_context(|_| format!("error parsing {}", url))?;
+                .with_context(|| format!("error parsing {}", url))?;
             Ok(value)
         } else {
             Err(self.handle_error_response(url, resp))
@@ -311,6 +319,7 @@ impl Client {
     }
 
     /// Check the HTTP status code and parse a JSON response.
+    #[tracing::instrument(level = "trace")]
     fn handle_empty_response(&self, url: &Url, resp: reqwest::Response) -> Result<()> {
         if resp.status().is_success() {
             Ok(())
@@ -320,15 +329,28 @@ impl Client {
     }
 
     /// Extract an error from an HTTP respone payload.
-    fn handle_error_response(&self, url: &Url, mut resp: reqwest::Response) -> Error {
+    #[tracing::instrument(level = "trace")]
+    fn handle_error_response(&self, url: &Url, resp: reqwest::Response) -> Error {
+        let status = resp.status();
         match resp.text() {
-            Ok(body) => format_err!(
-                "unexpected HTTP status {} for {}:\n{}",
-                resp.status(),
-                url,
-                body,
-            ),
+            Ok(body) => {
+                format_err!("unexpected HTTP status {} for {}:\n{}", status, url, body,)
+            }
             Err(err) => err.into(),
         }
+    }
+}
+
+impl fmt::Debug for Client {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Client")
+            .field("via", &self.via)
+            .field("url", &self.url)
+            .field("username", &self.username)
+            // We don't need these for debugging.
+            //
+            // .field("password", &self.password)
+            // .field("client", &self.client)
+            .finish()
     }
 }

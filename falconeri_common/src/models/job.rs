@@ -31,26 +31,26 @@ pub struct Job {
 impl Job {
     /// Find a job by ID.
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<Job> {
-        Ok(jobs::table
+        jobs::table
             .find(id)
             .first(conn)
-            .with_context(|_| format!("could not load job {}", id))?)
+            .with_context(|| format!("could not load job {}", id))
     }
 
     /// Find a job by job name.
     pub fn find_by_job_name(job_name: &str, conn: &PgConnection) -> Result<Job> {
-        Ok(jobs::table
+        jobs::table
             .filter(jobs::job_name.eq(job_name))
             .first(conn)
-            .with_context(|_| format!("could not load job {:?}", job_name))?)
+            .with_context(|| format!("could not load job {:?}", job_name))
     }
 
     /// Get all known jobs.
     pub fn list(conn: &PgConnection) -> Result<Vec<Job>> {
-        Ok(jobs::table
+        jobs::table
             .order_by(jobs::created_at.desc())
             .load(conn)
-            .context("could not list jobs")?)
+            .context("could not list jobs")
     }
 
     /// Look up the next datum available to process, and set the status to
@@ -165,11 +165,11 @@ impl Job {
             .load(conn)
             .context("cannot load status of datums")?;
 
-        Ok(raw_status_counts
+        raw_status_counts
             .into_iter()
             .filter(|&(_status, count)| count > 0)
             .map(|(status, count)| Ok((status, cast::u64(count)?)))
-            .collect::<Result<_>>()?)
+            .collect::<Result<_>>()
     }
 
     /// Get all our our currently running datums (the ones being processed by
@@ -179,11 +179,11 @@ impl Job {
         status: Status,
         conn: &PgConnection,
     ) -> Result<Vec<Datum>> {
-        Ok(Datum::belonging_to(self)
+        Datum::belonging_to(self)
             .filter(datums::status.eq(&status))
             .order(datums::updated_at)
             .load(conn)
-            .context("cannot load running datums for job")?)
+            .context("cannot load running datums for job")
     }
 
     /// Lock the underying database row using `SELECT FOR UPDATE`. Must be
@@ -193,7 +193,7 @@ impl Job {
             .find(self.id)
             .for_update()
             .first(conn)
-            .with_context(|_| format!("could not load job {}", self.id))?;
+            .with_context(|| format!("could not load job {}", self.id))?;
         Ok(())
     }
 
@@ -292,9 +292,9 @@ pub struct NewJob {
 impl NewJob {
     /// Insert a new job into the database.
     pub fn insert(&self, conn: &PgConnection) -> Result<Job> {
-        Ok(diesel::insert_into(jobs::table)
+        diesel::insert_into(jobs::table)
             .values(self)
             .get_result(conn)
-            .context("error inserting job")?)
+            .context("error inserting job")
     }
 }

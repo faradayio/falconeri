@@ -13,13 +13,14 @@ pub extern crate diesel_migrations;
 
 pub use cast;
 pub use chrono;
-pub use common_failures;
 pub use rand;
 pub use semver;
 pub use serde_json;
+pub use tracing;
 
 pub mod connect_via;
 pub mod db;
+pub mod errors;
 pub mod kubernetes;
 pub mod manifest;
 pub mod models;
@@ -28,13 +29,13 @@ pub mod rest_api;
 mod schema;
 pub mod secret;
 pub mod storage;
+pub mod tracing_support;
 
 /// Common imports used by many modules.
 pub mod prelude {
+    pub use anyhow::{format_err, Context};
     pub use chrono::{NaiveDateTime, Utc};
     pub use diesel::{self, prelude::*, PgConnection};
-    pub use failure::{format_err, ResultExt};
-    pub use log::{debug, error, info, trace, warn};
     pub use serde::{Deserialize, Serialize};
     pub use std::{
         collections::HashMap,
@@ -43,18 +44,23 @@ pub mod prelude {
         io::Write,
         path::{Path, PathBuf},
     };
+    pub use tracing::{
+        debug, debug_span, error, error_span, info, info_span, instrument, trace,
+        trace_span, warn, warn_span,
+    };
     pub use uuid::Uuid;
 
     pub use super::connect_via::ConnectVia;
+    pub use super::errors::DisplayCausesAndBacktraceExt;
     pub use super::models::*;
     pub use super::{Error, Result};
 }
 
 /// Error type for this crate's functions.
-pub type Error = failure::Error;
+pub use anyhow::Error;
 
 /// Result type for this crate's functions.
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub use anyhow::Result;
 
 /// The version of `falconeri_common` that we're using. This can be used
 /// to make sure that our various clients and servers match.

@@ -1,4 +1,4 @@
-FROM ekidd/rust-musl-builder:nightly-2019-04-25
+FROM ekidd/rust-musl-builder:stable
 
 # We need to add the source code to the image because `rust-musl-builder`
 # assumes a UID of 1000, but TravisCI has switched to 2000.
@@ -10,6 +10,6 @@ ENV CARGO_ARGS=
 
 # Build all binaries.
 CMD if [ -d target ]; then sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; fi && \
-    cargo audit && \
+    cargo audit --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 && \
     cargo build --all ${CARGO_ARGS} && \
     cd guide && mdbook build

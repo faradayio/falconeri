@@ -1,15 +1,15 @@
 # Use Alpine as a base image, because it's small. We need `edge` to get
 # `aws-cli`.
-FROM alpine:edge
+FROM alpine:3.14
 
 # Install `gsutil`. Taken from
 # https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/alpine/Dockerfile.
-ARG CLOUD_SDK_VERSION=248.0.0
+ARG CLOUD_SDK_VERSION=364.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV PATH /google-cloud-sdk/bin:$PATH
 RUN apk --no-cache --update add \
         curl \
-        python \
+        python3 \
         py-crcmod \
         bash \
         libc6-compat \

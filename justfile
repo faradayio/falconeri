@@ -14,10 +14,10 @@
 
 # This should be either "debug" or "release". You can pass `mode=release` on
 # the command line to perform a release build.
-MODE = "debug"
+MODE := "debug"
 
 # Look up our CLI version (which should match our other package versions).
-VERSION = `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "falconeri") | .version'`
+VERSION := `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "falconeri") | .version'`
 
 # Print the current version.
 version:
@@ -87,7 +87,7 @@ publish-image: image
 # Check to make sure that we're in releasable shape.
 check:
     cargo fmt -- --check
-    cargo audit
+    cargo audit --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071
     cargo clippy -- -D warnings
     cargo test --all
 

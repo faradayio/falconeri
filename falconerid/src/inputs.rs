@@ -115,14 +115,14 @@ fn atom_to_datums_helper(
     // currently be directories.
     let mut base = uri.to_owned();
     if !base.ends_with('/') {
-        base.push_str("/");
+        base.push('/');
     }
 
     // Figure out what files to process. We do this for _both_
     // `Glob::TopLevelDirectoryEntries` and `Glob::WholeRepo`, because we want
     // to verify that we can actually list the contents of a `Glob::WholeRepo`
     // _before_ spinning up a big cluster job.
-    let storage = CloudStorage::for_uri(&uri, secrets)?;
+    let storage = <dyn CloudStorage>::for_uri(uri, secrets)?;
     let file_uris = storage.list(uri)?;
 
     match glob {

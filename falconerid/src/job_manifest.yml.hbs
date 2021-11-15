@@ -11,6 +11,11 @@ metadata:
     "created-by": "falconeri"
 spec:
   parallelism: {{pipeline_spec.parallelism_spec.constant}}
+{{#if pipeline_spec.job_timeout}}
+  activeDeadlineSeconds: {{pipeline_spec.job_timeout}}
+{{/if}}
+  # Automatically clean up logs and metadata a while after jobs finish.
+  ttlSecondsAfterFinished: 86400
   template:
     metadata:
       labels:
@@ -63,7 +68,7 @@ spec:
 {{/each}}
 {{#each pipeline_spec.transform.secrets}}
 {{! Use lookup to avoid triggering a strict mode error when not defined. }}
-{{#if (lookup this "env_var")}}
+{{#if env_var}}
         - name: "{{env_var}}"
           valueFrom:
             secretKeyRef:
@@ -79,7 +84,7 @@ spec:
         - mountPath: /scratch
           name: scratch
 {{#each pipeline_spec.transform.secrets}}
-{{#if (lookup this "mount_path")}}
+{{#if mount_path}}
         - mountPath: "{{mount_path}}"
           name: "transform-secret-{{name}}"
 {{/if}}
@@ -94,7 +99,7 @@ spec:
         secret:
           secretName: falconeri
 {{#each pipeline_spec.transform.secrets}}
-{{#if (lookup this "mount_path")}}
+{{#if mount_path}}
       - name: "transform-secret-{{name}}"
         secret:
           secretName: "{{name}}"
