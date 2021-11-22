@@ -8,6 +8,9 @@
         "cmd": [
             "word-frequencies.sh"
         ],
+        "env": {
+            "RUST_LOG": "info"
+        },
         "secrets": [
             {
                 "name": "s3",

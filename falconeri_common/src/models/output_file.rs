@@ -26,10 +26,10 @@ pub struct OutputFile {
 impl OutputFile {
     /// Find an output file by ID.
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<OutputFile> {
-        Ok(output_files::table
+        output_files::table
             .find(id)
             .first(conn)
-            .with_context(|_| format!("could not load output file {}", id))?)
+            .with_context(|| format!("could not load output file {}", id))
     }
 
     /// Mark the specified output files as having been successfully processed.

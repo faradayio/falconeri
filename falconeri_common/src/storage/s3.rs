@@ -1,6 +1,5 @@
 //! Support for AWS S3 storage.
 
-use failure::ResultExt;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json;
@@ -32,16 +31,10 @@ pub struct S3Storage {
 impl S3Storage {
     /// Create a new `S3Storage` backend.
     #[allow(clippy::new_ret_no_self)]
+    #[tracing::instrument(level = "trace")]
     pub fn new(secrets: &[Secret]) -> Result<Self> {
         let secret = secrets.iter().find(|s| {
-            match s {
-                // We assume that the AWS_ACCESS_KEY_ID and
-                // AWS_SECRET_ACCESS_KEY are stored in the same secret, because
-                // we're lazy and this code path will probably be heavily
-                // modified when we write an actual server.
-                Secret::Env { env_var, .. } if env_var == "AWS_ACCESS_KEY_ID" => true,
-                _ => false,
-            }
+            matches!(s, Secret::Env { env_var, .. } if env_var == "AWS_ACCESS_KEY_ID")
         });
         let secret_data = if let Some(Secret::Env { name, .. }) = secret {
             Some(kubectl_secret(name)?)
@@ -53,6 +46,7 @@ impl S3Storage {
 
     /// Construct a new `S3Storage` backend, using an AWS access key from
     /// the Kubernetes secret `secret_name`.
+    #[tracing::instrument(level = "trace")]
     pub fn new_with_secret(secret_name: &str) -> Result<Self> {
         Ok(S3Storage {
             secret_data: kubectl_secret(secret_name)?,
@@ -61,6 +55,7 @@ impl S3Storage {
 
     /// Build a `Command` object which calls the `aws` CLI tool, including any
     /// authentication that we happen to have.
+    #[tracing::instrument(level = "trace")]
     fn aws_command(&self) -> process::Command {
         let mut command = process::Command::new("aws");
         if let Some(secret_data) = &self.secret_data {
@@ -71,14 +66,22 @@ impl S3Storage {
     }
 }
 
+impl fmt::Debug for S3Storage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Don't include secrets in the debug output, for trace mode.
+        f.debug_struct("S3Storage").finish()
+    }
+}
+
 impl CloudStorage for S3Storage {
+    #[tracing::instrument(level = "trace")]
     fn list(&self, uri: &str) -> Result<Vec<String>> {
         trace!("listing {}", uri);
 
         let (bucket, key) = parse_s3_url(uri)?;
         let mut prefix = key.to_owned();
-        if key != "" && !key.ends_with('/') {
-            prefix.push_str("/");
+        if !key.is_empty() && !key.ends_with('/') {
+            prefix.push('/');
         }
 
         // Use `aws` to list our bucket, and parse the results.parse_s3_url(
@@ -118,6 +121,7 @@ impl CloudStorage for S3Storage {
             .collect::<Vec<_>>())
     }
 
+    #[tracing::instrument(level = "trace")]
     fn sync_down(&self, uri: &str, local_path: &Path) -> Result<()> {
         trace!("downloading {} to {}", uri, local_path.display());
         if uri.ends_with('/') {
@@ -152,6 +156,7 @@ impl CloudStorage for S3Storage {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace")]
     fn sync_up(&self, local_path: &Path, uri: &str) -> Result<()> {
         trace!("uploading {} to {}", local_path.display(), uri);
 
@@ -175,6 +180,7 @@ impl CloudStorage for S3Storage {
 }
 
 /// Parse an S3 URL.
+#[tracing::instrument(level = "trace")]
 fn parse_s3_url(url: &str) -> Result<(&str, &str)> {
     // lazy_static allows us to compile this regex only once.
     lazy_static! {

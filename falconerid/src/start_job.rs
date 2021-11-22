@@ -1,4 +1,4 @@
-//! Code for starting a job on the server.
+// ! Code for starting a job on the server.
 
 use falconeri_common::{
     cast, diesel::Connection, kubernetes, manifest::render_manifest, pipeline::*,
@@ -16,7 +16,16 @@ pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job>
     let job_name = unique_kubernetes_job_name(&pipeline_spec.pipeline.name);
     let new_job = NewJob {
         id: job_id,
-        pipeline_spec: json!(pipeline_spec),
+        pipeline_spec: json!({
+            "pipeline": pipeline_spec.pipeline,
+            "transform": pipeline_spec.transform,
+            "parallelism_spec": pipeline_spec.parallelism_spec,
+            "resource_requests": pipeline_spec.resource_requests,
+            "job_timeout": pipeline_spec.job_timeout.map(|timeout| timeout.as_secs()),
+            "node_selector": pipeline_spec.node_selector,
+            "input": pipeline_spec.input,
+            "egress": pipeline_spec.egress,
+        }),
         job_name,
         command: pipeline_spec.transform.cmd.clone(),
         egress_uri: pipeline_spec.egress.uri.clone(),
@@ -31,9 +40,9 @@ pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job>
 
     // Insert everthing into the database.
     let job = conn.transaction(|| -> Result<Job> {
-        let job = new_job.insert(&conn)?;
-        NewDatum::insert_all(&new_datums, &conn)?;
-        NewInputFile::insert_all(&new_input_files, &conn)?;
+        let job = new_job.insert(conn)?;
+        NewDatum::insert_all(&new_datums, conn)?;
+        NewInputFile::insert_all(&new_input_files, conn)?;
         Ok(job)
     })?;
 
@@ -49,8 +58,8 @@ pub fn retry_job(job: &Job, conn: &PgConnection) -> Result<Job> {
         if job.status != Status::Error {
             return Err(format_err!("can only retry jobs with status 'error'"));
         }
-        let error_datums = job.datums_with_status(Status::Error, &conn)?;
-        let input_files = InputFile::for_datums(&error_datums, &conn)?;
+        let error_datums = job.datums_with_status(Status::Error, conn)?;
+        let input_files = InputFile::for_datums(&error_datums, conn)?;
 
         // Recover the original pipeline specification.
         let mut pipeline_spec: PipelineSpec =
@@ -70,7 +79,7 @@ pub fn retry_job(job: &Job, conn: &PgConnection) -> Result<Job> {
             command: job.command.clone(),
             egress_uri: job.egress_uri.clone(),
         }
-        .insert(&conn)?;
+        .insert(conn)?;
 
         // Create new datums and input files.
         let mut new_datums = vec![];
@@ -90,8 +99,8 @@ pub fn retry_job(job: &Job, conn: &PgConnection) -> Result<Job> {
                 });
             }
         }
-        NewDatum::insert_all(&new_datums, &conn)?;
-        NewInputFile::insert_all(&new_input_files, &conn)?;
+        NewDatum::insert_all(&new_datums, conn)?;
+        NewInputFile::insert_all(&new_input_files, conn)?;
 
         Ok((pipeline_spec, new_job))
     })?;

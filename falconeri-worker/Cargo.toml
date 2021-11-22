@@ -5,13 +5,12 @@ authors = ["Eric Kidd <git@randomhacks.net>"]
 edition = "2018"
 
 [dependencies]
-crossbeam = "0.7"
-env_logger = "0.6"
-failure = "0.1.1"
+crossbeam = "0.8.1"
+env_logger = "0.9.0"
 falconeri_common = { path = "../falconeri_common" }
 glob = "0.3"
 log = "0.4.3"
 # Needed for ekidd/rust-musl-builder.
 openssl = "*"
 openssl-probe = "0.1.2"
-uuid = { version = "0.7", features = ["serde", "v4"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }

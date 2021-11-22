@@ -2,15 +2,13 @@
 extern crate openssl;
 
 use crossbeam::{self, thread::Scope};
-use env_logger;
 use falconeri_common::{
-    common_failures::display::DisplayCausesAndBacktraceExt,
     prelude::*,
     rest_api::{Client, OutputFilePatch},
     storage::CloudStorage,
+    tracing,
+    tracing_support::initialize_tracing,
 };
-use glob;
-use openssl_probe;
 use std::{
     env, fs,
     io::{self, prelude::*},
@@ -24,8 +22,9 @@ use std::{
 const USAGE: &str = "Usage: falconeri-worker <job id>";
 
 /// Our main entry point.
+#[tracing::instrument(level = "trace")]
 fn main() -> Result<()> {
-    env_logger::init();
+    initialize_tracing();
     openssl_probe::init_ssl_cert_env_vars();
 
     // Parse our arguments (manually, so we don't need to drag in a ton of
@@ -115,6 +114,7 @@ fn main() -> Result<()> {
 }
 
 /// Process a single datum.
+#[tracing::instrument(skip(to_record), level = "trace")]
 fn process_datum(
     client: &Client,
     job: &Job,
@@ -130,7 +130,7 @@ fn process_datum(
     for file in files {
         // We don't pass in any `secrets` here, because those are supposed to
         // be specified in our Kubernetes job when it's created.
-        let storage = CloudStorage::for_uri(&file.uri, &[])?;
+        let storage = <dyn CloudStorage>::for_uri(&file.uri, &[])?;
         storage.sync_down(&file.uri, Path::new(&file.local_path))?;
     }
 
@@ -145,14 +145,14 @@ fn process_datum(
             .stdout(process::Stdio::piped())
             .stderr(process::Stdio::piped())
             .spawn()
-            .with_context(|_| format!("could not run {:?}", &cmd[0]))?;
+            .with_context(|| format!("could not run {:?}", &cmd[0]))?;
 
         // Listen on stdout.
         tee_child(scope, &mut child, to_record)?;
 
         let status = child
             .wait()
-            .with_context(|_| format!("error running {:?}", &cmd[0]))?;
+            .with_context(|| format!("error running {:?}", &cmd[0]))?;
         if !status.success() {
             return Err(format_err!(
                 "command {:?} failed with status {}",
@@ -162,7 +162,7 @@ fn process_datum(
         }
 
         // Finish up.
-        upload_outputs(&client, job, datum).context("could not upload outputs")?;
+        upload_outputs(client, job, datum).context("could not upload outputs")?;
         reset_work_dirs()?;
         Ok(())
     })
@@ -173,6 +173,7 @@ fn process_datum(
 /// respectively, and write a copy to `to_record`.
 ///
 /// This function will panic if `child` does not have a `stdout` or `stderr`.
+#[tracing::instrument(skip(to_record), level = "trace")]
 fn tee_child<'a>(
     scope: &'a Scope,
     child: &mut process::Child,
@@ -207,6 +208,7 @@ fn tee_child<'a>(
 }
 
 /// Copy output from `from_child` to `to_console` and `to_record`.
+#[tracing::instrument(skip(from_child, to_console, to_record), level = "trace")]
 fn tee_output(
     from_child: &mut dyn Read,
     to_console: &mut dyn Write,
@@ -242,6 +244,7 @@ fn tee_output(
 }
 
 /// Reset our working directories to a default, clean state.
+#[tracing::instrument(level = "trace")]
 fn reset_work_dirs() -> Result<()> {
     reset_work_dir(Path::new("/pfs/"))?;
     fs::create_dir("/pfs/out").context("cannot create /pfs/out")?;
@@ -250,6 +253,7 @@ fn reset_work_dirs() -> Result<()> {
 }
 
 /// Restore a directory to a default, clean state.
+#[tracing::instrument(level = "trace")]
 fn reset_work_dir(work_dir: &Path) -> Result<()> {
     debug!("resetting work dir {}", work_dir.display());
 
@@ -264,20 +268,20 @@ fn reset_work_dir(work_dir: &Path) -> Result<()> {
     // Delete everything in our work dir.
     let entries = work_dir
         .read_dir()
-        .with_context(|_| format!("error listing directory {}", work_dir.display()))?;
+        .with_context(|| format!("error listing directory {}", work_dir.display()))?;
     for entry in entries {
         let path = entry
-            .with_context(|_| {
+            .with_context(|| {
                 format!("error listing directory {}", work_dir.display())
             })?
             .path();
         trace!("deleting {}", path.display());
         if path.is_dir() {
             fs::remove_dir_all(&path)
-                .with_context(|_| format!("cannot delete {}", path.display()))?;
+                .with_context(|| format!("cannot delete {}", path.display()))?;
         } else {
             fs::remove_file(&path)
-                .with_context(|_| format!("cannot delete {}", path.display()))?;
+                .with_context(|| format!("cannot delete {}", path.display()))?;
         }
     }
 
@@ -287,6 +291,7 @@ fn reset_work_dir(work_dir: &Path) -> Result<()> {
 }
 
 /// Upload `/pfs/out` to our output bucket.
+#[tracing::instrument(level = "debug")]
 fn upload_outputs(client: &Client, job: &Job, datum: &Datum) -> Result<()> {
     debug!("uploading outputs");
 
@@ -295,6 +300,9 @@ fn upload_outputs(client: &Client, job: &Job, datum: &Datum) -> Result<()> {
     let local_paths = glob::glob("/pfs/out/**/*").context("error listing /pfs/out")?;
     for local_path in local_paths {
         let local_path = local_path.context("error listing /pfs/out")?;
+        let _span =
+            debug_span!("uploading local data", local_path = %local_path.display())
+                .entered();
 
         // Skip anything we can't upload.
         if local_path.is_dir() {
@@ -313,9 +321,9 @@ fn upload_outputs(client: &Client, job: &Job, datum: &Datum) -> Result<()> {
         // Build the URI we want to upload to.
         let mut uri = job.egress_uri.clone();
         if !uri.ends_with('/') {
-            uri.push_str("/");
+            uri.push('/');
         }
-        uri.push_str(&rel_path_str);
+        uri.push_str(rel_path_str);
 
         // Create a database record for the file we're about to upload.
         new_output_files.push(NewOutputFile {
@@ -327,7 +335,7 @@ fn upload_outputs(client: &Client, job: &Job, datum: &Datum) -> Result<()> {
     let output_files = client.create_output_files(&new_output_files)?;
 
     // Upload all our files in a batch, for maximum performance.
-    let storage = CloudStorage::for_uri(&job.egress_uri, &[])?;
+    let storage = <dyn CloudStorage>::for_uri(&job.egress_uri, &[])?;
     let result = storage.sync_up(Path::new("/pfs/out/"), &job.egress_uri);
     let status = match result {
         Ok(()) => Status::Done,

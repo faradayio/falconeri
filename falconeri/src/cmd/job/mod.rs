@@ -71,6 +71,6 @@ pub fn run(opt: &Opt) -> Result<()> {
         // Disabled because it's broken by recurive `"input"` types.
         //
         // Opt::Schema => schema::run(),
-        Opt::Wait { job_name } => wait::run(&job_name),
+        Opt::Wait { job_name } => wait::run(job_name),
     }
 }

@@ -4,9 +4,14 @@
 //!
 //! [pipespec]: http://docs.pachyderm.io/en/latest/reference/pipeline_spec.html
 
+use std::time::Duration;
+
 use crate::{prelude::*, secret::Secret};
 
 /// Represents a pipeline `*.json` file.
+///
+/// (When editing this, be sure to update `run_job` in `start_job.rs` to include
+/// any new files.)
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineSpec {
@@ -18,6 +23,9 @@ pub struct PipelineSpec {
     pub parallelism_spec: ParallelismSpec,
     /// How many resources should we allocate for each worker?
     pub resource_requests: ResourceRequests,
+    /// Timeout a running job after this many seconds have elapsed.
+    #[serde(default, with = "humantime_serde")]
+    pub job_timeout: Option<Duration>,
     /// EXTENSION: Kubernetes node selectors describing the nodes where we can
     /// run this job.
     #[serde(default)]
@@ -205,7 +213,8 @@ fn parse_pipeline_spec() {
     );
     assert_eq!(parsed.parallelism_spec.constant, 10);
     assert_eq!(parsed.resource_requests.memory, "500Mi");
-    assert_eq!(parsed.resource_requests.cpu, 1.2);
+    assert!((parsed.resource_requests.cpu - 1.2).abs() < f32::EPSILON);
+    assert_eq!(parsed.job_timeout, Some(Duration::from_secs(300)));
     assert_eq!(parsed.node_selector["node_type"], "falconeri_worker");
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");
     assert_eq!(

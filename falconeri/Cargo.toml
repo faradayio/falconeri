@@ -5,12 +5,10 @@ version = "0.2.10"
 edition = "2018"
 
 [dependencies]
-base64 = "0.10"
-crossbeam = "0.7"
-env_logger = "0.6"
-failure = "0.1.1"
+base64 = "0.13"
+crossbeam = "0.8.1"
 falconeri_common = { path = "../falconeri_common" }
-handlebars = "1.0.0-beta.4"
+handlebars = "4.1.4"
 log = "0.4.3"
 # Needed for ekidd/rust-musl-builder.
 openssl = "*"
@@ -19,5 +17,5 @@ prettytable-rs = "0.8.0"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-structopt = "0.2.10"
-uuid = { version = "0.7", features = ["serde", "v4"] }
+structopt = "0.3.25"
+uuid = { version = "0.8", features = ["serde", "v4"] }

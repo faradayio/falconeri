@@ -12,11 +12,12 @@ use std::{
 use crate::prelude::*;
 
 /// Run `kubectl`, passing any output through to the console.
+#[tracing::instrument(level = "trace")]
 pub fn kubectl(args: &[&str]) -> Result<()> {
     let status = Command::new("kubectl")
         .args(args)
         .status()
-        .with_context(|_| format!("error starting kubectl with {:?}", args))?;
+        .with_context(|| format!("error starting kubectl with {:?}", args))?;
     if !status.success() {
         return Err(format_err!("error running kubectl with {:?}", args));
     }
@@ -25,36 +26,38 @@ pub fn kubectl(args: &[&str]) -> Result<()> {
 
 /// Run `kubectl`, capture output as JSON, and parse it using the
 /// specified type.
+#[tracing::instrument(level = "trace")]
 pub fn kubectl_parse_json<T: DeserializeOwned>(args: &[&str]) -> Result<T> {
     let output = Command::new("kubectl")
         .args(args)
         // Pass `stderr` through on console instead of capturing.
         .stderr(Stdio::inherit())
         .output()
-        .with_context(|_| format!("error starting kubectl with {:?}", args))?;
+        .with_context(|| format!("error starting kubectl with {:?}", args))?;
     if !output.status.success() {
         return Err(format_err!("error running kubectl with {:?}", args));
     }
-    Ok(serde_json::from_slice(&output.stdout)
-        .with_context(|_| format!("error parsing output of kubectl {:?}", args))?)
+    serde_json::from_slice(&output.stdout)
+        .with_context(|| format!("error parsing output of kubectl {:?}", args))
 }
 
 /// Run `kubectl` with the specified input.
+#[tracing::instrument(level = "trace")]
 pub fn kubectl_with_input(args: &[&str], input: &str) -> Result<()> {
     let mut child = Command::new("kubectl")
         .args(args)
         .stdin(Stdio::piped())
         .spawn()
-        .with_context(|_| format!("error starting kubectl with {:?}", args))?;
+        .with_context(|| format!("error starting kubectl with {:?}", args))?;
     write!(
         child.stdin.as_mut().expect("child stdin is missing"),
         "{}",
         input
     )
-    .with_context(|_| format!("error writing intput to kubectl {:?}", args))?;
+    .with_context(|| format!("error writing intput to kubectl {:?}", args))?;
     let status = child
         .wait()
-        .with_context(|_| format!("error running kubectl with {:?}", args))?;
+        .with_context(|| format!("error running kubectl with {:?}", args))?;
     if !status.success() {
         return Err(format_err!("error running kubectl with {:?}", args));
     }
@@ -62,6 +65,7 @@ pub fn kubectl_with_input(args: &[&str], input: &str) -> Result<()> {
 }
 
 /// Does `kubectl` exit successfully when called with the specified arguments?
+#[tracing::instrument(level = "trace")]
 pub fn kubectl_succeeds(args: &[&str]) -> Result<bool> {
     let output = Command::new("kubectl").args(args).output()?;
     Ok(output.status.success())
@@ -103,6 +107,7 @@ pub mod base64_encoded_secret_string {
 }
 
 /// Fetch a secret and deserialize it as the specified type.
+#[tracing::instrument(level = "trace")]
 pub fn kubectl_secret<T: DeserializeOwned>(secret: &str) -> Result<T> {
     let secret: Secret<T> =
         kubectl_parse_json(&["get", "secret", secret, "-o", "json"])?;
@@ -134,21 +139,22 @@ pub fn delete(resource_id: &str) -> Result<()> {
 /// database constraint to enforce that).
 pub fn resource_tag() -> String {
     let mut rng = thread_rng();
-    iter::repeat(())
+    let bytes = iter::repeat(())
         // Note that this random distribution is biased, because we generate
         // both upper and lowercase letters and then convert to lowercase
         // later. This isn't a big deal for now.
         .map(|()| rng.sample(Alphanumeric))
         .take(5)
-        .collect::<String>()
+        .collect::<Vec<u8>>();
+    String::from_utf8_lossy(&bytes).into_owned()
 }
 
 /// Get the name of the current Kubernetes node.
 pub fn node_name() -> Result<String> {
-    Ok(env::var("FALCONERI_NODE_NAME").context("couldn't get FALCONERI_NODE_NAME")?)
+    env::var("FALCONERI_NODE_NAME").context("couldn't get FALCONERI_NODE_NAME")
 }
 
 /// Get the name of the current Kubernetes pod.
 pub fn pod_name() -> Result<String> {
-    Ok(env::var("FALCONERI_POD_NAME").context("couldn't get FALCONERI_POD_NAME")?)
+    env::var("FALCONERI_POD_NAME").context("couldn't get FALCONERI_POD_NAME")
 }

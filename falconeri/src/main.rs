@@ -1,9 +1,7 @@
 // Needed for static linking to work right on Linux.
 extern crate openssl;
 
-use env_logger;
-use falconeri_common::{common_failures::quick_main, prelude::*};
-use openssl_probe;
+use falconeri_common::{prelude::*, quick_main};
 use structopt::StructOpt;
 
 mod cmd;
@@ -61,7 +59,6 @@ enum Opt {
 quick_main!(run);
 
 fn run() -> Result<()> {
-    env_logger::init();
     openssl_probe::init_ssl_cert_env_vars();
     let opt = Opt::from_args();
     debug!("Args: {:?}", opt);

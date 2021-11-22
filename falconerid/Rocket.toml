@@ -1,21 +1,20 @@
-[global]
+[default]
 port = 8089
+# We only run inside a container, so bind on a public port.
+address = "0.0.0.0"
 
-[global.limits]
+[default.limits]
 # Allow large JSON data, mostly for submitting output logs from workers.
 json = 52428800
 
 [development]
-# We only run inside a container, so bind on a public port.
-address = "0.0.0.0"
 workers = 4
-log = "normal"
+log_level = "normal"
 
 [production]
-address = "0.0.0.0"
 # This seems like enough for the jobs we've run, but we could try
 # doubling it.
 workers = 32
-log = "normal"
+log_level = "normal"
 # Not secure, but not used either. Just specified to silence a warning.
 #secret_key = "phdz202OvPNMXKkE2UgNLUucXI6WXUDhJtbgMcUMuzNK3TAWZ1sfLEO7gPkg3kyfU/SljEu0Fxa8qB1IN2EE9XZgNvoLUc1K6LZT0TjOkEddaay6f9LeO8kl/MmrTyTtFdBu5LXXtAmGFBx3Kz8d5QRZwu+iuopLIMy9V8ATjfUyeZw4R/CKLwbCNh62c2cHbmiURONjWQ1FUvc3DiQzED+087mBaufV96i+ngi8o50Pc9oKDUBi/m0W/3YpCEbnRUkq+Q3S0c9dRIy8HiEnbpd7DW27ihCuSJQkXhYAOcrrQdw8RYARIg23MuPKp9l5OHrY49sJC6vNBcV37R06iw=="

@@ -25,6 +25,7 @@ struct FalconeriSecretData {
 }
 
 /// Look up our PostgreSQL password in our cluster's `falconeri` secret.
+#[tracing::instrument(level = "trace")]
 pub fn postgres_password(via: ConnectVia) -> Result<String> {
     match via {
         ConnectVia::Proxy => {
@@ -46,6 +47,7 @@ pub fn postgres_password(via: ConnectVia) -> Result<String> {
 }
 
 /// Get an appropriate database URL.
+#[tracing::instrument(level = "trace")]
 pub fn database_url(via: ConnectVia) -> Result<String> {
     // Check the environment first, so it can be overridden for testing outside
     // of a full Kubernetes setup.
@@ -69,12 +71,13 @@ pub fn database_url(via: ConnectVia) -> Result<String> {
 }
 
 /// Connect to PostgreSQL.
+#[tracing::instrument(level = "trace")]
 pub fn connect(via: ConnectVia) -> Result<PgConnection> {
     let database_url = database_url(via)?;
 
     let conn = via
         .retry_if_appropriate(|| Ok(PgConnection::establish(&database_url)?))
-        .with_context(|_| format!("Error connecting to {}", database_url))?;
+        .with_context(|| format!("Error connecting to {}", database_url))?;
 
     Ok(conn)
 }
@@ -87,6 +90,7 @@ pub type PooledConnection =
     r2d2::PooledConnection<DieselConnectionManager<PgConnection>>;
 
 /// Create a connection pool using the specified parameters.
+#[tracing::instrument(level = "trace")]
 pub fn pool(pool_size: u32, via: ConnectVia) -> Result<Pool> {
     let database_url = database_url(via)?;
     let manager = DieselConnectionManager::new(database_url);
@@ -101,6 +105,7 @@ pub fn pool(pool_size: u32, via: ConnectVia) -> Result<Pool> {
 const MIGRATION_LOCK_ID: i64 = 5_275_218_930_720_578_783;
 
 /// Run any pending migrations, and print to standard output.
+#[tracing::instrument(skip(conn), level = "trace")]
 pub fn run_pending_migrations(conn: &PgConnection) -> Result<()> {
     debug!("Running pending migrations");
     conn.transaction(|| -> Result<()> {

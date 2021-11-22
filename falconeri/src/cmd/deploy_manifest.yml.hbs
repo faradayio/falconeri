@@ -109,6 +109,8 @@ spec:
         env:
         - name: ROCKET_ENV
           value: "{{config.env}}"
+        - name: ROCKET_CONFIG
+          value: "/app/Rocket.toml"
         resources:
           requests:
             cpu: "{{config.falconerid_cpu}}"

@@ -5,7 +5,7 @@ use falconeri_common::{
     kubernetes,
     manifest::render_manifest,
     prelude::*,
-    rand::{distributions::Alphanumeric, rngs::EntropyRng, Rng},
+    rand::{distributions::Alphanumeric, rngs::StdRng, Rng, SeedableRng},
 };
 use std::iter;
 use structopt::StructOpt;
@@ -97,11 +97,11 @@ pub struct Opt {
 /// Deploy `falconeri` to the current Kubernetes cluster.
 pub fn run(opt: &Opt) -> Result<()> {
     // Generate a password using the system's "secure" random number generator.
-    let mut rng = EntropyRng::new();
+    let mut rng = StdRng::from_entropy();
     let postgres_password = iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
         .take(32)
-        .collect::<String>();
+        .collect::<Vec<u8>>();
 
     // Generate our secret manifest.
     let secret_params = SecretManifestParams {

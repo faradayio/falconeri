@@ -30,18 +30,18 @@ pub struct Datum {
 impl Datum {
     /// Find a datum by ID.
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<Datum> {
-        Ok(datums::table
+        datums::table
             .find(id)
             .first(conn)
-            .with_context(|_| format!("could not load datum {}", id))?)
+            .with_context(|| format!("could not load datum {}", id))
     }
 
     /// Get the input files for this datum.
     pub fn input_files(&self, conn: &PgConnection) -> Result<Vec<InputFile>> {
-        Ok(InputFile::belonging_to(self)
+        InputFile::belonging_to(self)
             .order_by(input_files::created_at)
             .load(conn)
-            .context("could not load input file")?)
+            .context("could not load input file")
     }
 
     /// Mark this datum as having been successfully processed.
