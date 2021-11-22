@@ -588,7 +588,7 @@ checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 
 [[package]]
 name = "falconeri"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "base64",
  "crossbeam",
@@ -607,7 +607,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri-worker"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "crossbeam",
  "env_logger",
@@ -621,7 +621,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri_common"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "anyhow",
  "backoff",
@@ -648,7 +648,7 @@ dependencies = [
 
 [[package]]
 name = "falconerid"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "falconeri_common",
  "headers",
