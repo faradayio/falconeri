@@ -111,6 +111,8 @@ spec:
           value: "{{config.env}}"
         - name: ROCKET_CONFIG
           value: "/app/Rocket.toml"
+        - name: RUST_LOG
+          value: "{{config.falconerid_log_level}}"
         resources:
           requests:
             cpu: "{{config.falconerid_cpu}}"

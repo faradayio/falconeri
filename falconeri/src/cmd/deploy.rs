@@ -1,14 +1,15 @@
 //! The `deploy` subcommand.
 
 use base64;
+use std::iter;
+use structopt::StructOpt;
+
 use falconeri_common::{
     kubernetes,
     manifest::render_manifest,
     prelude::*,
     rand::{distributions::Alphanumeric, rngs::StdRng, Rng, SeedableRng},
 };
-use std::iter;
-use structopt::StructOpt;
 
 /// The manifest defining secrets for `falconeri`.
 const SECRET_MANIFEST: &str = include_str!("secret_manifest.yml.hbs");
@@ -39,6 +40,8 @@ struct Config {
     falconerid_memory: String,
     /// The number of CPUs to request for `falconerid`.
     falconerid_cpu: String,
+    /// The RUST_LOG value to pass to `falconerid`.
+    falconerid_log_level: String,
     /// Should we get our `falconeri` image from `minikube`'s internal Docker
     /// daemon?
     use_local_image: bool,
@@ -92,6 +95,11 @@ pub struct Opt {
     /// The number of CPUs to request for `falconerid`.
     #[structopt(long = "falconerid-cpu")]
     falconerid_cpu: Option<String>,
+
+    /// Set the log level to be used for `falconerid`. This uses the same format
+    /// as `RUST_LOG`. Example: `falconeri_common=debug,falconerid=debug,warn`.
+    #[structopt(long = "falconerid-log-level")]
+    falconerid_log_level: Option<String>,
 }
 
 /// Deploy `falconeri` to the current Kubernetes cluster.
@@ -128,6 +136,9 @@ pub fn run(opt: &Opt) -> Result<()> {
     }
     if let Some(falconerid_cpu) = &opt.falconerid_cpu {
         config.falconerid_cpu = falconerid_cpu.to_owned();
+    }
+    if let Some(falconerid_log_level) = &opt.falconerid_log_level {
+        config.falconerid_log_level = falconerid_log_level.to_owned();
     }
 
     // Generate our deploy manifest.
@@ -181,6 +192,8 @@ fn default_config(development: bool) -> Config {
             falconerid_replicas: 1,
             falconerid_memory: "64Mi".to_string(),
             falconerid_cpu: "100m".to_string(),
+            falconerid_log_level: "falconeri_common=debug,falconerid=debug,warn"
+                .to_string(),
             use_local_image: true,
             version: env!("CARGO_PKG_VERSION").to_string(),
         }
@@ -193,6 +206,7 @@ fn default_config(development: bool) -> Config {
             falconerid_replicas: 2,
             falconerid_memory: "256Mi".to_string(),
             falconerid_cpu: "450m".to_string(),
+            falconerid_log_level: "warn".to_string(),
             use_local_image: false,
             version: env!("CARGO_PKG_VERSION").to_string(),
         }
