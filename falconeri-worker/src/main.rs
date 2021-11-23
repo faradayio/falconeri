@@ -253,10 +253,8 @@ fn reset_work_dirs() -> Result<()> {
 }
 
 /// Restore a directory to a default, clean state.
-#[tracing::instrument(level = "trace")]
+#[tracing::instrument(level = "debug")]
 fn reset_work_dir(work_dir: &Path) -> Result<()> {
-    debug!("resetting work dir {}", work_dir.display());
-
     // Make sure our work dir still exists.
     if !work_dir.is_dir() {
         return Err(format_err!(
@@ -293,16 +291,13 @@ fn reset_work_dir(work_dir: &Path) -> Result<()> {
 /// Upload `/pfs/out` to our output bucket.
 #[tracing::instrument(level = "debug")]
 fn upload_outputs(client: &Client, job: &Job, datum: &Datum) -> Result<()> {
-    debug!("uploading outputs");
-
     // Create records describing the files we're going to upload.
     let mut new_output_files = vec![];
     let local_paths = glob::glob("/pfs/out/**/*").context("error listing /pfs/out")?;
     for local_path in local_paths {
         let local_path = local_path.context("error listing /pfs/out")?;
         let _span =
-            debug_span!("uploading local data", local_path = %local_path.display())
-                .entered();
+            debug_span!("upload_output", local_path = %local_path.display()).entered();
 
         // Skip anything we can't upload.
         if local_path.is_dir() {
