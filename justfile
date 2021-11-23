@@ -28,13 +28,11 @@ version:
 #     just set-version 0.2.1
 #
 # TEMPORARY: This will have to be improved before we can make crate releases,
-# because it doesn't update inter-crate dependencies.
+# because it doesn't update inter-crate dependencies. We need something like
+# this. See https://github.com/killercup/cargo-edit/issues/426.
 set-version NEW_VERSION:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    for TOML in falconeri*/Cargo.toml; do
-        (cd "$(dirname "$TOML")" && cargo bump {{NEW_VERSION}})
-    done
+    # If this fails, run `cargo install cargo-edit`.
+    cargo set-version --workspace {{NEW_VERSION}}
 
 # The docker image `build-falconeri`, which we use to compile things.
 _build_falconeri_image:
