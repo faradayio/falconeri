@@ -1,7 +1,9 @@
 // Needed for static linking to work right on Linux.
 extern crate openssl;
 
-use falconeri_common::{prelude::*, quick_main};
+use std::{io::stderr, process};
+
+use falconeri_common::prelude::*;
 use structopt::StructOpt;
 
 mod cmd;
@@ -56,8 +58,17 @@ enum Opt {
     },
 }
 
-quick_main!(run);
+/// Wrapper around `run` which reports errors.
+fn main() {
+    if let Err(err) = run() {
+        let stderr = stderr();
+        write!(&mut stderr.lock(), "{}", err.display_causes_and_backtrace())
+            .expect("Error occurred while trying to display error");
+        process::exit(1);
+    }
+}
 
+/// The actual main code of the application.
 fn run() -> Result<()> {
     openssl_probe::init_ssl_cert_env_vars();
     let opt = Opt::from_args();

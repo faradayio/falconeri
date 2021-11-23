@@ -54,22 +54,3 @@ impl fmt::Display for DisplayCauses<'_> {
         Ok(())
     }
 }
-
-/// Generate a `main` function which calls the specified function. If the
-/// function returns `Result::Err(_)`, then `main` will print the error and exit
-/// with a non-zero status code.
-#[macro_export]
-macro_rules! quick_main {
-    ($wrapped:ident) => {
-        fn main() {
-            if let Err(err) = $wrapped() {
-                use ::std::io::Write;
-                use $crate::errors::DisplayCausesAndBacktraceExt;
-                let stderr = ::std::io::stderr();
-                write!(&mut stderr.lock(), "{}", err.display_causes_and_backtrace())
-                    .expect("Error occurred while trying to display error");
-                ::std::process::exit(1);
-            }
-        }
-    };
-}
