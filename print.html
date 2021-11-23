@@ -1,24 +1,42 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js">
+<html lang="en" class="sidebar-visible no-js light">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>falconeri: Distributed batch processing using Kubernetes</title>
+        
+        <meta name="robots" content="noindex" />
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
+        
+        <link rel="icon" href="favicon.svg">
+        
+        
         <link rel="shortcut icon" href="favicon.png">
+        
         <link rel="stylesheet" href="css/variables.css">
         <link rel="stylesheet" href="css/general.css">
         <link rel="stylesheet" href="css/chrome.css">
+        
         <link rel="stylesheet" href="css/print.css" media="print">
+        
 
         <!-- Fonts -->
         <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
-        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
 
         <!-- Highlight.js Stylesheets -->
         <link rel="stylesheet" href="highlight.css">
@@ -30,9 +48,12 @@
 
         
     </head>
-    <body class="light">
+    <body>
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">var path_to_root = "";</script>
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script type="text/javascript">
@@ -53,10 +74,13 @@
         <!-- Set the theme before any content is loaded, prevents flash -->
         <script type="text/javascript">
             var theme;
-            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
-            if (theme === null || theme === undefined) { theme = 'light'; }
-            document.body.className = theme;
-            document.querySelector('html').className = theme + ' js';
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
         </script>
 
         <!-- Hide / unhide sidebar before it is displayed -->
@@ -72,43 +96,48 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><a href="installation.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><a href="specification.html"><strong aria-hidden="true">3.</strong> Job specification</a></li><li><a href="images.html"><strong aria-hidden="true">4.</strong> Creating Docker images</a></li><li><a href="commands.html"><strong aria-hidden="true">5.</strong> Commands</a></li><li><ol class="section"><li><a href="commands/connecting.html"><strong aria-hidden="true">5.1.</strong> Connecting</a></li><li><a href="commands/job.html"><strong aria-hidden="true">5.2.</strong> Running jobs</a></li><li><a href="commands/db.html"><strong aria-hidden="true">5.3.</strong> Accessing the database</a></li></ol></li></ol>
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li class="chapter-item expanded "><a href="specification.html"><strong aria-hidden="true">3.</strong> Job specification</a></li><li class="chapter-item expanded "><a href="images.html"><strong aria-hidden="true">4.</strong> Creating Docker images</a></li><li class="chapter-item expanded "><a href="commands.html"><strong aria-hidden="true">5.</strong> Commands</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="commands/connecting.html"><strong aria-hidden="true">5.1.</strong> Connecting</a></li><li class="chapter-item expanded "><a href="commands/job.html"><strong aria-hidden="true">5.2.</strong> Running jobs</a></li><li class="chapter-item expanded "><a href="commands/db.html"><strong aria-hidden="true">5.3.</strong> Accessing the database</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                 
-                <div id="menu-bar" class="menu-bar">
-                    <div id="menu-bar-sticky-container">
-                        <div class="left-buttons">
-                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
-                                <i class="fa fa-bars"></i>
-                            </button>
-                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
-                                <i class="fa fa-paint-brush"></i>
-                            </button>
-                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                                <li role="none"><button role="menuitem" class="theme" id="light">Light <span class="default">(default)</span></button></li>
-                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
-                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
-                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
-                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
-                            </ul>
-                            
-                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
-                                <i class="fa fa-search"></i>
-                            </button>
-                            
-                        </div>
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
 
-                        <h1 class="menu-title">falconeri: Distributed batch processing using Kubernetes</h1> 
+                    <h1 class="menu-title">falconeri: Distributed batch processing using Kubernetes</h1>
 
-                        <div class="right-buttons">
-                            <a href="print.html" title="Print this book" aria-label="Print this book">
-                                <i id="print-button" class="fa fa-print"></i>
-                            </a>
-                        </div>
+                    <div class="right-buttons">
+                        
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        
                     </div>
                 </div>
 
@@ -136,18 +165,18 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="#introduction" id="introduction"><h1>Introduction</h1></a>
+                        <h1><a class="header" href="#introduction" id="introduction">Introduction</a></h1>
 <p>Falconeri is lightweight tool for running distributed batch jobs on a Kubernetes cluster. You can specify your processing code as a Docker image that reads files as input, and produces other files as output. This allows you to use virtually any programming language.</p>
 <p>Falconeri will read files from cloud buckets, distribute them among multiple copies of your worker image, and collect the output into a another cloud bucket.</p>
 <p>Falconeri is inspired by the open source <a href="http://www.pachyderm.io/">Pachyderm</a>, which offers a considerably richer set of tools for batch-processing on a Kubernetes cluster, plus a <code>git</code>-like file system for tracking multiple versions of data and recording the provenance.</p>
-<a class="header" href="#installation" id="installation"><h1>Installation</h1></a>
+<h1><a class="header" href="#installation" id="installation">Installation</a></h1>
 <p>To install <code>falconeri</code>, you'll need a working Kubernetes cluster and a basic knowledge of Kubernetes. Ideally, your Kubernetes cluster should support cluster autoscaling, allowing it to automatically add and remove servers as needed.</p>
 <p>We've had good luck with the following:</p>
 <ul>
 <li>Google Kubernetes Engine, running version 1.10.5-gke.0 with permissions <code>--scopes=gke-default,storage-rw</code> and SSD boot disks.</li>
 <li>O'Reilly's <em>Kubernetes: Up &amp; Running</em>, which introduces nearly all the Kubernetes features used by Falconeri.</li>
 </ul>
-<a class="header" href="#required-software" id="required-software"><h2>Required software</h2></a>
+<h2><a class="header" href="#required-software" id="required-software">Required software</a></h2>
 <p>If you're running Kubernetes on Google's cloud, you will need:</p>
 <ul>
 <li><code>gsutil</code> for accessing Google Cloud Storage.</li>
@@ -160,9 +189,9 @@
 <li><code>falconeri</code>, which you should be able to find on the <a href="https://github.com/faradayio/falconeri/releases">releases page</a>.</li>
 </ul>
 <p>On the Mac, you will also need to install OpenSSL shared libraries. You can do this using <code>brew</code>:</p>
-<pre><code class="language-sh">brew install openssl
+<pre><code class="language-sh">brew install openssl@1.1
 </code></pre>
-<a class="header" href="#authenticating-with-your-cluster" id="authenticating-with-your-cluster"><h2>Authenticating with your cluster</h2></a>
+<h2><a class="header" href="#authenticating-with-your-cluster" id="authenticating-with-your-cluster">Authenticating with your cluster</a></h2>
 <p>If you're using Google Cloud, and your cluster is named <code>falconeri</code>, you can authenticate with your Falconeri cluster as follows:</p>
 <pre><code class="language-sh">gcloud auth login
 gcloud container clusters get-credentials falconeri \
@@ -171,7 +200,7 @@ gcloud container clusters get-credentials falconeri \
 <p>You'll also need to set your Falconeri cluster as the default for <code>kubectl</code> commands:</p>
 <pre><code class="language-sh">kubectl config use-context $CONTEXT_NAME
 </code></pre>
-<a class="header" href="#setting-up-a-cluster-autoscaling-pool" id="setting-up-a-cluster-autoscaling-pool"><h2>Setting up a cluster autoscaling pool</h2></a>
+<h2><a class="header" href="#setting-up-a-cluster-autoscaling-pool" id="setting-up-a-cluster-autoscaling-pool">Setting up a cluster autoscaling pool</a></h2>
 <p>We've had good luck splitting our cluster into two separate parts:</p>
 <ol>
 <li>Three master nodes. These run the Kubernetes cluster infrastructure, plus the Falconeri back end. These are always running. For a really small installation, it might be possible to get by with a single master node.</li>
@@ -200,7 +229,7 @@ gcloud container clusters get-credentials falconeri \
   },
 </code></pre>
 <p>Strictly speaking, this is optional. But in practice, autoscaling is extremely convenient, and isolating the workers to a separate node pool will reduce the risk of a runaway worker process &quot;evicting&quot; critical Kubernetes infrastructure.</p>
-<a class="header" href="#deploying-falconeri" id="deploying-falconeri"><h2>Deploying Falconeri</h2></a>
+<h2><a class="header" href="#deploying-falconeri" id="deploying-falconeri">Deploying Falconeri</a></h2>
 <p>Once you are authenticated with your cluster and you have added your autoscaling pool, you can install Falconeri as follows:</p>
 <pre><code class="language-sh">falconeri deploy
 </code></pre>
@@ -213,7 +242,7 @@ gcloud container clusters get-credentials falconeri \
 <p>Finally, update your database to the latest schema:</p>
 <pre><code class="language-sh">falconeri migrate
 </code></pre>
-<a class="header" href="#setting-up-an-http-ingress" id="setting-up-an-http-ingress"><h2>Setting up an HTTP ingress</h2></a>
+<h2><a class="header" href="#setting-up-an-http-ingress" id="setting-up-an-http-ingress">Setting up an HTTP ingress</a></h2>
 <p><code>falconerid</code> provides a simple REST API, allowing it to be used as a service by other applications. (This is not documented yet, but you could look at <code>faraday_common/src/rest_api.rs</code> for the details.) Within a Kubernetes cluster, you should be able to access the HTTP endpoint associated with <code>service/falconeri</code>.</p>
 <p>You can also create a Kubernetes <code>Ingress</code> resource which exposes <code>falconerid</code> from outside the cluster and binds a DNS name to it. For example, using <a href="https://github.com/kubernetes-sigs/aws-alb-ingress-controller/">aws-alb-ingress-controller</a>, you could expose <code>falconerid</code> as follows (untested):</p>
 <pre><code class="language-yaml">---
@@ -253,7 +282,7 @@ spec:
               servicePort: 8089
 </code></pre>
 <p>Note that if you make <code>falconerid</code> available over the internet, you <strong>must</strong> set up HTTPS certificates for your load balancer.</p>
-<a class="header" href="#job-specification" id="job-specification"><h1>Job specification</h1></a>
+<h1><a class="header" href="#job-specification" id="job-specification">Job specification</a></h1>
 <p>Here is a sample job specification:</p>
 <pre><code class="language-json">{
   &quot;pipeline&quot;: {
@@ -288,6 +317,7 @@ spec:
     &quot;memory&quot;: &quot;500Mi&quot;,
     &quot;cpu&quot;: 1.2
   },
+  &quot;job_timeout&quot;: &quot;5m&quot;,
   &quot;node_selector&quot;: {
     &quot;node_type&quot;: &quot;falconeri_worker&quot;
   },
@@ -302,7 +332,6 @@ spec:
     &quot;URI&quot;: &quot;gs://example-bucket/words/&quot;
   }
 }
-
 </code></pre>
 <p>Some notes:</p>
 <ul>
@@ -314,7 +343,7 @@ spec:
 <li>For now, <code>input.atom</code> is the only supported input type.</li>
 <li><code>egress.URI</code> is mandatory.</li>
 </ul>
-<a class="header" href="#s3-authentication" id="s3-authentication"><h2>S3 authentication</h2></a>
+<h2><a class="header" href="#s3-authentication" id="s3-authentication">S3 authentication</a></h2>
 <p>In order to authenticate with S3, you will need to create a secret, and add a <code>transform.secrets</code> section to your pipeline specification. This should look like the following, although you may replace the secret name with something other than <code>&quot;s3&quot;</code>. For now, the <code>&quot;key&quot;</code> values must be as specified below for the S3 backend to work.</p>
 <pre><code class="language-json">&quot;secrets&quot;: [
   {
@@ -329,9 +358,9 @@ spec:
   }
 ]
 </code></pre>
-<a class="header" href="#creating-docker-images" id="creating-docker-images"><h1>Creating Docker images</h1></a>
+<h1><a class="header" href="#creating-docker-images" id="creating-docker-images">Creating Docker images</a></h1>
 <p>In order to transform your data, you will need to create a Docker image.</p>
-<a class="header" href="#inputs-and-outputs" id="inputs-and-outputs"><h2>Inputs and outputs</h2></a>
+<h2><a class="header" href="#inputs-and-outputs" id="inputs-and-outputs">Inputs and outputs</a></h2>
 <p>If your pipeline JSON contains the following input section:</p>
 <pre><code class="language-json">&quot;input&quot;: {
   &quot;atom&quot;: {
@@ -342,7 +371,7 @@ spec:
 }
 </code></pre>
 <p>...you will find one or more input files from your bucket in the directory <code>/pfs/books</code>. You should place your input files in <code>/pfs/out</code>, using output names that are unique across all workers.</p>
-<a class="header" href="#required-executables" id="required-executables"><h2>Required executables</h2></a>
+<h2><a class="header" href="#required-executables" id="required-executables">Required executables</a></h2>
 <p>Your Docker image must contain both <code>gsutil</code> (assuming you're using Google Cloud Storage) and <code>falconeri-worker</code> somewhere in your <code>$PATH</code>. You can install <code>gsutil</code> on an Ubuntu image as follows:</p>
 <pre><code class="language-Dockerfile">RUN export CLOUD_SDK_REPO=&quot;cloud-sdk-$(lsb_release -c -s)&quot; &amp;&amp; \
     echo &quot;deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main&quot; | \
@@ -354,51 +383,51 @@ spec:
 </code></pre>
 <p>You can install <code>falconeri-worker</code> by downloading the latest <a href="https://github.com/faradayio/falconeri/">release</a> and copying <code>falconeri-worker</code> to <code>/usr/local/bin</code>, or another directory in your <code>$PATH</code>. This is a statically-linked Linux binary, so it should work on any reasonably modern Linux distro.</p>
 <p>TODO: Add example of installing <code>falconeri-worker</code>.</p>
-<a class="header" href="#commands" id="commands"><h1>Commands</h1></a>
+<h1><a class="header" href="#commands" id="commands">Commands</a></h1>
 <p>For a list of all available commands, run:</p>
 <pre><code class="language-sh">falconeri --help
 </code></pre>
 <p>Individual commands are documented in the sections that follow.</p>
-<a class="header" href="#connecting" id="connecting"><h1>Connecting</h1></a>
+<h1><a class="header" href="#connecting" id="connecting">Connecting</a></h1>
 <p>Before using Falconeri, you'll need to authenticate with your Kubernetes cluster using <code>kubectl</code>, and then set up a proxy connection.</p>
-<a class="header" href="#proxy" id="proxy"><h2><code>proxy</code></h2></a>
+<h2><a class="header" href="#proxy" id="proxy"><code>proxy</code></a></h2>
 <p>Before doing anything else, you will need to connect to Flaconeri using the <code>proxy</code> command:</p>
 <pre><code class="language-sh">falconeri proxy
 </code></pre>
 <p>This currently maps Falconeri's PostgreSQL server to <code>localhost:5432</code>. In the future, it may also map a second port for access to a Falconeri server.</p>
 <p>You will need to make sure that this is running every time you use Falconeri.</p>
-<a class="header" href="#running-jobs" id="running-jobs"><h1>Running jobs</h1></a>
-<a class="header" href="#job-run" id="job-run"><h2><code>job run</code></h2></a>
+<h1><a class="header" href="#running-jobs" id="running-jobs">Running jobs</a></h1>
+<h2><a class="header" href="#job-run" id="job-run"><code>job run</code></a></h2>
 <p>To run a job using <code>falconeri</code>, use the <code>job run</code> subcommand:</p>
 <pre><code class="language-sh">falconeri job run $PIPELINE_SPEC_JSON_PATH
 </code></pre>
-<p>The <code>$PIPELINE_SPEC_JSON_PATH</code> should point a file in <a href="./specification.html">pipeline spec JSON</a> format. This will create all the necessary records for a job in the database, and start a job on the Kubernetes cluster. It will also print out the ID of the new job.</p>
-<a class="header" href="#job-list" id="job-list"><h2><code>job list</code></h2></a>
+<p>The <code>$PIPELINE_SPEC_JSON_PATH</code> should point a file in <a href="commands/./specification.html">pipeline spec JSON</a> format. This will create all the necessary records for a job in the database, and start a job on the Kubernetes cluster. It will also print out the ID of the new job.</p>
+<h2><a class="header" href="#job-list" id="job-list"><code>job list</code></a></h2>
 <p>To list all known jobs, and their current state, run:</p>
 <pre><code class="language-sh">falconeri job list
 </code></pre>
-<a class="header" href="#job-describe" id="job-describe"><h2><code>job describe</code></h2></a>
+<h2><a class="header" href="#job-describe" id="job-describe"><code>job describe</code></a></h2>
 <p>To see a summary of the current state of a job, including datums currently being processed, see:</p>
 <pre><code class="language-sh">falconeri job describe $JOB_NAME
 </code></pre>
-<a class="header" href="#datum-describe-datum_id" id="datum-describe-datum_id"><h2><code>datum describe $DATUM_ID</code></h2></a>
+<h2><a class="header" href="#datum-describe-datum_id" id="datum-describe-datum_id"><code>datum describe $DATUM_ID</code></a></h2>
 <p>To describe an individual datum in a job, you can run:</p>
 <pre><code class="language-sh">falconeri datum describe $DATUM_ID
 </code></pre>
-<a class="header" href="#job-retry" id="job-retry"><h2><code>job retry</code></h2></a>
+<h2><a class="header" href="#job-retry" id="job-retry"><code>job retry</code></a></h2>
 <p>If a job has failed due to an intermittent error, you can re-run just the failed datums using <code>job retry</code>:</p>
 <pre><code class="language-sh">falconeri job retry $JOB_NAME
 </code></pre>
 <p>Note that this will use the original pipeline specification JSON, and that it will create a new job.</p>
 <p><strong>KLUDGE:</strong> If you need to edit the pipeline spec JSON before retrying, you might be able to do so using <code>falconeri db console</code> to change the <code>jobs.pipeline_spec</code> column. Note that this is not officially supported.</p>
-<a class="header" href="#accessing-the-database" id="accessing-the-database"><h1>Accessing the database</h1></a>
+<h1><a class="header" href="#accessing-the-database" id="accessing-the-database">Accessing the database</a></h1>
 <p>Sometimes, you may need to know more about a job than you can access using the CLI. Falconeri stores its state in a PostgreSQL database, which you can access using the following commands.</p>
 <p><strong>WARNING:</strong> The database schema is subject to change without warning, and does not form part of the stable interface to Falconeri. Proceed at your own risk!</p>
-<a class="header" href="#db-url" id="db-url"><h2><code>db url</code></h2></a>
+<h2><a class="header" href="#db-url" id="db-url"><code>db url</code></a></h2>
 <p>Print out a URL pointing to Falconeri's PostgreSQL server, as mapped by <code>falconeri proxy</code>:</p>
 <pre><code class="language-sh">falconeri db uri
 </code></pre>
-<a class="header" href="#db-console" id="db-console"><h2><code>db console</code></h2></a>
+<h2><a class="header" href="#db-console" id="db-console"><code>db console</code></a></h2>
 <p>Use <code>psql</code> to connect to Falconeri's PostgreSQL server, as mapped by <code>falconeri proxy</code>:</p>
 <pre><code class="language-sh">falconeri db console
 </code></pre>
@@ -426,6 +455,14 @@ spec:
 
         
 
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
         
 
         
