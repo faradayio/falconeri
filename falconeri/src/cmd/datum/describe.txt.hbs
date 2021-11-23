@@ -8,6 +8,7 @@ Pod Name: {{datum.pod_name}}
 {{~ #if datum.node_name}}
 Node Name: {{datum.node_name}}
 {{~ /if}}
+Tries: {{datum.attempted_run_count}}/{{datum.maximum_allowed_run_count}}
 
 Input Files:
 {{~ #each input_files}}

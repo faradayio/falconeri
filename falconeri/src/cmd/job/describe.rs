@@ -11,7 +11,7 @@ const DESCRIBE_TEMPLATE: &str = include_str!("describe.txt.hbs");
 #[derive(Serialize)]
 struct Params {
     job: Job,
-    datum_status_counts: Vec<(Status, u64)>,
+    datum_status_counts: Vec<DatumStatusCount>,
     running_datums: Vec<Datum>,
     error_datums: Vec<Datum>,
 }
@@ -39,8 +39,16 @@ pub fn run(job_name: &str) -> Result<()> {
 #[test]
 fn render_template() {
     let job = Job::factory();
-    let datum_status_counts =
-        vec![(Status::Ready, 1), (Status::Running, 1), (Status::Error, 1)];
+    let dsc = |status: Status, count: u64, rerunable_count: u64| DatumStatusCount {
+        status,
+        count,
+        rerunable_count,
+    };
+    let datum_status_counts = vec![
+        dsc(Status::Ready, 1, 0),
+        dsc(Status::Running, 1, 0),
+        dsc(Status::Error, 2, 1),
+    ];
     let mut running_datum = Datum::factory(&job);
     running_datum.status = Status::Running;
     let running_datums = vec![running_datum];

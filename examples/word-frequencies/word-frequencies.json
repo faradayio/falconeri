@@ -9,7 +9,7 @@
             "word-frequencies.sh"
         ],
         "env": {
-            "RUST_LOG": "info"
+            "RUST_LOG": "falconeri_common=debug,falconeri_worker=debug,info"
         },
         "secrets": [
             {
@@ -31,6 +31,7 @@
         "memory": "128Mi",
         "cpu": 0.1
     },
+    "datum_tries": 3,
     "input": {
         "atom": {
           "repo": "texts",

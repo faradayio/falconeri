@@ -16,12 +16,14 @@ use rocket::{
 };
 use std::{env, process::exit};
 
+mod babysitter;
 pub(crate) mod inputs;
 mod start_job;
 mod util;
 
-use start_job::{retry_job, run_job};
-use util::{DbConn, FalconeridResult, User};
+use crate::babysitter::start_babysitter;
+use crate::start_job::{retry_job, run_job};
+use crate::util::{DbConn, FalconeridResult, User};
 
 /// initialize the server at startup.
 fn initialize_server() -> Result<()> {
@@ -36,6 +38,11 @@ fn initialize_server() -> Result<()> {
     eprintln!("Running any pending migrations.");
     db::run_pending_migrations(&conn)?;
     eprintln!("Finished migrations.");
+
+    eprintln!("Starting babysitter thread to monitor jobs.");
+    start_babysitter()?;
+    eprintln!("Babysitter started.");
+
     Ok(())
 }
 
@@ -140,8 +147,7 @@ fn patch_datum(
 
     // If there are no more datums, mark the job as finished (either done or
     // error).
-    let mut job = Job::find(datum.job_id, &conn)?;
-    job.update_status_if_done(&conn)?;
+    datum.update_job_status_if_done(&conn)?;
 
     Ok(Json(datum))
 }

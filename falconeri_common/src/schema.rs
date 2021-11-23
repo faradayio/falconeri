@@ -13,6 +13,8 @@ table! {
         pod_name -> Nullable<Text>,
         backtrace -> Nullable<Text>,
         output -> Nullable<Text>,
+        attempted_run_count -> Int4,
+        maximum_allowed_run_count -> Int4,
     }
 }
 

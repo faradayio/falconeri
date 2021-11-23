@@ -23,6 +23,8 @@ pub struct PipelineSpec {
     pub parallelism_spec: ParallelismSpec,
     /// How many resources should we allocate for each worker?
     pub resource_requests: ResourceRequests,
+    /// The maximum number of times to retry a single datum.
+    pub datum_tries: Option<u32>,
     /// Timeout a running job after this many seconds have elapsed.
     #[serde(default, with = "humantime_serde")]
     pub job_timeout: Option<Duration>,
@@ -214,6 +216,7 @@ fn parse_pipeline_spec() {
     assert_eq!(parsed.parallelism_spec.constant, 10);
     assert_eq!(parsed.resource_requests.memory, "500Mi");
     assert!((parsed.resource_requests.cpu - 1.2).abs() < f32::EPSILON);
+    assert_eq!(parsed.datum_tries, Some(3));
     assert_eq!(parsed.job_timeout, Some(Duration::from_secs(300)));
     assert_eq!(parsed.node_selector["node_type"], "falconeri_worker");
     assert_eq!(parsed.transform.image, "somerepo/my_python_nlp");

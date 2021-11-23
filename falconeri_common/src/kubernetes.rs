@@ -4,6 +4,7 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::de::{Deserialize, DeserializeOwned};
 use serde_json;
+use std::collections::HashSet;
 use std::{
     env, iter,
     process::{Command, Stdio},
@@ -112,6 +113,57 @@ pub fn kubectl_secret<T: DeserializeOwned>(secret: &str) -> Result<T> {
     let secret: Secret<T> =
         kubectl_parse_json(&["get", "secret", secret, "-o", "json"])?;
     Ok(secret.data)
+}
+
+/// A list of items returned by Kubernetes.
+#[derive(Deserialize)]
+struct ItemsJson<T> {
+    items: Vec<T>,
+}
+
+/// JSON describing a pod or similar resource.
+#[derive(Deserialize)]
+struct ResourceJson {
+    // Kubernetes resource metadata.
+    metadata: Option<MetadataJson>,
+}
+
+impl ResourceJson {
+    /// Get the name of this resource, if any.
+    fn name(&self) -> Option<&str> {
+        let s = self.metadata.as_ref()?.name.as_ref()?;
+        Some(&s[..])
+    }
+}
+/// JSON describing resource metadata.
+#[derive(Deserialize)]
+struct MetadataJson {
+    /// Resource name.
+    name: Option<String>,
+}
+
+/// Get a set of currently running pod names.
+#[tracing::instrument(level = "trace")]
+pub fn running_pod_names() -> Result<HashSet<String>> {
+    let pods = kubectl_parse_json::<ItemsJson<ResourceJson>>(&[
+        "get",
+        "pods",
+        "--field-selector",
+        "status.phase=Running",
+        "--output=json",
+    ])?;
+
+    let mut names = HashSet::new();
+    for pod in &pods.items {
+        if let Some(name) = pod.name() {
+            names.insert(name.to_owned());
+        } else {
+            warn!("found nameless pod");
+        }
+    }
+    debug!("found {} running pods", names.len());
+    trace!("running pods: {:?}", names);
+    Ok(names)
 }
 
 /// Deploy a manifest to our Kubernetes cluster.

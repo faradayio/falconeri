@@ -14,9 +14,11 @@
 * DONE Polishing
 ** DONE prefix
 ** DONE rustfmt
-* TODO Write a basic manual
-
+* DONE Write a basic manual
 * TODO Figure out how to set /pfs and /scratch to SSD drives on Google cloud
 * TODO Handlebars escape functions
 ** TODO Plain text to fix &quot; in `description` output
-** TODO YAML for templates
+** DONE YAML for templates
+* TODO Bugs & regressions
+** TODO Text output for `describe`, `list`, etc., is a mess.
+** TODO Rocket complains about environments at startup, and Rocket logging isn't set up.
