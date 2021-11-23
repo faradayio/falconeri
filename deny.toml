@@ -1,0 +1,62 @@
+# Project policies.
+#
+# These policies can be enforced using `cargo deny check`.
+
+[advisories]
+ignore = [
+    # Ignore a nasty `localtime_r` and `setenv` race condition which can
+    # segfault if we try to read the localtime while someone is setting an env
+    # var.
+    #
+    # This can probably be fixed once
+    # https://github.com/chronotope/chrono/issues/602 has been addressed.
+    "RUSTSEC-2020-0159",
+    # Also `localtime_r`.
+    "RUSTSEC-2020-0071",
+]
+
+[licenses]
+# Don't allow code with an unclear license.
+unlicensed = "deny"
+
+# Don't allow "copylefted" licenses unless they're listed below.
+copyleft = "deny"
+
+# Allow common non-restrictive licenses. ISC is used for various DNS and crypto
+# things, and it's a minimally restrictive open source license.
+allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "CC0-1.0", "ISC", "OpenSSL", "Zlib"]
+
+# Many organizations ban AGPL-licensed code
+# https://opensource.google/docs/using/agpl-policy/
+deny = ["AGPL-3.0"]
+
+[[licenses.clarify]]
+# Ring has a messy license.
+name = "ring"
+expression = "ISC AND OpenSSL AND MIT"
+license-files = [
+    { path = "LICENSE", hash = 3171872035 },
+]
+
+[bans]
+# Warn about multiple versions of the same crate, unless we've indicated otherwise below.
+multiple-versions = "warn"
+
+deny = [
+    # OpenSSL has caused endless deployment and build problems, and we want
+    # nothing to do with it, in any version. Unforunately, `diesel` depends on
+    # `libpq`, which depends on OpenSSL at the C level. So it's not quite gone.
+    { name = "openssl-sys" },
+]
+
+skip = [
+    { name = "sha-1", version = "0.8.2" }
+]
+
+skip-tree = [
+    # Rocket's pre-release is stale.
+    { name = "rocket", version = "0.5.0-rc.1" },
+    # Build-only dependency uses some stale crates.
+    { name = "pest_meta" }
+]
+

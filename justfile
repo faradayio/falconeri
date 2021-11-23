@@ -85,7 +85,7 @@ publish-image: image
 # Check to make sure that we're in releasable shape.
 check:
     cargo fmt -- --check
-    cargo audit --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071
+    cargo deny check
     cargo clippy -- -D warnings
     cargo test --all
 

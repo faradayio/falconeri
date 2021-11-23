@@ -1,6 +1,3 @@
-// Needed for static linking to work right on Linux.
-extern crate openssl;
-
 use std::{io::stderr, process};
 
 use falconeri_common::prelude::*;
