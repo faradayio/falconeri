@@ -45,8 +45,10 @@ multiple-versions = "warn"
 deny = [
     # OpenSSL has caused endless deployment and build problems, and we want
     # nothing to do with it, in any version. Unforunately, `diesel` depends on
-    # `libpq`, which depends on OpenSSL at the C level. So it's not quite gone.
-    { name = "openssl-sys" },
+    # `libpq`, which depends on OpenSSL at the C level. So we ban `openssl`
+    # (used from Rust), but we keep `openssl-sys` so we can do some linker
+    # tricks with `extern crate`.
+    { name = "openssl" },
 ]
 
 skip = [

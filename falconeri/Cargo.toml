@@ -12,6 +12,8 @@ crossbeam = "0.8.1"
 falconeri_common = { path = "../falconeri_common" }
 handlebars = "4.1.4"
 log = "0.4.3"
+# Needed for ekidd/rust-musl-builder.                                                                   
+openssl-sys = "*" 
 openssl-probe = "0.1.2"
 prettytable-rs = "0.8.0"
 serde = "1.0"

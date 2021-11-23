@@ -9,6 +9,8 @@ license = "Apache-2.0 OR MIT"
 [dependencies]
 falconeri_common = { path = "../falconeri_common" }
 headers = "0.3.5"
+# Needed for ekidd/rust-musl-builder.                                                                   
+openssl-sys = "*"
 openssl-probe = "0.1.2"
 rocket = { version = "0.5.0-rc.1", features = ["json", "uuid"] }
 serde = "1.0"

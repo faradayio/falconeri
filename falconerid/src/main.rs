@@ -1,3 +1,6 @@
+// Needed for static linking to work right on Linux.
+extern crate openssl_sys;
+
 use falconeri_common::{
     db, falconeri_common_version,
     pipeline::PipelineSpec,
