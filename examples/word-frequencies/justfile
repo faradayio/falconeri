@@ -31,6 +31,10 @@ secret:
         --from-file=AWS_SECRET_ACCESS_KEY
     rm AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 
+# Set up a proxy.
+proxy:
+    cargo run -p falconeri -- proxy
+
 # Run our example job.
 run:
     cargo run -p falconeri -- job run word-frequencies.json
