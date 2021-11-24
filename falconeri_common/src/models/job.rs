@@ -293,16 +293,36 @@ impl Job {
                 Some(Status::Done)
             };
             if let Some(job_status) = job_status {
-                let now = Utc::now().naive_utc();
                 *self = diesel::update(jobs::table)
                     .filter(jobs::id.eq(&self.id))
-                    .set((jobs::status.eq(&job_status), jobs::updated_at.eq(now)))
+                    .set((
+                        jobs::updated_at.eq(Utc::now().naive_utc()),
+                        jobs::status.eq(&job_status),
+                    ))
                     .get_result(conn)
                     .context("could not update job status")?;
             }
 
             Ok(())
         })
+    }
+
+    /// Mark this job as having errored.
+    ///
+    /// This is not the typical way jobs are marked as having errored, which is
+    /// the responsibility of [`Job::update_status_if_done`].
+    #[tracing::instrument(skip(conn), level = "trace")]
+    pub fn mark_as_error(&mut self, conn: &PgConnection) -> Result<()> {
+        debug!("marking job {} as having errored", self.job_name);
+        *self = diesel::update(jobs::table)
+            .filter(jobs::id.eq(&self.id))
+            .set((
+                jobs::updated_at.eq(Utc::now().naive_utc()),
+                jobs::status.eq(Status::Error),
+            ))
+            .get_result(conn)
+            .context("could not update job status")?;
+        Ok(())
     }
 
     /// Generate a sample value for testing.

@@ -10,7 +10,9 @@
 
 use std::{panic::catch_unwind, process, thread, time::Duration};
 
-use falconeri_common::{db, prelude::*, tracing};
+use falconeri_common::{
+    chrono, db, kubernetes::get_all_job_names, prelude::*, tracing,
+};
 
 /// Spawn a thread and run the babysitter in it. This should run indefinitely.
 #[tracing::instrument(level = "trace")]
@@ -73,7 +75,7 @@ fn run_babysitter() {
 #[tracing::instrument(level = "debug")]
 fn check_running_jobs() -> Result<()> {
     let conn = db::connect(ConnectVia::Cluster)?;
-    check_for_finished_jobs(&conn)?;
+    check_for_finished_and_vanished_jobs(&conn)?;
     check_for_zombie_datums(&conn)?;
     // Note that any datums marked as `Status::Error` by
     // `check_for_zombie_datums` above may then be retried normally by
@@ -81,15 +83,40 @@ fn check_running_jobs() -> Result<()> {
     check_for_datums_which_can_be_rerun(&conn)
 }
 
-/// Check for jobs which should be marked as finished.
-///
-/// This should normally happen automatically, but if it doesn't, we'll catch it
-/// here.
+/// Check for jobs which should already be marked as finished, or which have
+/// vanished off the cluster.
 #[tracing::instrument(skip(conn), level = "debug")]
-fn check_for_finished_jobs(conn: &PgConnection) -> Result<()> {
+fn check_for_finished_and_vanished_jobs(conn: &PgConnection) -> Result<()> {
     let jobs = Job::find_by_status(Status::Running, conn)?;
+    let all_job_names = get_all_job_names()?;
     for mut job in jobs {
-        job.update_status_if_done(conn)?;
+        conn.transaction(|| -> Result<()> {
+            // We may be racing a second copy of the babysitter here, or a
+            // request from a worker, so start a transaction, take a lock, and
+            // double-check everything before we act on it.
+            job.lock_for_update(conn)?;
+
+            // Check to see if we should have already marked this job as
+            // finished. This should normally happen automatically, but if it
+            // doesn't, we'll catch it here.
+            //
+            // This will internally retake the lock and open a nested a
+            // transaction, but that should be fine.
+            job.update_status_if_done(conn)?;
+
+            // If the job has been running for a while, but it has no associated
+            // Kubernetes job, assume that either the job has exceeded
+            // `ttlAfterSecondsFinished`, or was manually deleted by someone.
+            let cutoff = Utc::now().naive_utc() - chrono::Duration::minutes(15);
+            if job.status == Status::Running
+                && job.created_at < cutoff
+                && !all_job_names.contains(&job.job_name)
+            {
+                warn!("job {} is running but has no corresponding Kubernetes job, setting status to 'error'", job.job_name);
+                job.mark_as_error(conn)?;
+            }
+            Ok(())
+        })?;
     }
     Ok(())
 }

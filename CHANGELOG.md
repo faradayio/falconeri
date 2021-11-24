@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - If worker pod disappears off the cluster while processing a datum, detect this and set the datum to `status = Status::Error`. This is handled automatically by a "babysitter" thread in `falconerid`.
-- Periodically check to see whether a job has finished.
 - Add support for `datum_tries` in the pipeline JSON. Set this to 2, 3, etc., to automatically retry failed datums. This is also handled by the babysitter.
+- Periodically check to see whether a job has finished without being correctly marked as such. This is mostly intended to clean up existing clusters.
+- Periodically check to see whether a Kubernetes job has unexpectedly disappeared, and mark the corresponding `falconeri` job as having failed.
 - Add trace spans for most low-level database access.
 
 ## [0.2.13] - 2021-11-23

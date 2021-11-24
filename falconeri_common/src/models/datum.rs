@@ -72,7 +72,7 @@ impl Datum {
     pub fn zombies(conn: &PgConnection) -> Result<Vec<Datum>> {
         let running = Self::active_with_status(Status::Running, conn)?;
         trace!("running datums: {:?}", running);
-        let running_pod_names = kubernetes::running_pod_names()?;
+        let running_pod_names = kubernetes::get_running_pod_names()?;
         Ok(running
             .into_iter()
             .filter(|datum| match &datum.pod_name {

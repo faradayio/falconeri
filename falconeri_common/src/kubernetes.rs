@@ -144,7 +144,7 @@ struct MetadataJson {
 
 /// Get a set of currently running pod names.
 #[tracing::instrument(level = "trace")]
-pub fn running_pod_names() -> Result<HashSet<String>> {
+pub fn get_running_pod_names() -> Result<HashSet<String>> {
     let pods = kubectl_parse_json::<ItemsJson<ResourceJson>>(&[
         "get",
         "pods",
@@ -163,6 +163,28 @@ pub fn running_pod_names() -> Result<HashSet<String>> {
     }
     debug!("found {} running pods", names.len());
     trace!("running pods: {:?}", names);
+    Ok(names)
+}
+
+/// Get a set of all job names present on the cluster.
+#[tracing::instrument(level = "trace")]
+pub fn get_all_job_names() -> Result<HashSet<String>> {
+    let pods = kubectl_parse_json::<ItemsJson<ResourceJson>>(&[
+        "get",
+        "jobs",
+        "--output=json",
+    ])?;
+
+    let mut names = HashSet::new();
+    for pod in &pods.items {
+        if let Some(name) = pod.name() {
+            names.insert(name.to_owned());
+        } else {
+            warn!("found nameless job");
+        }
+    }
+    debug!("found {} jobs", names.len());
+    trace!("jobs: {:?}", names);
     Ok(names)
 }
 
