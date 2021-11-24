@@ -87,7 +87,7 @@ impl Datum {
 
     /// Find all datums which have errored, but that we can re-run.
     ///
-    /// This will only return datums associated with running-jobs.
+    /// This will only return datums associated with running jobs.
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn rerunable(conn: &PgConnection) -> Result<Vec<Datum>> {
         let datums = datums::table
@@ -104,7 +104,10 @@ impl Datum {
 
     /// Is this datum re-runable, assuming it belongs to a running job?
     ///
-    /// The logic here should mirror [`Datum::rerunnable`] above, except we don't check the job status.
+    /// The logic here should mirror [`Datum::rerunnable`] above, except we
+    /// don't check the job status. We use this to double-check the results of
+    /// `Self::rerunnable` _after_ loading them and locking an individual
+    /// `Datum`. We do this to prevent holding locks on more than one `Datum`.
     pub fn is_rerunable(&self) -> bool {
         self.status == Status::Error
             && self.attempted_run_count < self.maximum_allowed_run_count
@@ -173,13 +176,17 @@ impl Datum {
     ///
     /// We assume that the datum's row is locked by `lock_for_update` when we
     /// are called.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn mark_as_eligible_for_rerun(&mut self, conn: &PgConnection) -> Result<()> {
         let now = Utc::now().naive_utc();
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
                 datums::updated_at.eq(now),
                 datums::status.eq(&Status::Ready),
-                datums::attempted_run_count.eq(self.attempted_run_count + 1),
+                // Don't do this here! This is done when we start running in
+                // `actually_reserve_next_datum`.
+                //
+                // datums::attempted_run_count.eq(self.attempted_run_count + 1),
             ))
             .get_result(conn)
             .context("can't mark datum as eligible")?;

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+This release adds a "babysitter" process inside each `falconerid`. We use this to monitor jobs and datums, and detect and/or recover from various types of errors. Updating an existing cluster _should_ be fine, but it's likely to spend a minute or two detecting and marking problems with old jobs. So please exercise appropriate caution.
+
+We plan to stabilize a `falconeri` 1.0 with approximately this feature set. It has been in production for years, and the babysitter was the last missing critical feature.
+
 ### Added
 
 - If worker pod disappears off the cluster while processing a datum, detect this and set the datum to `status = Status::Error`. This is handled automatically by a "babysitter" thread in `falconerid`.
@@ -14,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Periodically check to see whether a job has finished without being correctly marked as such. This is mostly intended to clean up existing clusters.
 - Periodically check to see whether a Kubernetes job has unexpectedly disappeared, and mark the corresponding `falconeri` job as having failed.
 - Add trace spans for most low-level database access.
+
+### Fixed
+
+- We now correctly update `updated_at` on all tables that have it.
 
 ## [0.2.13] - 2021-11-23
 

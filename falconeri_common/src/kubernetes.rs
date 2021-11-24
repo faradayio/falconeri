@@ -169,15 +169,15 @@ pub fn get_running_pod_names() -> Result<HashSet<String>> {
 /// Get a set of all job names present on the cluster.
 #[tracing::instrument(level = "trace")]
 pub fn get_all_job_names() -> Result<HashSet<String>> {
-    let pods = kubectl_parse_json::<ItemsJson<ResourceJson>>(&[
+    let jobs = kubectl_parse_json::<ItemsJson<ResourceJson>>(&[
         "get",
         "jobs",
         "--output=json",
     ])?;
 
     let mut names = HashSet::new();
-    for pod in &pods.items {
-        if let Some(name) = pod.name() {
+    for job in &jobs.items {
+        if let Some(name) = job.name() {
             names.insert(name.to_owned());
         } else {
             warn!("found nameless job");
