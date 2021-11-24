@@ -7,7 +7,7 @@ Egress URI: {{job.egress_uri}}
 
 Datum status:
 {{~ #each datum_status_counts}}
-  {{this.0}}: {{this.1}}
+  {{status}}: {{count}}{{#if rerunable_count}} ({{rerunable_count}} to retry){{/if}}
 {{~ /each}}
 {{~ #if running_datums}}
 

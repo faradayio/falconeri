@@ -47,7 +47,7 @@ fn main() -> Result<()> {
     // Create a REST client.
     let client = Client::new(ConnectVia::Cluster)?;
 
-    // Loop until there are no more datums.
+    // Loop until the job is done.
     loop {
         // Fetch our job, and make sure that it's still running.
         let mut job = client.job(job_id)?;
@@ -94,22 +94,26 @@ fn main() -> Result<()> {
                 }
             }
         } else {
-            debug!("no more datums to process");
+            debug!("no datums to process right now");
 
-            // Don't exit until all the other workers are ready to exit, because
-            // we might be getting run as a Kubernetes `Job`, and if so, a 0
-            // exit status would mean that it's safe to start descheduling all
-            // other workers. Yes this is weird.
-            while job.status == Status::Running {
+            // Break early if the job is no longer running.
+            job = client.job(job_id)?;
+            if job.status != Status::Running {
+                break;
+            } else {
+                // We're still running, so wait a while and check to see if the
+                // job finishes or if some datums become available.
                 trace!("waiting for job to finish");
                 sleep(Duration::from_secs(30));
-                job = client.job(job_id)?;
             }
-            debug!("all workers have finished");
-            break;
         }
     }
 
+    // IMPORTANT: Don't exit until all the other workers are ready to exit,
+    // because we're normally run as a Kubernetes `Job`, and if so, a 0 exit
+    // status would mean that it's safe to start descheduling all other workers.
+    // Yes this is weird.
+    debug!("all workers have finished");
     Ok(())
 }
 

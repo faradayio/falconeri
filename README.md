@@ -20,6 +20,10 @@ falconeri job run my-job.json
 
 [guide]: https://github.com/faradayio/falconeri/blob/master/guide/src/SUMMARY.md
 
+## REST API
+
+Note that `falconerid` has a complete REST API, and you don't actually need to use the `falconeri` command-line tool during normal operations. This is used internally at Faraday, and it should be fairly self-explanatory, but it isn't documented.
+
 ## Contributing to `falconeri`
 
 First, you'll need to set up some development tools:
@@ -28,6 +32,10 @@ First, you'll need to set up some development tools:
 cargo install just
 cargo install cargo-deny
 cargo install cargo-edit
+
+# If you want to change the SQL schema, you'll also need the `diesel` CLI. This
+# may also require installing some C development libraries.
+cargo install diesel_cli
 ```
 
 Next, check out the available tasks in the `justfile`:
@@ -133,6 +141,39 @@ You should be able to make a release by running:
 just MODE=release release
 ```
 
-### REST API
+Once the the binaries have built, go to https://github.com/faradayio/falconeri/releases, and use the `CHANGELOG.md` entry to provide release notes.
 
-Note that `falconerid` has a complete REST API, and you don't actually need to use the `falconeri` command-line tool during normal operations. This _is_ used internally at Faraday.
+### Changing the database schema
+
+We use [`diesel`][diesel] as our ORM. This has complex tradeoffs, and we've been considering whether to move to `sqlx` or `tokio-postgres` in the future. See above for instructions on install `diesel_cli`.
+
+[diesel]: https://diesel.rs/
+
+To create a new migration, run:
+
+```sh
+cd falconeri_common
+diesel migration generate add_some_table_or_columns
+```
+
+This will generate a new `up.sql` and `down.sql` file which you can edit as needed. These work like Rails migrations: `up.sql` makes the necessary changes to the database, and `down.sql` reverts those changes. But in this case, migrations are written using SQL.
+
+You can show a list of migrations using:
+
+```sh
+diesel migration list
+```
+
+To apply pending migrations, run:
+
+```sh
+diesel migration run
+
+# Test the `down.sql` file as well.
+diesel migration revert
+diesel migration run
+```
+
+After doing this, edit `falconeri_common/src/schema.rs` and revert any changes which break the schema, and any which introduce warnings. You will probably also need to update any corresponding files in `falconeri_common/src/models/`.
+
+Migrations will be compiled into the server and run on deploys, as well.

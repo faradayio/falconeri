@@ -22,11 +22,13 @@ impl DatumData {
     fn into_new_datum_and_input_files(
         self,
         job_id: Uuid,
+        maximum_allowed_run_count: i32,
     ) -> (NewDatum, Vec<NewInputFile>) {
         let datum_id = Uuid::new_v4();
         let datum = NewDatum {
             id: datum_id,
             job_id,
+            maximum_allowed_run_count,
         };
         let input_files = self
             .input_files
@@ -65,12 +67,14 @@ impl InputFileData {
 pub fn input_to_datums(
     secrets: &[Secret],
     job_id: Uuid,
+    maximum_allowed_run_count: i32,
     input: &Input,
 ) -> Result<(Vec<NewDatum>, Vec<NewInputFile>)> {
     let mut all_datums = vec![];
     let mut all_input_files = vec![];
     for datum_data in input_to_datums_helper(secrets, input)? {
-        let (datum, input_files) = datum_data.into_new_datum_and_input_files(job_id);
+        let (datum, input_files) = datum_data
+            .into_new_datum_and_input_files(job_id, maximum_allowed_run_count);
         all_datums.push(datum);
         all_input_files.extend(input_files);
     }

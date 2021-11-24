@@ -25,6 +25,7 @@ pub struct OutputFile {
 
 impl OutputFile {
     /// Find an output file by ID.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn find(id: Uuid, conn: &PgConnection) -> Result<OutputFile> {
         output_files::table
             .find(id)
@@ -33,18 +34,26 @@ impl OutputFile {
     }
 
     /// Mark the specified output files as having been successfully processed.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn mark_ids_as_done(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
         diesel::update(output_files::table.filter(output_files::id.eq_any(ids)))
-            .set(output_files::status.eq(&Status::Done))
+            .set((
+                output_files::updated_at.eq(Utc::now().naive_utc()),
+                output_files::status.eq(&Status::Done),
+            ))
             .execute(conn)
             .context("can't mark output file as done")?;
         Ok(())
     }
 
     /// Mark the specified output files as having been successfully processed.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn mark_ids_as_error(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
         diesel::update(output_files::table.filter(output_files::id.eq_any(ids)))
-            .set(output_files::status.eq(&Status::Error))
+            .set((
+                output_files::updated_at.eq(Utc::now().naive_utc()),
+                output_files::status.eq(&Status::Error),
+            ))
             .execute(conn)
             .context("can't mark output file as done")?;
         Ok(())
@@ -52,9 +61,13 @@ impl OutputFile {
 
     /// Mark the output files of this datum as having been successfully
     /// processed.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn mark_as_done_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
         diesel::update(OutputFile::belonging_to(datum))
-            .set(output_files::status.eq(&Status::Done))
+            .set((
+                output_files::updated_at.eq(Utc::now().naive_utc()),
+                output_files::status.eq(&Status::Done),
+            ))
             .execute(conn)
             .context("can't mark output file as done")?;
         Ok(())
@@ -62,9 +75,13 @@ impl OutputFile {
 
     /// Mark the output files of this datum as having been unsuccessfully
     /// processed.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn mark_as_error_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
         diesel::update(OutputFile::belonging_to(datum))
-            .set(output_files::status.eq(&Status::Error))
+            .set((
+                output_files::updated_at.eq(Utc::now().naive_utc()),
+                output_files::status.eq(&Status::Error),
+            ))
             .execute(conn)
             .context("can't mark output file as error")?;
         Ok(())
@@ -85,6 +102,7 @@ pub struct NewOutputFile {
 
 impl NewOutputFile {
     /// Insert new output files into the database.
+    #[tracing::instrument(skip(conn), level = "trace")]
     pub fn insert_all(
         output_files: &[Self],
         conn: &PgConnection,

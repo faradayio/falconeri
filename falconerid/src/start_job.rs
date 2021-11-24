@@ -31,10 +31,14 @@ pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job>
         egress_uri: pipeline_spec.egress.uri.clone(),
     };
 
+    // Calculate how many times we're allowed to retry a datum.
+    let maximum_allowed_run_count = cast::i32(pipeline_spec.datum_tries.unwrap_or(1))?;
+
     // Get our datums and input files.
     let (new_datums, new_input_files) = input_to_datums(
         &pipeline_spec.transform.secrets,
         job_id,
+        maximum_allowed_run_count,
         &pipeline_spec.input,
     )?;
 
@@ -84,11 +88,14 @@ pub fn retry_job(job: &Job, conn: &PgConnection) -> Result<Job> {
         // Create new datums and input files.
         let mut new_datums = vec![];
         let mut new_input_files = vec![];
-        for (_datum, input_files) in error_datums.into_iter().zip(input_files) {
+        for (old_datum, input_files) in error_datums.into_iter().zip(input_files) {
             let datum_id = Uuid::new_v4();
             new_datums.push(NewDatum {
                 id: datum_id,
                 job_id: new_job.id,
+                // I guess we'll give this the same number of retries it was
+                // allowed before?
+                maximum_allowed_run_count: old_datum.maximum_allowed_run_count,
             });
             for input_file in input_files {
                 new_input_files.push(NewInputFile {
