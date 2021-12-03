@@ -134,7 +134,19 @@ const RUN_MANIFEST_TEMPLATE: &str = include_str!("job_manifest.yml.hbs");
 #[derive(Serialize)]
 struct JobParams<'a> {
     pipeline_spec: &'a PipelineSpec,
+    job_timeout: Option<u64>,
     job: &'a Job,
+}
+
+impl<'a> JobParams<'a> {
+    fn new(pipeline_spec: &'a PipelineSpec, job: &'a Job) -> JobParams<'a> {
+        let job_timeout = pipeline_spec.job_timeout.map(|timeout| timeout.as_secs());
+        Self {
+            pipeline_spec,
+            job_timeout,
+            job,
+        }
+    }
 }
 
 /// Start a new batch job running.
@@ -142,7 +154,7 @@ pub fn start_batch_job(pipeline_spec: &PipelineSpec, job: &Job) -> Result<()> {
     debug!("starting batch job on cluster");
 
     // Set up our template parameters, rendder our template, and deploy it.
-    let params = JobParams { pipeline_spec, job };
+    let params = JobParams::new(pipeline_spec, job);
     let manifest = render_manifest(RUN_MANIFEST_TEMPLATE, &params)
         .context("error rendering job template")?;
     kubernetes::deploy(&manifest)?;
@@ -159,10 +171,7 @@ fn render_template() {
     let pipeline_spec: PipelineSpec = serde_json::from_str(json).expect("parse error");
 
     let job = Job::factory();
-    let params = JobParams {
-        pipeline_spec: &pipeline_spec,
-        job: &job,
-    };
+    let params = JobParams::new(&pipeline_spec, &job);
 
     let manifest = render_manifest(RUN_MANIFEST_TEMPLATE, &params)
         .expect("error rendering job template");

@@ -11,8 +11,8 @@ metadata:
     "created-by": "falconeri"
 spec:
   parallelism: {{pipeline_spec.parallelism_spec.constant}}
-{{#if pipeline_spec.job_timeout}}
-  activeDeadlineSeconds: {{pipeline_spec.job_timeout}}
+{{#if job_timeout}}
+  activeDeadlineSeconds: {{job_timeout}}
 {{/if}}
   # Automatically clean up logs and metadata a while after jobs finish.
   ttlSecondsAfterFinished: 86400
