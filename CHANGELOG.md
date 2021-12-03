@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-beta.2] - 2021-12-02
+
+### Fixed
+
+- Fix `job_timeout` conversion to `ttlActiveSeconds` in the Kubernetes YAML.
+
 ## [1.0.0-beta.1] - 2021-11-24
 
 This release adds a "babysitter" process inside each `falconerid`. We use this to monitor jobs and datums, and detect and/or recover from various types of errors. Updating an existing cluster _should_ be fine, but it's likely to spend a minute or two detecting and marking problems with old jobs. So please exercise appropriate caution.
