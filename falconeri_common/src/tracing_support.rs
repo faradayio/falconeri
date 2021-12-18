@@ -10,6 +10,7 @@ use tracing_subscriber::{
 pub fn initialize_tracing() {
     let filter = EnvFilter::from_default_env();
     Subscriber::builder()
+        .with_writer(std::io::stderr)
         .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
         .with_env_filter(filter)
         .finish()
