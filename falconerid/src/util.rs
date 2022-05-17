@@ -163,7 +163,7 @@ fn basic_auth_from_request(
     let auth_headers = request
         .headers()
         .get(Authorization::<Basic>::name().as_str())
-        .map(|s| HeaderValue::from_str(s))
+        .map(HeaderValue::from_str)
         .collect::<result::Result<Vec<HeaderValue>, _>>()?;
 
     if auth_headers.is_empty() {
