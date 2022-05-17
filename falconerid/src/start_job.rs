@@ -123,7 +123,7 @@ pub fn retry_job(job: &Job, conn: &PgConnection) -> Result<Job> {
 pub fn unique_kubernetes_job_name(pipeline_name: &str) -> String {
     let tag = kubernetes::resource_tag();
     format!("{}-{}", pipeline_name, tag)
-        .replace("_", "-")
+        .replace('_', "-")
         .to_lowercase()
 }
 
