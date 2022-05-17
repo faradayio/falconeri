@@ -17,7 +17,7 @@ case `uname -s` in
     Linux)
         echo "Building static binaries using ekidd/rust-musl-builder"
         docker build -f Dockerfile.build -t build-"$1" .
-        docker run -it -e CARGO_ARGS=--release --name build-"$1"-run build-"$1"
+        docker run -e CARGO_ARGS=--release --name build-"$1"-run build-"$1"
         mkdir bin
         docker cp build-"$1"-run:/home/rust/src/target/x86_64-unknown-linux-musl/release/falconeri bin/falconeri
         docker cp build-"$1"-run:/home/rust/src/target/x86_64-unknown-linux-musl/release/falconeri-worker bin/falconeri-worker
