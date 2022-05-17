@@ -235,5 +235,4 @@ struct ListObjectsV2Output {
 #[serde(rename_all = "PascalCase")]
 struct Object {
     key: String,
-    size: i64,
 }

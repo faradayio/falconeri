@@ -47,7 +47,10 @@ impl ConnectVia {
             f().map_err(|err| {
                 if self.should_retry_by_default() {
                     error!("retrying after error: {}", err);
-                    backoff::Error::Transient(err)
+                    backoff::Error::Transient {
+                        err,
+                        retry_after: None,
+                    }
                 } else {
                     backoff::Error::Permanent(err)
                 }
@@ -62,8 +65,8 @@ impl ConnectVia {
             // Unwrap the backoff error into something we can handle. This should
             // have been built in.
             .map_err(|e| match e {
-                backoff::Error::Transient(e) => e,
-                backoff::Error::Permanent(e) => e,
+                backoff::Error::Transient { err, .. } => err,
+                backoff::Error::Permanent(err) => err,
             })?;
         Ok(value)
     }
