@@ -124,8 +124,10 @@ struct ItemsJson<T> {
 /// JSON describing a pod or similar resource.
 #[derive(Deserialize)]
 struct ResourceJson {
-    // Kubernetes resource metadata.
+    /// Kubernetes resource metadata.
     metadata: Option<MetadataJson>,
+    /// Kubernetes resource status.
+    status: Option<StatusJson>,
 }
 
 impl ResourceJson {
@@ -134,12 +136,31 @@ impl ResourceJson {
         let s = self.metadata.as_ref()?.name.as_ref()?;
         Some(&s[..])
     }
+
+    /// Get the `status.phase` field, if any.
+    fn phase(&self) -> Option<&str> {
+        let s = self.status.as_ref()?.phase.as_ref()?;
+        Some(&s[..])
+    }
+
+    /// Is this pod running?
+    fn is_running(&self) -> bool {
+        self.phase() == Some("Running")
+    }
 }
+
 /// JSON describing resource metadata.
 #[derive(Deserialize)]
 struct MetadataJson {
     /// Resource name.
     name: Option<String>,
+}
+
+/// JSON describing resource metadata.
+#[derive(Deserialize)]
+struct StatusJson {
+    /// Execution phase.
+    phase: Option<String>,
 }
 
 /// Get a set of currently running pod names.
@@ -148,13 +169,22 @@ pub fn get_running_pod_names() -> Result<HashSet<String>> {
     let pods = kubectl_parse_json::<ItemsJson<ResourceJson>>(&[
         "get",
         "pods",
-        "--field-selector",
-        "status.phase=Running",
+        // If we pass this, output seems to be limited to 50 records, even if
+        // more exist.
+        //
+        // "--field-selector",
+        // "status.phase=Running",
         "--output=json",
     ])?;
 
     let mut names = HashSet::new();
     for pod in &pods.items {
+        // This replaces the `--field-selector status.phase=Running` argument,
+        // which doesn't work. Checking this way seems to see all running pods.
+        if !pod.is_running() {
+            continue;
+        }
+
         if let Some(name) = pod.name() {
             names.insert(name.to_owned());
         } else {
