@@ -96,7 +96,7 @@ jobs:
       - name: Build release
         id: build_release
         run: |
-          ./build-release falconeri ${{ needs.create_release.outputs.release_version }}-${{ matrix.target }}
+          ./build-release falconeri ${{ needs.create_release.outputs.release_version }}_${{ matrix.target }}
           release_file=falconeri_${{ needs.create_release.outputs.release_version }}_${{ matrix.target }}.zip
           echo "::set-output name=release_file::$release_file"
       - name: Upload Release Asset
