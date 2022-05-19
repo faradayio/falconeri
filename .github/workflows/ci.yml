@@ -58,7 +58,7 @@ jobs:
           body_path: RELEASE_BODY.md
 
   # We use a matrix to run our build on every supported platform.
-  build_release:
+  release:
     name: "Build"
 
     needs:
@@ -94,6 +94,7 @@ jobs:
         run: |
           cargo test
       - name: Build release
+        id: build_release
         run: |
           ./build-release falconeri ${{ needs.create_release.outputs.release_version }}-${{ matrix.target }}
           release_file=falconeri_${{ needs.create_release.outputs.release_version }}_${{ matrix.target }}.zip
