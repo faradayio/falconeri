@@ -58,7 +58,7 @@ jobs:
           body_path: RELEASE_BODY.md
 
   # We use a matrix to run our build on every supported platform.
-  build:
+  build_release:
     name: "Build"
 
     needs:
