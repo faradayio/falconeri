@@ -24,11 +24,11 @@ case `uname -s` in
         docker cp build-"$1"-run:/home/rust/src/guide/book gh-pages
         docker rm build-"$1"-run
         docker rmi build-"$1"
-        zip -j "$1"-"$2".zip bin/falconeri bin/falconeri-worker
+        zip -j "$1"_"$2".zip bin/falconeri bin/falconeri-worker
         ;;
     *)
         echo "Building standard release binaries"
         cargo build -p falconeri --release
-        zip -j "$1"-"$2".zip target/release/"$1"
+        zip -j "$1"_"$2".zip target/release/"$1"
         ;;
 esac
