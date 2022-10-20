@@ -10,7 +10,7 @@ ignore = [
     #
     # This can probably be fixed once
     # https://github.com/chronotope/chrono/issues/602 has been addressed.
-    "RUSTSEC-2020-0159",
+    #"RUSTSEC-2020-0159",
     # Also `localtime_r`.
     "RUSTSEC-2020-0071",
 ]
@@ -24,7 +24,7 @@ copyleft = "deny"
 
 # Allow common non-restrictive licenses. ISC is used for various DNS and crypto
 # things, and it's a minimally restrictive open source license.
-allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "CC0-1.0", "ISC", "OpenSSL", "Zlib"]
+allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "CC0-1.0", "ISC", "OpenSSL", "Zlib", "Unicode-DFS-2016"]
 
 # Many organizations ban AGPL-licensed code
 # https://opensource.google/docs/using/agpl-policy/
@@ -52,13 +52,14 @@ deny = [
 ]
 
 skip = [
-    { name = "sha-1", version = "0.8.2" }
 ]
 
 skip-tree = [
     # Rocket's pre-release is stale.
     { name = "rocket", version = "0.5.0-rc.1" },
     # Build-only dependency uses some stale crates.
-    { name = "pest_meta" }
+    { name = "pest_meta" },
+    # We're never running on top of a real WASI platform, so just ignore it.
+    { name = "wasi"},
 ]
 
