@@ -172,7 +172,7 @@ impl Job {
         conn: &PgConnection,
     ) -> Result<Vec<DatumStatusCount>> {
         // Look up how many
-        let raw_status_counts: Vec<(Status, i64, i64)> = Datum::belonging_to(&*self)
+        let raw_status_counts: Vec<(Status, i64, i64)> = Datum::belonging_to(self)
             // Diesel doesn't fully support `GROUP BY`, but we can use the
             // undocumented `group_by` method and the `dsl::sql` helper to build
             // the query anyways. For details, see

@@ -3,6 +3,9 @@
 #![warn(missing_docs)]
 // Silence diesel warnings: https://github.com/diesel-rs/diesel/pull/1787
 #![allow(proc_macro_derive_resolution_fallback)]
+// If we do this, it's generally deliberate (because a future version of the
+// struct might contain floats, which don't support `Eq`).
+#![allow(clippy::derive_partial_eq_without_eq)]
 
 // Keep `macro_use` for `diesel` until it's easier to use Rust 2018 macro
 // imports with it.
