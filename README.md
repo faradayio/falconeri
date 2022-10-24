@@ -141,7 +141,7 @@ You should be able to make a release by running:
 just MODE=release release
 ```
 
-Once the the binaries have built, go to https://github.com/faradayio/falconeri/releases, and use the `CHANGELOG.md` entry to provide release notes.
+Once the the binaries have built, you can find them at https://github.com/faradayio/falconeri/releases. The `CHANGELOG.md` entry should be automatically converted to release notes.
 
 ### Changing the database schema
 
