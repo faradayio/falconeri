@@ -28,6 +28,8 @@ struct SecretManifestParams {
 struct Config {
     /// The name of the environment. Should be `development` or `production`.
     env: String,
+    /// The version of PostgreSQL to deploy.
+    postgres_version: String,
     /// The amount of disk to allocate for PostgreSQL.
     postgres_storage: String,
     /// The amount of RAM to request for PostgreSQL.
@@ -71,6 +73,11 @@ pub struct Opt {
     /// Deploy a development server (for minikube).
     #[structopt(long = "development")]
     development: bool,
+
+    /// The version of PostgreSQL to deploy. It's generally OK to specify just
+    /// the major version, like "14".
+    #[structopt(long = "postgres-version", default_value = "14")]
+    postgres_version: String,
 
     /// The amount of disk to allocate for PostgreSQL.
     #[structopt(long = "postgres-storage")]
@@ -119,6 +126,7 @@ pub fn run(opt: &Opt) -> Result<()> {
 
     // Figure out our configuration.
     let mut config = default_config(opt.development);
+    config.postgres_version = opt.postgres_version.clone();
     if let Some(postgres_storage) = &opt.postgres_storage {
         config.postgres_storage = postgres_storage.to_owned();
     }
@@ -181,11 +189,15 @@ pub fn run_undeploy(all: bool) -> Result<()> {
     Ok(())
 }
 
+/// Our current default Postgres version.
+const POSTGRES_VERSION: &str = "14";
+
 /// Get our default deployment config.
 fn default_config(development: bool) -> Config {
     if development {
         Config {
             env: "development".to_string(),
+            postgres_version: POSTGRES_VERSION.to_string(),
             postgres_storage: "100Mi".to_string(),
             postgres_memory: "256Mi".to_string(),
             postgres_cpu: "100m".to_string(),
@@ -200,6 +212,7 @@ fn default_config(development: bool) -> Config {
     } else {
         Config {
             env: "production".to_string(),
+            postgres_version: POSTGRES_VERSION.to_string(),
             postgres_storage: "10Gi".to_string(),
             postgres_memory: "1Gi".to_string(),
             postgres_cpu: "500m".to_string(),

@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: falconeri-postgres
-        image: postgres
+        image: "postgres:{{config.postgres_version}}"
         # We no longer need a huge number of connections thanks to falconerid,
         # but we might want to tune shared_buffers and maybe kernel.shmmax as
         # well.
