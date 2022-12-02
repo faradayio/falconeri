@@ -164,6 +164,7 @@ fn check_for_datums_which_can_be_rerun(conn: &PgConnection) -> Result<()> {
         // transaction, take a lock, and double-check that we're still eligible
         // for a re-run.
         conn.transaction(|| -> Result<()> {
+            // Mark our datum as re-runnable.
             datum.lock_for_update(conn)?;
             if datum.is_rerunable() {
                 warn!(
@@ -176,6 +177,25 @@ fn check_for_datums_which_can_be_rerun(conn: &PgConnection) -> Result<()> {
             } else {
                 warn!("someone beat us to rerunable datum {}", datum.id);
             }
+
+            // Remove `OutputFile` records for this datum, so we can upload the
+            // same output files again.
+            //
+            // TODO: Unfortunately, there's an issue here. It takes one of two
+            // forms:
+            //
+            // 1. Workers use deterministic file names. In this case, we
+            //    _should_ be fine, because we'll just overwrite any files we
+            //    did manage to upload.
+            // 2. Workers use random filenames. Here, there are two subcases: a.
+            //    We have successfully created an `OutputFile` record. b. We
+            //    have yet to create an `OutputFile` record.
+            //
+            // We need to fix (2b) by pre-creating all our `OutputFile` records
+            // _before_ uploading, and then updating them later to show that the
+            // output succeeded. Which them into case (2a). And then we can fix (2a)
+            // by deleting any S3/GCS files corresponding to `OutputFile::uri`.
+            OutputFile::delete_for_datum(&datum, conn)?;
             Ok(())
         })?;
     }

@@ -33,6 +33,16 @@ impl OutputFile {
             .with_context(|| format!("could not load output file {}", id))
     }
 
+    /// Fetch all the input files corresponding to `datums`, returning grouped
+    /// in the same order.
+    #[tracing::instrument(skip(conn), level = "trace")]
+    pub fn delete_for_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
+        diesel::delete(OutputFile::belonging_to(datum))
+            .execute(conn)
+            .context("could not delete output files belonging to failed datums")?;
+        Ok(())
+    }
+
     /// Mark the specified output files as having been successfully processed.
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn mark_ids_as_done(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
