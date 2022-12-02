@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-beta.10] - 2022-12-02
+
+### Fixed
+
+- Prevent key constraint error when retrying failed datums ([Issue #33](https://github.com/faradayio/falconeri/issues/33)). But see [Issue #36](https://github.com/faradayio/falconeri/issues/36); we still don't do the right thing when output files are randomly named.
+- Reduce odds of birthday paradox collision when naming jobs ([Issue #35](https://github.com/faradayio/falconeri/issues/35)).
+
 ## [1.0.0-beta.9] - 2022-10-24
 
 ### Fixed
