@@ -27,7 +27,7 @@ impl CloudStorage for GoogleCloudStorage {
         // Shell out to gsutil to list the files we want to process.
         let output = process::Command::new("gsutil")
             .arg("ls")
-            .arg(&uri)
+            .arg(uri)
             .stderr(process::Stdio::inherit())
             .output()
             .context("error running gsutil")?;
@@ -57,7 +57,7 @@ impl CloudStorage for GoogleCloudStorage {
             fs::create_dir_all(local_path)
                 .context("cannot create local download directory")?;
             let status = process::Command::new("gsutil")
-                .args(&["-m", "rsync"])
+                .args(["-m", "rsync"])
                 .arg(uri)
                 .arg(local_path)
                 .status()
@@ -73,7 +73,7 @@ impl CloudStorage for GoogleCloudStorage {
                     .context("cannot create local download directory")?;
             }
             let status = process::Command::new("gsutil")
-                .args(&["-m", "cp", "-r"])
+                .args(["-m", "cp", "-r"])
                 .arg(uri)
                 .arg(local_path)
                 .status()
@@ -89,7 +89,7 @@ impl CloudStorage for GoogleCloudStorage {
     fn sync_up(&self, local_path: &Path, uri: &str) -> Result<()> {
         trace!("uploading {} to {}", local_path.display(), uri);
         let status = process::Command::new("gsutil")
-            .args(&["-m", "rsync", "-r"])
+            .args(["-m", "rsync", "-r"])
             .arg(local_path)
             .arg(uri)
             .status()

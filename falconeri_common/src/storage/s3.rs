@@ -87,7 +87,7 @@ impl CloudStorage for S3Storage {
         // Use `aws` to list our bucket, and parse the results.parse_s3_url(
         let output = self
             .aws_command()
-            .args(&["s3api", "list-objects-v2"])
+            .args(["s3api", "list-objects-v2"])
             .arg("--bucket")
             .arg(bucket)
             .arg("--prefix")
@@ -129,7 +129,7 @@ impl CloudStorage for S3Storage {
                 .context("cannot create local download directory")?;
             let status = self
                 .aws_command()
-                .args(&["s3", "sync", "--quiet"])
+                .args(["s3", "sync", "--quiet"])
                 .arg(uri)
                 .arg(local_path)
                 .status()
@@ -144,7 +144,7 @@ impl CloudStorage for S3Storage {
             }
             let status = self
                 .aws_command()
-                .args(&["s3", "cp"])
+                .args(["s3", "cp"])
                 .arg(uri)
                 .arg(local_path)
                 .status()
@@ -163,7 +163,7 @@ impl CloudStorage for S3Storage {
         // We assume that we only need to support directories, namely /pfs/out.
         let status = self
             .aws_command()
-            .args(&["s3", "sync", "--quiet"])
+            .args(["s3", "sync", "--quiet"])
             .arg(local_path)
             .arg(uri)
             .status()
