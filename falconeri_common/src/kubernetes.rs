@@ -248,7 +248,9 @@ pub fn resource_tag() -> String {
         // both upper and lowercase letters and then convert to lowercase
         // later. This isn't a big deal for now.
         .map(|()| rng.sample(Alphanumeric))
-        .take(5)
+        // This needs to be large enough to avoid getting bit by
+        // https://en.wikipedia.org/wiki/Birthday_problem.
+        .take(10)
         .collect::<Vec<u8>>();
     String::from_utf8_lossy(&bytes).into_owned()
 }
