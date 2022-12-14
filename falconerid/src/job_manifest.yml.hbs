@@ -49,10 +49,6 @@ spec:
             # surprise evictions.
             memory: "{{pipeline_spec.resource_requests.memory}}"
         env:
-        - name: RUST_BACKTRACE
-          value: "1"
-        - name: RUST_LOG
-          value: "falconeri_common=trace,falconeri_worker=trace"
         - name: FALCONERI_NODE_NAME
           valueFrom:
             fieldRef:

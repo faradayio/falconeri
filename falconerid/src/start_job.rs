@@ -14,11 +14,21 @@ pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job>
     // Build our job.
     let job_id = Uuid::new_v4();
     let job_name = unique_kubernetes_job_name(&pipeline_spec.pipeline.name);
+
+    // If nobody specified RUST_LOG, default it sensibly.
+    let mut transform = pipeline_spec.transform.clone();
+    if !transform.env.contains_key("RUST_LOG") {
+        transform.env.insert(
+            "RUST_LOG".to_owned(),
+            "falconeri_common=info,falconeri_worker=info,warning".to_owned(),
+        );
+    }
+
     let new_job = NewJob {
         id: job_id,
         pipeline_spec: json!({
             "pipeline": pipeline_spec.pipeline,
-            "transform": pipeline_spec.transform,
+            "transform": transform,
             "parallelism_spec": pipeline_spec.parallelism_spec,
             "resource_requests": pipeline_spec.resource_requests,
             "job_timeout": pipeline_spec.job_timeout.map(|timeout| timeout.as_secs()),
