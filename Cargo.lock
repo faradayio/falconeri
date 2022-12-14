@@ -587,7 +587,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri"
-version = "1.0.0-beta.10"
+version = "1.0.0-beta.11"
 dependencies = [
  "base64",
  "crossbeam",
@@ -606,7 +606,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri-worker"
-version = "1.0.0-beta.10"
+version = "1.0.0-beta.11"
 dependencies = [
  "crossbeam",
  "env_logger",
@@ -620,7 +620,7 @@ dependencies = [
 
 [[package]]
 name = "falconeri_common"
-version = "1.0.0-beta.10"
+version = "1.0.0-beta.11"
 dependencies = [
  "anyhow",
  "backoff",
@@ -647,7 +647,7 @@ dependencies = [
 
 [[package]]
 name = "falconerid"
-version = "1.0.0-beta.10"
+version = "1.0.0-beta.11"
 dependencies = [
  "falconeri_common",
  "headers",
