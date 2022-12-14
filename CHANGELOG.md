@@ -5,12 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-beta.11] - 2022-12-14
-
-### Fixed
-
-- Reduce default log level of workers from trace to info.
-
 ## [1.0.0-beta.10] - 2022-12-02
 
 ### Fixed
@@ -89,7 +83,7 @@ We plan to stabilize a `falconeri` 1.0 with approximately this feature set. It h
 ### Added
 
 - Wrote some basic developer documentation to supplement the `justfile`s.
-- Allow specifying `--falconerid-log-level` for `falconeri deploy`. This uses standard `RUST_LOG` syntax, as described in the CLI help.
+- Allow specifying `--falconerid-log-level` for `falconeri deploy`. This uses standard `RUST_LOG` syntax, as described in the CLI help. 
 
 ### Fixed
 
