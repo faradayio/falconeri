@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-beta.12] - 2022-12-14
+
+### Fixed
+
+- Log much less from `falconeri_worker` by default, and make it configurable. This fixes an issue where the newer tracing code was causing the worker to log far too much.
+
+## [1.0.0-beta.11] - 2022-12-14 [YANKED]
+
+### Fixed
+
+- This version hard-coded a very low logging level. It was yanked because the low logging level would have made it impossible to debug falconeri issues discovered in the field, and because it was never fully released.
+
 ## [1.0.0-beta.10] - 2022-12-02
 
 ### Fixed
