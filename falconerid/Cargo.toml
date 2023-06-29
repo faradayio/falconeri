@@ -7,16 +7,17 @@ edition = "2018"
 license = "Apache-2.0 OR MIT"
 
 [dependencies]
+axum = { version = "0.6.18", features = ["macros", "tracing"] }
 falconeri_common = { path = "../falconeri_common" }
 headers = "0.3.5"
 # Needed for ekidd/rust-musl-builder.                                                                   
 openssl-sys = "*"
 openssl-probe = "0.1.2"
 # Newer versions after 0.5.0-rc.1 require uuid 1.0.0, which requires diesel 2.0.
-rocket = { version = "=0.5.0-rc.1", features = ["json", "uuid"] }
+rocket = { version = "=0.5.0-rc.3", features = ["json", "uuid"] }
 # We also need to lock down rocket's supporting modules.
-rocket_codegen = "=0.5.0-rc.1"
-rocket_http = "=0.5.0-rc.1"
+rocket_codegen = "=0.5.0-rc.3"
+rocket_http = "=0.5.0-rc.3"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"

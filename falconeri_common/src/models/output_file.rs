@@ -26,7 +26,7 @@ pub struct OutputFile {
 impl OutputFile {
     /// Find an output file by ID.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn find(id: Uuid, conn: &PgConnection) -> Result<OutputFile> {
+    pub fn find(id: Uuid, conn: &mut PgConnection) -> Result<OutputFile> {
         output_files::table
             .find(id)
             .first(conn)
@@ -36,7 +36,7 @@ impl OutputFile {
     /// Fetch all the input files corresponding to `datums`, returning grouped
     /// in the same order.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn delete_for_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
+    pub fn delete_for_datum(datum: &Datum, conn: &mut PgConnection) -> Result<()> {
         diesel::delete(OutputFile::belonging_to(datum))
             .execute(conn)
             .context("could not delete output files belonging to failed datums")?;
@@ -45,7 +45,7 @@ impl OutputFile {
 
     /// Mark the specified output files as having been successfully processed.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn mark_ids_as_done(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
+    pub fn mark_ids_as_done(ids: &[Uuid], conn: &mut PgConnection) -> Result<()> {
         diesel::update(output_files::table.filter(output_files::id.eq_any(ids)))
             .set((
                 output_files::updated_at.eq(Utc::now().naive_utc()),
@@ -58,7 +58,7 @@ impl OutputFile {
 
     /// Mark the specified output files as having been successfully processed.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn mark_ids_as_error(ids: &[Uuid], conn: &PgConnection) -> Result<()> {
+    pub fn mark_ids_as_error(ids: &[Uuid], conn: &mut PgConnection) -> Result<()> {
         diesel::update(output_files::table.filter(output_files::id.eq_any(ids)))
             .set((
                 output_files::updated_at.eq(Utc::now().naive_utc()),
@@ -72,7 +72,10 @@ impl OutputFile {
     /// Mark the output files of this datum as having been successfully
     /// processed.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn mark_as_done_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
+    pub fn mark_as_done_by_datum(
+        datum: &Datum,
+        conn: &mut PgConnection,
+    ) -> Result<()> {
         diesel::update(OutputFile::belonging_to(datum))
             .set((
                 output_files::updated_at.eq(Utc::now().naive_utc()),
@@ -86,7 +89,10 @@ impl OutputFile {
     /// Mark the output files of this datum as having been unsuccessfully
     /// processed.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn mark_as_error_by_datum(datum: &Datum, conn: &PgConnection) -> Result<()> {
+    pub fn mark_as_error_by_datum(
+        datum: &Datum,
+        conn: &mut PgConnection,
+    ) -> Result<()> {
         diesel::update(OutputFile::belonging_to(datum))
             .set((
                 output_files::updated_at.eq(Utc::now().naive_utc()),
@@ -115,7 +121,7 @@ impl NewOutputFile {
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn insert_all(
         output_files: &[Self],
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<OutputFile>> {
         let output_files = diesel::insert_into(output_files::table)
             .values(output_files)

@@ -77,10 +77,7 @@ impl fmt::Display for Status {
 }
 
 impl ::diesel::serialize::ToSql<sql_types::Status, Pg> for Status {
-    fn to_sql<W: Write>(
-        &self,
-        out: &mut serialize::Output<'_, W, Pg>,
-    ) -> serialize::Result {
+    fn to_sql(&self, out: &mut serialize::Output<'_, '_, Pg>) -> serialize::Result {
         match *self {
             Status::Ready => out.write_all(b"ready")?,
             Status::Running => out.write_all(b"running")?,
@@ -93,14 +90,18 @@ impl ::diesel::serialize::ToSql<sql_types::Status, Pg> for Status {
 }
 
 impl ::diesel::deserialize::FromSql<sql_types::Status, Pg> for Status {
-    fn from_sql(bytes: Option<&[u8]>) -> deserialize::Result<Self> {
-        match not_none!(bytes) {
-            b"ready" => Ok(Status::Ready),
-            b"running" => Ok(Status::Running),
-            b"done" => Ok(Status::Done),
-            b"error" => Ok(Status::Error),
-            b"canceled" => Ok(Status::Canceled),
-            _ => Err("Unrecognized status value from database".into()),
+    fn from_sql(
+        bytes: diesel::backend::RawValue<'_, Pg>,
+    ) -> deserialize::Result<Self> {
+        match String::from_sql(bytes)?.as_str() {
+            "ready" => Ok(Status::Ready),
+            "running" => Ok(Status::Running),
+            "done" => Ok(Status::Done),
+            "error" => Ok(Status::Error),
+            "canceled" => Ok(Status::Canceled),
+            val => {
+                Err(format!("Unrecognized status value from database: {}", val).into())
+            }
         }
     }
 }

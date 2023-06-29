@@ -41,7 +41,7 @@ pub struct Datum {
 impl Datum {
     /// Find a datum by ID.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn find(id: Uuid, conn: &PgConnection) -> Result<Datum> {
+    pub fn find(id: Uuid, conn: &mut PgConnection) -> Result<Datum> {
         datums::table
             .find(id)
             .first(conn)
@@ -52,7 +52,7 @@ impl Datum {
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn active_with_status(
         status: Status,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<Datum>> {
         let datums = datums::table
             .inner_join(jobs::table)
@@ -69,7 +69,7 @@ impl Datum {
     /// Find datums which claim to be running, but whose `pod_name` points to a
     /// non-existant pod.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn zombies(conn: &PgConnection) -> Result<Vec<Datum>> {
+    pub fn zombies(conn: &mut PgConnection) -> Result<Vec<Datum>> {
         let running = Self::active_with_status(Status::Running, conn)?;
         trace!("running datums: {:?}", running);
         let running_pod_names = kubernetes::get_running_pod_names()?;
@@ -89,7 +89,7 @@ impl Datum {
     ///
     /// This will only return datums associated with running jobs.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn rerunable(conn: &PgConnection) -> Result<Vec<Datum>> {
+    pub fn rerunable(conn: &mut PgConnection) -> Result<Vec<Datum>> {
         let datums = datums::table
             .inner_join(jobs::table)
             .filter(jobs::status.eq(Status::Running))
@@ -115,7 +115,7 @@ impl Datum {
 
     /// Get the input files for this datum.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn input_files(&self, conn: &PgConnection) -> Result<Vec<InputFile>> {
+    pub fn input_files(&self, conn: &mut PgConnection) -> Result<Vec<InputFile>> {
         InputFile::belonging_to(self)
             .order_by(input_files::created_at)
             .load(conn)
@@ -125,7 +125,7 @@ impl Datum {
     /// Lock the underying database row using `SELECT FOR UPDATE`. Must be
     /// called from within a transaction.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn lock_for_update(&mut self, conn: &PgConnection) -> Result<()> {
+    pub fn lock_for_update(&mut self, conn: &mut PgConnection) -> Result<()> {
         *self = datums::table
             .find(self.id)
             .for_update()
@@ -136,7 +136,11 @@ impl Datum {
 
     /// Mark this datum as having been successfully processed.
     #[tracing::instrument(skip(conn, output), level = "trace")]
-    pub fn mark_as_done(&mut self, output: &str, conn: &PgConnection) -> Result<()> {
+    pub fn mark_as_done(
+        &mut self,
+        output: &str,
+        conn: &mut PgConnection,
+    ) -> Result<()> {
         let now = Utc::now().naive_utc();
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
@@ -156,7 +160,7 @@ impl Datum {
         output: &str,
         error_message: &str,
         backtrace: &str,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<()> {
         let now = Utc::now().naive_utc();
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
@@ -177,7 +181,10 @@ impl Datum {
     /// We assume that the datum's row is locked by `lock_for_update` when we
     /// are called.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn mark_as_eligible_for_rerun(&mut self, conn: &PgConnection) -> Result<()> {
+    pub fn mark_as_eligible_for_rerun(
+        &mut self,
+        conn: &mut PgConnection,
+    ) -> Result<()> {
         let now = Utc::now().naive_utc();
         *self = diesel::update(datums::table.filter(datums::id.eq(&self.id)))
             .set((
@@ -196,7 +203,7 @@ impl Datum {
     /// Update the status of our associate job, if it has finished.
     ///
     /// This calls [`Job::update_status_if_done`].
-    pub fn update_job_status_if_done(&self, conn: &PgConnection) -> Result<()> {
+    pub fn update_job_status_if_done(&self, conn: &mut PgConnection) -> Result<()> {
         let mut job = Job::find(self.job_id, conn)?;
         job.update_status_if_done(conn)
     }
@@ -240,7 +247,7 @@ pub struct NewDatum {
 impl NewDatum {
     /// Insert new datums into the database.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn insert_all(datums: &[Self], conn: &PgConnection) -> Result<()> {
+    pub fn insert_all(datums: &[Self], conn: &mut PgConnection) -> Result<()> {
         diesel::insert_into(datums::table)
             .values(datums)
             .execute(conn)

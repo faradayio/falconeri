@@ -25,7 +25,7 @@ impl InputFile {
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn for_datums(
         datums: &[Datum],
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<Vec<InputFile>>> {
         Ok(InputFile::belonging_to(datums)
             .load(conn)
@@ -64,7 +64,7 @@ pub struct NewInputFile {
 impl NewInputFile {
     /// Insert a new job into the database.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn insert_all(input_files: &[Self], conn: &PgConnection) -> Result<()> {
+    pub fn insert_all(input_files: &[Self], conn: &mut PgConnection) -> Result<()> {
         diesel::insert_into(input_files::table)
             .values(input_files)
             .execute(conn)

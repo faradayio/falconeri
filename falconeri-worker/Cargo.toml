@@ -8,11 +8,11 @@ license = "Apache-2.0 OR MIT"
 
 [dependencies]
 crossbeam = "0.8.1"
-env_logger = "0.9.0"
+env_logger = "0.10.0"
 falconeri_common = { path = "../falconeri_common" }
 glob = "0.3"
 log = "0.4.3"
 # Needed for ekidd/rust-musl-builder.                                                                   
 openssl-sys = "*" 
 openssl-probe = "0.1.2"
-uuid = { version = "0.8", features = ["serde", "v4"] }
+uuid = { version = "1.3.3", features = ["serde", "v4"] }

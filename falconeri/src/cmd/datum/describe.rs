@@ -17,9 +17,9 @@ struct Params {
 /// Run the `datum describe` subcommand.
 pub fn run(id: Uuid) -> Result<()> {
     // Look up our data in the database.
-    let conn = db::connect(ConnectVia::Proxy)?;
-    let datum = Datum::find(id, &conn)?;
-    let input_files = datum.input_files(&conn)?;
+    let mut conn = db::connect(ConnectVia::Proxy)?;
+    let datum = Datum::find(id, &mut conn)?;
+    let input_files = datum.input_files(&mut conn)?;
 
     // Package into a params object.
     let params = Params { datum, input_files };

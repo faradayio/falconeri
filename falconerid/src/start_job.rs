@@ -10,7 +10,7 @@ use std::cmp::min;
 use crate::inputs::input_to_datums;
 
 /// Run a new job on our cluster.
-pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job> {
+pub fn run_job(pipeline_spec: &PipelineSpec, conn: &mut PgConnection) -> Result<Job> {
     // Build our job.
     let job_id = Uuid::new_v4();
     let job_name = unique_kubernetes_job_name(&pipeline_spec.pipeline.name);
@@ -53,7 +53,7 @@ pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job>
     )?;
 
     // Insert everthing into the database.
-    let job = conn.transaction(|| -> Result<Job> {
+    let job = conn.transaction(|conn| -> Result<Job> {
         let job = new_job.insert(conn)?;
         NewDatum::insert_all(&new_datums, conn)?;
         NewInputFile::insert_all(&new_input_files, conn)?;
@@ -66,8 +66,8 @@ pub fn run_job(pipeline_spec: &PipelineSpec, conn: &PgConnection) -> Result<Job>
 }
 
 /// The `job retry` subcommand.
-pub fn retry_job(job: &Job, conn: &PgConnection) -> Result<Job> {
-    let (pipeline_spec, new_job) = conn.transaction(|| -> Result<_> {
+pub fn retry_job(job: &Job, conn: &mut PgConnection) -> Result<Job> {
+    let (pipeline_spec, new_job) = conn.transaction(|conn| -> Result<_> {
         // Load the original job, failed datums, and input files.
         if job.status != Status::Error {
             return Err(format_err!("can only retry jobs with status 'error'"));

@@ -74,23 +74,23 @@ fn run_babysitter() {
 /// with.
 #[tracing::instrument(level = "debug")]
 fn check_running_jobs() -> Result<()> {
-    let conn = db::connect(ConnectVia::Cluster)?;
-    check_for_finished_and_vanished_jobs(&conn)?;
-    check_for_zombie_datums(&conn)?;
+    let mut conn = db::connect(ConnectVia::Cluster)?;
+    check_for_finished_and_vanished_jobs(&mut conn)?;
+    check_for_zombie_datums(&mut conn)?;
     // Note that any datums marked as `Status::Error` by
     // `check_for_zombie_datums` above may then be retried normally by
     // `check_for_datums_which_can_be_rerun` (if they're eligible).
-    check_for_datums_which_can_be_rerun(&conn)
+    check_for_datums_which_can_be_rerun(&mut conn)
 }
 
 /// Check for jobs which should already be marked as finished, or which have
 /// vanished off the cluster.
 #[tracing::instrument(skip(conn), level = "debug")]
-fn check_for_finished_and_vanished_jobs(conn: &PgConnection) -> Result<()> {
+fn check_for_finished_and_vanished_jobs(conn: &mut PgConnection) -> Result<()> {
     let jobs = Job::find_by_status(Status::Running, conn)?;
     let all_job_names = get_all_job_names()?;
     for mut job in jobs {
-        conn.transaction(|| -> Result<()> {
+        conn.transaction(|conn| -> Result<()> {
             // We may be racing a second copy of the babysitter here, or a
             // request from a worker, so start a transaction, take a lock, and
             // double-check everything before we act on it.
@@ -123,13 +123,13 @@ fn check_for_finished_and_vanished_jobs(conn: &PgConnection) -> Result<()> {
 
 /// Check for datums which claim to be running in a pod that no longer exists.
 #[tracing::instrument(skip(conn), level = "debug")]
-fn check_for_zombie_datums(conn: &PgConnection) -> Result<()> {
+fn check_for_zombie_datums(conn: &mut PgConnection) -> Result<()> {
     let zombies = Datum::zombies(conn)?;
     for mut zombie in zombies {
         // We may be racing a second copy of the babysitter here, so start a
         // transaction, take a lock, and double-check that our status is still
         // `Status::Running`.
-        conn.transaction(|| -> Result<()> {
+        conn.transaction(|conn| -> Result<()> {
             zombie.lock_for_update(conn)?;
             if zombie.status == Status::Running {
                 warn!(
@@ -157,13 +157,13 @@ fn check_for_zombie_datums(conn: &PgConnection) -> Result<()> {
 /// Check for datums which are in the error state but which are eligible for
 /// retries.
 #[tracing::instrument(skip(conn), level = "debug")]
-fn check_for_datums_which_can_be_rerun(conn: &PgConnection) -> Result<()> {
+fn check_for_datums_which_can_be_rerun(conn: &mut PgConnection) -> Result<()> {
     let rerunable_datums = Datum::rerunable(conn)?;
     for mut datum in rerunable_datums {
         // We may be racing a second copy of the babysitter here, so start a
         // transaction, take a lock, and double-check that we're still eligible
         // for a re-run.
-        conn.transaction(|| -> Result<()> {
+        conn.transaction(|conn| -> Result<()> {
             // Mark our datum as re-runnable.
             datum.lock_for_update(conn)?;
             if datum.is_rerunable() {

@@ -1,6 +1,10 @@
 //! Database utilities.
 
+use anyhow::anyhow;
 use diesel::r2d2::ConnectionManager as DieselConnectionManager;
+use diesel::sql_query;
+use diesel::sql_types::BigInt;
+use diesel_migrations::{HarnessWithOutput, MigrationHarness};
 use r2d2;
 use std::{env, fs::read_to_string, io};
 
@@ -11,10 +15,8 @@ use crate::prelude::*;
 /// submodule so we can configure warnings.
 #[allow(unused_imports)]
 mod migrations {
-    embed_migrations!();
-
-    // Re-export everything because it's private.
-    pub use self::embedded_migrations::*;
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+    pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 }
 
 /// The data we store in our secret.
@@ -106,17 +108,22 @@ const MIGRATION_LOCK_ID: i64 = 5_275_218_930_720_578_783;
 
 /// Run any pending migrations, and print to standard output.
 #[tracing::instrument(skip(conn), level = "trace")]
-pub fn run_pending_migrations(conn: &PgConnection) -> Result<()> {
+pub fn run_pending_migrations(conn: &mut PgConnection) -> Result<()> {
     debug!("Running pending migrations");
-    conn.transaction(|| -> Result<()> {
+    conn.transaction(|conn| -> Result<()> {
         // Take an advisory lock before running the migration. It's safe to
         // generate this SQL by hand because MIGRATION_LOCK_ID is an integer.
-        conn.execute(&format!(
-            "SELECT pg_advisory_xact_lock({})",
-            MIGRATION_LOCK_ID
-        ))
-        .context("error taking advisory lock for migrations")?;
-        migrations::run_with_output(conn, &mut io::stdout())?;
+        let lock_sql = sql_query("SELECT pg_advisory_xact_lock(?)");
+        lock_sql
+            .bind::<BigInt, _>(MIGRATION_LOCK_ID)
+            .execute(conn)
+            .context("error taking advisory lock for migrations")?;
+
+        let mut stdout = io::stdout();
+        let mut harness = HarnessWithOutput::new(conn, &mut stdout);
+        harness
+            .run_pending_migrations(migrations::MIGRATIONS)
+            .map_err(|e| anyhow!("could not run migrations: {}", e))?;
         Ok(())
     })?;
     Ok(())

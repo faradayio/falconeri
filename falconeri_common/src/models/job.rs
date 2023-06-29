@@ -31,7 +31,7 @@ pub struct Job {
 impl Job {
     /// Find a job by ID.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn find(id: Uuid, conn: &PgConnection) -> Result<Job> {
+    pub fn find(id: Uuid, conn: &mut PgConnection) -> Result<Job> {
         jobs::table
             .find(id)
             .first(conn)
@@ -40,7 +40,7 @@ impl Job {
 
     /// Find a job by job name.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn find_by_job_name(job_name: &str, conn: &PgConnection) -> Result<Job> {
+    pub fn find_by_job_name(job_name: &str, conn: &mut PgConnection) -> Result<Job> {
         jobs::table
             .filter(jobs::job_name.eq(job_name))
             .first(conn)
@@ -49,7 +49,10 @@ impl Job {
 
     /// Find all jobs with specified status.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn find_by_status(status: Status, conn: &PgConnection) -> Result<Vec<Job>> {
+    pub fn find_by_status(
+        status: Status,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Job>> {
         jobs::table
             .filter(jobs::status.eq(status))
             .load(conn)
@@ -58,7 +61,7 @@ impl Job {
 
     /// Get all known jobs.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn list(conn: &PgConnection) -> Result<Vec<Job>> {
+    pub fn list(conn: &mut PgConnection) -> Result<Vec<Job>> {
         jobs::table
             .order_by(jobs::created_at.desc())
             .load(conn)
@@ -72,7 +75,7 @@ impl Job {
         &self,
         node_name: &str,
         pod_name: &str,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Option<(Datum, Vec<InputFile>)>> {
         // Check for existing reservation (which shouldn't happen unless
         // a reservation got lost somewhere between `falconeri-postgres` and
@@ -109,7 +112,7 @@ impl Job {
     fn find_already_reserved_datum(
         &self,
         pod_name: &str,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Option<Datum>> {
         Ok(datums::table
             .filter(
@@ -129,9 +132,9 @@ impl Job {
         &self,
         node_name: &str,
         pod_name: &str,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Option<Datum>> {
-        conn.transaction(|| {
+        conn.transaction(|conn| {
             let datum_id: Option<Uuid> = datums::table
                 .select(datums::id)
                 .for_update()
@@ -169,7 +172,7 @@ impl Job {
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn datum_status_counts(
         &self,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<DatumStatusCount>> {
         // Look up how many
         let raw_status_counts: Vec<(Status, i64, i64)> = Datum::belonging_to(self)
@@ -208,7 +211,7 @@ impl Job {
     pub fn datums_with_status(
         &self,
         status: Status,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<Datum>> {
         Datum::belonging_to(self)
             .filter(datums::status.eq(&status))
@@ -220,7 +223,7 @@ impl Job {
     /// Lock the underying database row using `SELECT FOR UPDATE`. Must be
     /// called from within a transaction.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn lock_for_update(&mut self, conn: &PgConnection) -> Result<()> {
+    pub fn lock_for_update(&mut self, conn: &mut PgConnection) -> Result<()> {
         *self = jobs::table
             .find(self.id)
             .for_update()
@@ -231,9 +234,9 @@ impl Job {
 
     /// Update the overall job status if there's nothing left to do.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn update_status_if_done(&mut self, conn: &PgConnection) -> Result<()> {
+    pub fn update_status_if_done(&mut self, conn: &mut PgConnection) -> Result<()> {
         trace!("querying for status of datums for job {}", self.id);
-        conn.transaction(|| {
+        conn.transaction(|conn| {
             // Lock this job for update. This isn't necessary for this routine
             // by itself, but it should help avoid race conditions with job
             // retries and the babysitter.
@@ -312,7 +315,7 @@ impl Job {
     /// This is not the typical way jobs are marked as having errored, which is
     /// the responsibility of [`Job::update_status_if_done`].
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn mark_as_error(&mut self, conn: &PgConnection) -> Result<()> {
+    pub fn mark_as_error(&mut self, conn: &mut PgConnection) -> Result<()> {
         debug!("marking job {} as having errored", self.job_name);
         *self = diesel::update(jobs::table)
             .filter(jobs::id.eq(&self.id))
@@ -372,7 +375,7 @@ pub struct NewJob {
 impl NewJob {
     /// Insert a new job into the database.
     #[tracing::instrument(skip(conn), level = "trace")]
-    pub fn insert(&self, conn: &PgConnection) -> Result<Job> {
+    pub fn insert(&self, conn: &mut PgConnection) -> Result<Job> {
         diesel::insert_into(jobs::table)
             .values(self)
             .get_result(conn)

@@ -34,9 +34,9 @@ fn initialize_server() -> Result<()> {
 
     // Initialize the database.
     eprintln!("Connecting to database.");
-    let conn = db::connect(ConnectVia::Cluster)?;
+    let mut conn = db::connect(ConnectVia::Cluster)?;
     eprintln!("Running any pending migrations.");
-    db::run_pending_migrations(&conn)?;
+    db::run_pending_migrations(&mut conn)?;
     eprintln!("Finished migrations.");
 
     eprintln!("Starting babysitter thread to monitor jobs.");
@@ -57,35 +57,43 @@ fn version() -> String {
 #[post("/jobs", data = "<pipeline_spec>")]
 fn post_job(
     _user: User,
-    conn: DbConn,
+    mut conn: DbConn,
     pipeline_spec: Json<PipelineSpec>,
 ) -> FalconeridResult<Json<Job>> {
-    Ok(Json(run_job(&pipeline_spec, &conn)?))
+    Ok(Json(run_job(&pipeline_spec, &mut conn)?))
 }
 
 /// Look up a job and return it as JSON.
 #[get("/jobs?<job_name>")]
 fn get_job_by_name(
     _user: User,
-    conn: DbConn,
+    mut conn: DbConn,
     job_name: String,
 ) -> FalconeridResult<Json<Job>> {
-    let job = Job::find_by_job_name(&job_name, &conn)?;
+    let job = Job::find_by_job_name(&job_name, &mut conn)?;
     Ok(Json(job))
 }
 
 /// Look up a job and return it as JSON.
 #[get("/jobs/<job_id>")]
-fn get_job(_user: User, conn: DbConn, job_id: Uuid) -> FalconeridResult<Json<Job>> {
-    let job = Job::find(job_id, &conn)?;
+fn get_job(
+    _user: User,
+    mut conn: DbConn,
+    job_id: Uuid,
+) -> FalconeridResult<Json<Job>> {
+    let job = Job::find(job_id, &mut conn)?;
     Ok(Json(job))
 }
 
 /// Retry a job, and return the new job as JSON.
 #[post("/jobs/<job_id>/retry")]
-fn job_retry(_user: User, conn: DbConn, job_id: Uuid) -> FalconeridResult<Json<Job>> {
-    let job = Job::find(job_id, &conn)?;
-    Ok(Json(retry_job(&job, &conn)?))
+fn job_retry(
+    _user: User,
+    mut conn: DbConn,
+    job_id: Uuid,
+) -> FalconeridResult<Json<Job>> {
+    let job = Job::find(job_id, &mut conn)?;
+    Ok(Json(retry_job(&job, &mut conn)?))
 }
 
 /// Reserve the next available datum for a job, and return it along with a list
@@ -93,13 +101,13 @@ fn job_retry(_user: User, conn: DbConn, job_id: Uuid) -> FalconeridResult<Json<J
 #[post("/jobs/<job_id>/reserve_next_datum", data = "<request>")]
 fn job_reserve_next_datum(
     _user: User,
-    conn: DbConn,
+    mut conn: DbConn,
     job_id: Uuid,
     request: Json<DatumReservationRequest>,
 ) -> FalconeridResult<Json<Option<DatumReservationResponse>>> {
-    let job = Job::find(job_id, &conn)?;
+    let job = Job::find(job_id, &mut conn)?;
     let reserved =
-        job.reserve_next_datum(&request.node_name, &request.pod_name, &conn)?;
+        job.reserve_next_datum(&request.node_name, &request.pod_name, &mut conn)?;
     if let Some((datum, input_files)) = reserved {
         Ok(Json(Some(DatumReservationResponse { datum, input_files })))
     } else {
@@ -111,11 +119,11 @@ fn job_reserve_next_datum(
 #[patch("/datums/<datum_id>", data = "<patch>")]
 fn patch_datum(
     _user: User,
-    conn: DbConn,
+    mut conn: DbConn,
     datum_id: Uuid,
     patch: Json<DatumPatch>,
 ) -> FalconeridResult<Json<Datum>> {
-    let mut datum = Datum::find(datum_id, &conn)?;
+    let mut datum = Datum::find(datum_id, &mut conn)?;
 
     // We only support a few very specific types of patches.
     match &patch.into_inner() {
@@ -126,7 +134,7 @@ fn patch_datum(
             error_message: None,
             backtrace: None,
         } => {
-            datum.mark_as_done(output, &conn)?;
+            datum.mark_as_done(output, &mut conn)?;
         }
 
         // Set status to `Status::Error`.
@@ -136,7 +144,7 @@ fn patch_datum(
             error_message: Some(error_message),
             backtrace: Some(backtrace),
         } => {
-            datum.mark_as_error(output, error_message, backtrace, &conn)?;
+            datum.mark_as_error(output, error_message, backtrace, &mut conn)?;
         }
 
         // All other combinations are forbidden.
@@ -147,7 +155,7 @@ fn patch_datum(
 
     // If there are no more datums, mark the job as finished (either done or
     // error).
-    datum.update_job_status_if_done(&conn)?;
+    datum.update_job_status_if_done(&mut conn)?;
 
     Ok(Json(datum))
 }
@@ -159,10 +167,10 @@ fn patch_datum(
 #[post("/output_files", data = "<new_output_files>")]
 fn create_output_files(
     _user: User,
-    conn: DbConn,
+    mut conn: DbConn,
     new_output_files: Json<Vec<NewOutputFile>>,
 ) -> FalconeridResult<Json<Vec<OutputFile>>> {
-    let created = NewOutputFile::insert_all(&new_output_files, &conn)?;
+    let created = NewOutputFile::insert_all(&new_output_files, &mut conn)?;
     Ok(Json(created))
 }
 
@@ -170,7 +178,7 @@ fn create_output_files(
 #[patch("/output_files", data = "<output_file_patches>")]
 fn patch_output_files(
     _user: User,
-    conn: DbConn,
+    mut conn: DbConn,
     output_file_patches: Json<Vec<OutputFilePatch>>,
 ) -> FalconeridResult<HttpStatus> {
     // Separate patches by status.
@@ -189,9 +197,9 @@ fn patch_output_files(
     }
 
     // Apply our updates.
-    conn.transaction(|| -> Result<()> {
-        OutputFile::mark_ids_as_done(&done_ids, &conn)?;
-        OutputFile::mark_ids_as_error(&error_ids, &conn)?;
+    conn.transaction(|conn| -> Result<()> {
+        OutputFile::mark_ids_as_done(&done_ids, conn)?;
+        OutputFile::mark_ids_as_error(&error_ids, conn)?;
         Ok(())
     })?;
 
