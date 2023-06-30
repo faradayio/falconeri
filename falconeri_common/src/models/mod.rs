@@ -1,5 +1,6 @@
 //! Database models.
 
+use diesel::backend::Backend;
 use diesel::{deserialize, pg::Pg, serialize};
 
 use crate::prelude::*;
@@ -90,9 +91,7 @@ impl ::diesel::serialize::ToSql<sql_types::Status, Pg> for Status {
 }
 
 impl ::diesel::deserialize::FromSql<sql_types::Status, Pg> for Status {
-    fn from_sql(
-        bytes: diesel::backend::RawValue<'_, Pg>,
-    ) -> deserialize::Result<Self> {
+    fn from_sql(bytes: <Pg as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
         match String::from_sql(bytes)?.as_str() {
             "ready" => Ok(Status::Ready),
             "running" => Ok(Status::Running),
