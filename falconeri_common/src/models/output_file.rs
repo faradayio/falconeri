@@ -3,8 +3,8 @@ use crate::schema::*;
 
 /// An output file uploaded from a worker.
 #[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
-#[belongs_to(Datum, foreign_key = "datum_id")]
-#[belongs_to(Job, foreign_key = "job_id")]
+#[diesel(belongs_to(Datum, foreign_key = datum_id))]
+#[diesel(belongs_to(Job, foreign_key = job_id))]
 pub struct OutputFile {
     /// The unique ID of this file.
     pub id: Uuid,
@@ -106,7 +106,7 @@ impl OutputFile {
 
 /// Data required to create a new `OutputFile`.
 #[derive(Debug, Deserialize, Insertable, Serialize)]
-#[table_name = "output_files"]
+#[diesel(table_name = output_files)]
 pub struct NewOutputFile {
     /// The job which created this file.
     pub job_id: Uuid,

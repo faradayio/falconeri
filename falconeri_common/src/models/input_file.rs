@@ -3,7 +3,7 @@ use crate::schema::*;
 
 /// An input file which needs to be downloaded to the worker container.
 #[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
-#[belongs_to(Datum, foreign_key = "datum_id")]
+#[diesel(belongs_to(Datum, foreign_key = datum_id))]
 pub struct InputFile {
     /// The unique ID of this file.
     pub id: Uuid,
@@ -49,7 +49,7 @@ impl InputFile {
 
 /// Data required to create a new `InputFile`.
 #[derive(Debug, Insertable)]
-#[table_name = "input_files"]
+#[diesel(table_name = input_files)]
 pub struct NewInputFile {
     /// The ID of the datum to which this file belongs.
     pub datum_id: Uuid,

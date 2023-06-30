@@ -88,7 +88,7 @@ struct Secret<T> {
 /// with `#[serde(with = "base64_encoded_secret_string")]` to automatically
 /// decode Base64-encoded fields.
 pub mod base64_encoded_secret_string {
-    use base64;
+    use base64::{prelude::BASE64_STANDARD, Engine};
     use serde::de::{Deserialize, Deserializer, Error as DeError};
     use std::result;
 
@@ -97,7 +97,7 @@ pub mod base64_encoded_secret_string {
         deserializer: D,
     ) -> result::Result<String, D::Error> {
         let encoded = String::deserialize(deserializer)?;
-        let bytes = base64::decode(&encoded).map_err(|err| {
+        let bytes = BASE64_STANDARD.decode(&encoded[..]).map_err(|err| {
             D::Error::custom(format!("could not base64-decode secret: {}", err))
         })?;
         let decoded = String::from_utf8(bytes).map_err(|err| {

@@ -18,7 +18,7 @@ pub use self::output_file::*;
 pub mod sql_types {
     /// A status enumeration type for use in Diesel's `table!` macro.
     #[derive(QueryId, SqlType)]
-    #[postgres(type_name = "status")]
+    #[diesel(postgres_type(name = "status"))]
     pub struct Status;
 }
 
@@ -36,7 +36,7 @@ pub mod sql_types {
     PartialOrd,
     Serialize,
 )]
-#[sql_type = "sql_types::Status"]
+#[diesel(sql_type = sql_types::Status)]
 #[serde(rename_all = "snake_case")]
 pub enum Status {
     /// This record is ready to be processed.

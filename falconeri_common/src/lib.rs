@@ -11,7 +11,6 @@
 // imports with it.
 #[macro_use]
 pub extern crate diesel;
-#[macro_use]
 pub extern crate diesel_migrations;
 
 pub use cast;

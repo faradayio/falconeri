@@ -358,7 +358,7 @@ pub struct DatumStatusCount {
 
 /// Data required to create a new `Job`.
 #[derive(Debug, Insertable)]
-#[table_name = "jobs"]
+#[diesel(table_name = jobs)]
 pub struct NewJob {
     /// The unique ID for this job.
     pub id: Uuid,

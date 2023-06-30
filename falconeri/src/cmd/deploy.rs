@@ -1,6 +1,6 @@
 //! The `deploy` subcommand.
 
-use base64;
+use base64::{prelude::BASE64_STANDARD, Engine};
 use std::iter;
 use structopt::StructOpt;
 
@@ -120,7 +120,7 @@ pub fn run(opt: &Opt) -> Result<()> {
 
     // Generate our secret manifest.
     let secret_params = SecretManifestParams {
-        postgres_password: base64::encode(&postgres_password),
+        postgres_password: BASE64_STANDARD.encode(&postgres_password[..]),
     };
     let secret_manifest = render_manifest(SECRET_MANIFEST, &secret_params)?;
 
