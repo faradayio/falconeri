@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-beta.13] - 2025-12-03
+
+### Changed
+
+- Updated all dependencies to latest versions.
+- Replaced unmaintained `structopt` with `clap` v4.
+- Replaced unmaintained `backoff` crate with simple built-in retry logic.
+- Removed OpenSSL Rust dependencies entirely. We now use `rustls` for all TLS. (Database connections still use the system's `libpq`, which may link against OpenSSL.)
+- Updated Rocket from 0.5.0-rc.3 to 0.5.1 (stable release).
+- Updated axum from 0.6 to 0.8.
+
 ## [1.0.0-beta.12] - 2022-12-14
 
 ### Fixed

@@ -1,59 +1,56 @@
-// Needed for static linking to work right on Linux.
-extern crate openssl_sys;
-
 use std::{io::stderr, process};
 
+use clap::Parser;
 use falconeri_common::prelude::*;
-use structopt::StructOpt;
 
 mod cmd;
 mod description;
 
-/// Command-line options, parsed using `structopt`.
-#[derive(Debug, StructOpt)]
-#[structopt(about = "A tool for running batch jobs on Kubernetes.")]
+/// Command-line options.
+#[derive(Debug, Parser)]
+#[command(about = "A tool for running batch jobs on Kubernetes.")]
 enum Opt {
     /// Datum-related commands.
-    #[structopt(name = "datum")]
+    #[command(name = "datum")]
     Datum {
-        #[structopt(subcommand)]
+        #[command(subcommand)]
         cmd: cmd::datum::Opt,
     },
 
     /// Commands for accessing the database.
-    #[structopt(name = "db")]
+    #[command(name = "db")]
     Db {
-        #[structopt(subcommand)]
+        #[command(subcommand)]
         cmd: cmd::db::Opt,
     },
 
     /// Deploy falconeri onto the current Docker cluster.
-    #[structopt(name = "deploy")]
+    #[command(name = "deploy")]
     Deploy {
-        #[structopt(flatten)]
+        #[command(flatten)]
         cmd: cmd::deploy::Opt,
     },
 
     /// Job-related commands.
-    #[structopt(name = "job")]
+    #[command(name = "job")]
     Job {
-        #[structopt(subcommand)]
+        #[command(subcommand)]
         cmd: cmd::job::Opt,
     },
 
     /// Manaually migrate falconeri's database schema to the latest version.
-    #[structopt(name = "migrate")]
+    #[command(name = "migrate")]
     Migrate,
 
     /// Create a proxy connection to the default Kubernetes cluster.
-    #[structopt(name = "proxy")]
+    #[command(name = "proxy")]
     Proxy,
 
     /// Undeploy `falconeri`, removing it from the cluster.
-    #[structopt(name = "undeploy")]
+    #[command(name = "undeploy")]
     Undeploy {
         /// Also delete the database volume and the secrets.
-        #[structopt(long = "all")]
+        #[arg(long = "all")]
         all: bool,
     },
 }
@@ -70,8 +67,7 @@ fn main() {
 
 /// The actual main code of the application.
 fn run() -> Result<()> {
-    openssl_probe::init_ssl_cert_env_vars();
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     debug!("Args: {:?}", opt);
 
     match opt {

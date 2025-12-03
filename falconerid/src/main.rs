@@ -1,6 +1,3 @@
-// Needed for static linking to work right on Linux.
-extern crate openssl_sys;
-
 use falconeri_common::{
     db, falconeri_common_version,
     pipeline::PipelineSpec,
@@ -209,7 +206,6 @@ fn patch_output_files(
 #[launch]
 fn rocket() -> _ {
     initialize_tracing();
-    openssl_probe::init_ssl_cert_env_vars();
 
     if let Err(err) = initialize_server() {
         eprintln!(

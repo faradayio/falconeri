@@ -64,14 +64,14 @@ impl<'r> FromRequest<'r> for DbConn {
         // Try to get the connection pool attached to our server.
         let pool = match request.guard::<&State<DbPool>>().await {
             Outcome::Success(pool) => pool,
-            Outcome::Failure(failure) => return Outcome::Failure(failure),
+            Outcome::Error(err) => return Outcome::Error(err),
             Outcome::Forward(forward) => return Outcome::Forward(forward),
         };
 
         // Get a connection.
         match pool.0.get() {
             Ok(conn) => Outcome::Success(DbConn(conn)),
-            Err(_) => Outcome::Failure((Status::ServiceUnavailable, ())),
+            Err(_) => Outcome::Error((Status::ServiceUnavailable, ())),
         }
     }
 }
@@ -134,15 +134,15 @@ impl<'r> FromRequest<'r> for User {
             Ok(None) => {
                 // TODO: Should send `WWW-Authenticate: Basic
                 // realm="falconeri"`.
-                return Outcome::Failure((Status::Unauthorized, ()));
+                return Outcome::Error((Status::Unauthorized, ()));
             }
-            Err(_) => return Outcome::Failure((Status::BadRequest, ())),
+            Err(_) => return Outcome::Error((Status::BadRequest, ())),
         };
 
         // Get the admin password for our server.
         let password = match request.guard::<&State<AdminPassword>>().await {
             Outcome::Success(password) => password,
-            Outcome::Failure(failure) => return Outcome::Failure(failure),
+            Outcome::Error(err) => return Outcome::Error(err),
             Outcome::Forward(forward) => return Outcome::Forward(forward),
         };
 
@@ -150,7 +150,7 @@ impl<'r> FromRequest<'r> for User {
         if auth.0.username() == "falconeri" && auth.0.password() == password.0 {
             Outcome::Success(User)
         } else {
-            Outcome::Failure((Status::Unauthorized, ()))
+            Outcome::Error((Status::Unauthorized, ()))
         }
     }
 }

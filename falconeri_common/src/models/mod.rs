@@ -92,7 +92,12 @@ impl ::diesel::serialize::ToSql<sql_types::Status, Pg> for Status {
 
 impl ::diesel::deserialize::FromSql<sql_types::Status, Pg> for Status {
     fn from_sql(bytes: <Pg as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
-        match String::from_sql(bytes)?.as_str() {
+        match <String as ::diesel::deserialize::FromSql<
+            diesel::sql_types::Text,
+            Pg,
+        >>::from_sql(bytes)?
+        .as_str()
+        {
             "ready" => Ok(Status::Ready),
             "running" => Ok(Status::Running),
             "done" => Ok(Status::Done),
