@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Usage: ./install-static
+#
+# Build a static version of the `falconeri` tools and install it. Only works on
+# x86_64 systems. This assumes the current user has UID 1000. (We can remove
+# that restriction later by adding the source to the container and mounting
+# a volume on ./target, then using `docker cp` to copy out the binaries.)
+
+# Standard paranoia.
+set -euo pipefail
+
+# Build our binaries.
+docker run --rm -it \
+    -v falconeri-cargo-git:/home/rust/.cargo/git \
+    -v falconeri-cargo-registry:/home/rust/.cargo/registry \
+    -v "$(pwd)":/home/rust/src \
+    ekidd/rust-musl-builder \
+    bash -c 'sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry && cargo build --all --release'
+
+# Install our binaries.
+target_dir=./target/x86_64-unknown-linux-musl/release
+sudo cp "$target_dir/falconeri" "$target_dir/falconeri-worker" /usr/local/bin

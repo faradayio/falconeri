@@ -9,7 +9,8 @@
 # 1. Run `just set-version 0.x.y-alpha.z`, where `0.x.y` will be the next
 #    release.
 # 2. Run `just publish-image`.
-# 3. Run `cargo run -p falconeri -- deploy` to update `falconerid`.
+# 3. Grab `bin/debug/falconeri-worker` and rebuild your worker image.
+# 4. Run `cargo run -p falconeri -- deploy` to update `falconerid`.
 
 # This should be either "debug" or "release". You can pass `mode=release` on
 # the command line to perform a release build.
@@ -33,25 +34,42 @@ set-version NEW_VERSION:
     # If this fails, run `cargo install cargo-edit`.
     cargo set-version --workspace {{NEW_VERSION}}
 
-# Build all binaries and create a `bin/{{MODE}}/` directory.
-bin:
+# The docker image `build-falconeri`, which we use to compile things.
+_build_falconeri_image:
+    docker build -f Dockerfile.build -t build-falconeri .
+
+# The container `build-falconeri-run`, which contains our binaries and docs.
+#
+# This uses a bash script so it can get access to more features.
+_build_falconeri_container: _build_falconeri_image
     #!/usr/bin/env bash
     set -euo pipefail
-    if [ "{{MODE}}" == "release" ]; then
-        cargo build --all --release
+    docker rm build-falconeri-container || true
+    if [ "{{MODE}}" == debug ]; then
+        docker run \
+            -v falconeri-cargo-git:/volume/.cargo/git \
+            -v falconeri-cargo-git:/volume/.cargo/registry \
+            -v falconeri-target:/volume/target \
+            --name build-falconeri-container \
+            build-falconeri
     else
-        cargo build --all
+        docker run \
+            -e CARGO_ARGS=--release \
+            --name build-falconeri-container \
+            build-falconeri
     fi
+
+# Create a `bin/{{MODE}}/` directory with our various binaries.
+bin: _build_falconeri_container
     mkdir -p 'bin/{{MODE}}'
-    cp 'target/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
-    cp 'target/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
-    cp 'target/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
+    docker cp 'build-falconeri-container:/volume/target/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
+    docker cp 'build-falconeri-container:/volume/target/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
+    docker cp 'build-falconeri-container:/volume/target/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
 
 # Create a `gh-pages` directory with our "GitHub pages" documentation.
-gh-pages:
-    cd guide && mdbook build
+gh-pages: _build_falconeri_container
     rm -rf gh-pages
-    cp -r guide/book gh-pages
+    docker cp build-falconeri-container:/volume/guide/book gh-pages
 
 # Our `falconeri` Docker image.
 image: bin
@@ -86,6 +104,7 @@ check-clean:
 #
 #     just set-version x.y.z-alpha.n
 #     just publish-image
+#     # Copy falconeri-worker from bin/debug
 #
 # Call this as:
 #
