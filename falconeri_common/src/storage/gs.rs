@@ -1,6 +1,7 @@
 //! Support for Google Cloud Storage.
 
 use std::future::Future;
+use std::io::Write;
 use std::path::Path;
 
 use google_cloud_auth::credentials::service_account;
@@ -182,7 +183,8 @@ impl CloudStorage for GoogleCloudStorage {
                 )
             };
 
-            self.upload_file(&bucket, &object_name, &entry)?;
+            // Upload the file with gzip compression
+            self.upload_file_compressed(&bucket, &object_name, &entry)?;
         }
 
         Ok(())
@@ -208,8 +210,7 @@ impl GoogleCloudStorage {
             // Format bucket name with projects/_/buckets/ prefix
             let bucket_path = format!("projects/_/buckets/{}", bucket);
 
-            // Download with automatic decompression enabled - this only affects files
-            // with Content-Encoding: gzip, not files that are natively .gz format
+            // Download with automatic decompression enabled
             let mut reader = self
                 .client
                 .read_object(&bucket_path, object)
@@ -228,22 +229,37 @@ impl GoogleCloudStorage {
         })
     }
 
-    /// Upload a single file to GCS.
-    fn upload_file(
+    /// Upload a single file to GCS with gzip compression.
+    fn upload_file_compressed(
         &self,
         bucket: &str,
         object: &str,
         local_path: &Path,
     ) -> Result<()> {
+        use flate2::Compression;
+
         run_async(async {
+            // Read entire file into memory
             let data = std::fs::read(local_path)
                 .with_context(|| format!("failed to read {}", local_path.display()))?;
+
+            // Compress with gzip
+            let mut encoder =
+                flate2::write::GzEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(&data)?;
+            let compressed_data = encoder.finish()?;
 
             // Format bucket name with projects/_/buckets/ prefix
             let bucket_path = format!("projects/_/buckets/{}", bucket);
 
+            // Upload with Content-Encoding: gzip
             self.client
-                .write_object(&bucket_path, object, bytes::Bytes::from(data))
+                .write_object(
+                    &bucket_path,
+                    object,
+                    bytes::Bytes::from(compressed_data),
+                )
+                .set_content_encoding("gzip")
                 .send_buffered()
                 .await?;
 

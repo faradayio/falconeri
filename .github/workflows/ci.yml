@@ -101,14 +101,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install PostgreSQL (macOS)
-        if: runner.os == 'macOS'
-        run: brew install postgresql@14
-
-      - name: Install PostgreSQL (Windows)
-        if: runner.os == 'Windows'
-        run: choco install postgresql14 --params '/Password:postgres' --no-progress
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
