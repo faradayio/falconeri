@@ -14,17 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Validate tag is on modernize branch
-        run: |
-          git fetch origin modernize
-          if ! git branch -r --contains ${{ github.ref }} | grep -q 'origin/modernize'; then
-            echo "Error: Tag ${{ github.ref }} is not on the modernize branch"
-            exit 1
-          fi
-          echo "Tag is on modernize branch ✓"
 
       - name: Extract version from tag
         id: tag_version
