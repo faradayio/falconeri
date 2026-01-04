@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Native Google Cloud Storage (GCS) support using the official `google-cloud-rust` SDK.
-- Support for `gs://` URIs with automatic compression/decompression.
+- Support for `gs://` URIs. Automatic decompression for files that were uploaded with Content-Encoding: gzip.
 - Authentication via `GCLOUD_SERVICE_ACCOUNT_KEY` environment variable or standard Application Default Credentials.
 
 ### Changed
