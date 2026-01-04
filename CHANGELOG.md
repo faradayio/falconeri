@@ -5,11 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
-
-- Fixed race condition causing "duplicate key value violates unique constraint" errors when retrying failed datums. Output file inserts now use `ON CONFLICT DO UPDATE` to properly handle concurrent retries, ensuring workers can always update file statuses and making the entire retry flow idempotent.
+## [1.0.0-beta.13] - 2025-12-03
 
 ### Added
 
@@ -19,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Switched from static musl builds to dynamically-linked binaries. The build process now uses standard Rust with glibc instead of musl, requiring `libpq` to be available at runtime. This simplifies the build process and avoids static linking complications with PostgreSQL.
 - Updated all dependencies to latest versions.
 - Replaced unmaintained `structopt` with `clap` v4.
 - Replaced unmaintained `backoff` crate with simple built-in retry logic.
@@ -117,7 +112,7 @@ We plan to stabilize a `falconeri` 1.0 with approximately this feature set. It h
 ### Added
 
 - Wrote some basic developer documentation to supplement the `justfile`s.
-- Allow specifying `--falconerid-log-level` for `falconeri deploy`. This uses standard `RUST_LOG` syntax, as described in the CLI help.
+- Allow specifying `--falconerid-log-level` for `falconeri deploy`. This uses standard `RUST_LOG` syntax, as described in the CLI help. 
 
 ### Fixed
 
