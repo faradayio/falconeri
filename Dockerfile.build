@@ -1,5 +1,8 @@
 FROM clux/muslrust:stable
 
+# Install PostgreSQL development libraries (needed for diesel with postgres feature)
+RUN sudo apt-get update && sudo apt-get install -y libpq-dev && sudo rm -rf /var/lib/apt/lists/*
+
 # Copy source code
 COPY --chown=rust:rust . .
 
