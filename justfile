@@ -47,9 +47,9 @@ _build_falconeri_container: _build_falconeri_image
     docker rm build-falconeri-container || true
     if [ "{{MODE}}" == debug ]; then
         docker run \
-            -v falconeri-cargo-git:/home/rust/.cargo/git \
-            -v falconeri-cargo-git:/home/rust/.cargo/registry \
-            -v falconeri-target:/home/rust/src/target \
+            -v falconeri-cargo-git:/volume/.cargo/git \
+            -v falconeri-cargo-git:/volume/.cargo/registry \
+            -v falconeri-target:/volume/target \
             --name build-falconeri-container \
             build-falconeri
     else
@@ -62,14 +62,14 @@ _build_falconeri_container: _build_falconeri_image
 # Create a `bin/{{MODE}}/` directory with our various binaries.
 static-bin: _build_falconeri_container
     mkdir -p 'bin/{{MODE}}'
-    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
-    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
-    docker cp 'build-falconeri-container:/home/rust/src/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
+    docker cp 'build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
+    docker cp 'build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
+    docker cp 'build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
 
 # Create a `gh-pages` directory with our "GitHub pages" documentation.
 gh-pages: _build_falconeri_container
     rm -rf gh-pages
-    docker cp build-falconeri-container:/home/rust/src/guide/book gh-pages
+    docker cp build-falconeri-container:/volume/guide/book gh-pages
 
 # Our `falconeri` Docker image.
 image: static-bin

@@ -1,15 +1,13 @@
-FROM ekidd/rust-musl-builder:stable
+FROM clux/muslrust:stable
 
-# We need to add the source code to the image because `rust-musl-builder`
-# assumes a UID of 1000, but TravisCI has switched to 2000.
-ADD . ./
-RUN sudo chown -R rust:rust .
+# Copy source code
+COPY --chown=rust:rust . .
 
 # Extra arguments to pass to cargo.
 ENV CARGO_ARGS=
 
 # Build all binaries.
-CMD if [ -d target ]; then sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; fi && \
+CMD if [ -d target ]; then chown -R rust:rust /volume/.cargo/git /volume/.cargo/registry /volume/target; fi && \
     cargo deny check && \
-    cargo build --all ${CARGO_ARGS} && \
+    cargo build --all ${CARGO_ARGS} --target x86_64-unknown-linux-musl && \
     cd guide && mdbook build
