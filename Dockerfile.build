@@ -1,24 +1,22 @@
-FROM clux/muslrust:stable
+FROM rust:1.85
 
-# Install build tools needed for bundled libpq compilation
-# The pq-sys crate with "bundled" feature will compile PostgreSQL from source
-# which requires make, perl, and other build tools
+# Install PostgreSQL development libraries (for dynamic linking)
 RUN apt-get update && \
     apt-get install -y \
-    make \
-    perl \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for static linking
-ENV PKG_CONFIG_ALLOW_CROSS=1
+# Install mdbook for building the guide
+RUN cargo install mdbook
+
+WORKDIR /volume
 
 # Copy source code
-COPY --chown=rust:rust . .
+COPY . .
 
 # Extra arguments to pass to cargo.
 ENV CARGO_ARGS=
 
-# Build all binaries.
-CMD if [ -d target ]; then chown -R rust:rust /volume/.cargo/git /volume/.cargo/registry /volume/target; fi && \
-    cargo build --all ${CARGO_ARGS} --target x86_64-unknown-linux-musl && \
+# Build all binaries (dynamically linked for x86_64-unknown-linux-gnu)
+CMD cargo build --all ${CARGO_ARGS} && \
     cd guide && mdbook build

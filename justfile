@@ -60,11 +60,11 @@ _build_falconeri_container: _build_falconeri_image
     fi
 
 # Create a `bin/{{MODE}}/` directory with our various binaries.
-static-bin: _build_falconeri_container
+bin: _build_falconeri_container
     mkdir -p 'bin/{{MODE}}'
-    docker cp 'build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
-    docker cp 'build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
-    docker cp 'build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
+    docker cp 'build-falconeri-container:/volume/target/{{MODE}}/falconeri' 'bin/{{MODE}}/falconeri'
+    docker cp 'build-falconeri-container:/volume/target/{{MODE}}/falconerid' 'bin/{{MODE}}/falconerid'
+    docker cp 'build-falconeri-container:/volume/target/{{MODE}}/falconeri-worker' 'bin/{{MODE}}/falconeri-worker'
 
 # Create a `gh-pages` directory with our "GitHub pages" documentation.
 gh-pages: _build_falconeri_container
@@ -72,7 +72,7 @@ gh-pages: _build_falconeri_container
     docker cp build-falconeri-container:/volume/guide/book gh-pages
 
 # Our `falconeri` Docker image.
-image: static-bin
+image: bin
     docker build --build-arg MODE={{MODE}} -t faraday/falconeri:{{VERSION}} .
 
 # This will publish our image to Docker Hub. Obviously, this requires an
