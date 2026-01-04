@@ -23,7 +23,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo test --all-features
 
   check:
     name: Check
@@ -38,7 +38,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run cargo check
-        run: cargo check --verbose
+        run: cargo check --all-features
 
   fmt:
     name: Format
@@ -69,7 +69,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run clippy
-        run: cargo clippy --verbose -- -D warnings
+        run: cargo clippy --all-features -- -D warnings
 
   deny:
     name: Deny
@@ -77,7 +77,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - name: Install cargo-deny
+        run: cargo install --locked cargo-deny
+
+      - name: Run cargo deny
+        run: cargo deny check advisories licenses sources
 
   build:
     name: Build ${{ matrix.target }}
@@ -86,43 +90,26 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            use_container: true
+            target: x86_64-unknown-linux-gnu
           - os: macos-latest
             target: x86_64-apple-darwin
-            use_container: false
           - os: macos-latest
             target: aarch64-apple-darwin
-            use_container: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            use_container: false
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build (Linux musl with Docker)
-        if: matrix.use_container
-        run: |
-          docker build -f Dockerfile.build -t build-falconeri .
-          docker run --name build-falconeri-container -e CARGO_ARGS=--release build-falconeri
-          mkdir -p bin/release
-          docker cp build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/release/falconeri bin/release/
-          docker cp build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/release/falconerid bin/release/
-          docker cp build-falconeri-container:/volume/target/x86_64-unknown-linux-musl/release/falconeri-worker bin/release/
-
-      - name: Install Rust (non-Linux)
-        if: ${{ !matrix.use_container }}
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      - name: Cache dependencies (non-Linux)
-        if: ${{ !matrix.use_container }}
+      - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
 
-      - name: Build (non-Linux)
-        if: ${{ !matrix.use_container }}
+      - name: Build
         run: cargo build --release --target ${{ matrix.target }}
