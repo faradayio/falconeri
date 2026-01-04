@@ -123,25 +123,10 @@ impl NewOutputFile {
         output_files: &[Self],
         conn: &mut PgConnection,
     ) -> Result<Vec<OutputFile>> {
-        let input_count = output_files.len();
-        let inserted_files = diesel::insert_into(output_files::table)
+        let output_files = diesel::insert_into(output_files::table)
             .values(output_files)
-            .on_conflict((output_files::job_id, output_files::uri))
-            .do_nothing()
             .get_results::<OutputFile>(conn)
-            .context("error inserting output files")?;
-
-        let inserted_count = inserted_files.len();
-        if inserted_count < input_count {
-            let conflict_count = input_count - inserted_count;
-            tracing::warn!(
-                conflict_count,
-                input_count,
-                inserted_count,
-                "detected duplicate output files, skipped inserting due to conflicts"
-            );
-        }
-
-        Ok(inserted_files)
+            .context("error inserting datums")?;
+        Ok(output_files)
     }
 }
