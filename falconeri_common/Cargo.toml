@@ -13,6 +13,7 @@ cast = { version = "0.3.0", features = ["std"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 diesel = { version = "2.3.4", features = ["chrono", "postgres", "r2d2", "serde_json", "uuid"] }
 diesel_migrations = "2.3.1"
+pq-sys = { version = "0.7", features = ["bundled"] }
 handlebars = "6.3.2"
 humantime-serde = "1.1.1"
 lazy_static = "1.5.0"
