@@ -103,10 +103,7 @@ jobs:
 
       - name: Install PostgreSQL (macOS)
         if: runner.os == 'macOS'
-        run: |
-          brew install libpq
-          echo "export LDFLAGS=\"-L/usr/local/opt/libpq/lib\"" >> $GITHUB_ENV
-          echo "export CPPFLAGS=\"-I/usr/local/opt/libpq/include\"" >> $GITHUB_ENV
+        run: brew install libpq
 
       - name: Install PostgreSQL (Windows)
         if: runner.os == 'Windows'
