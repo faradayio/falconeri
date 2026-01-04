@@ -103,7 +103,7 @@ jobs:
 
       - name: Install PostgreSQL (macOS)
         if: runner.os == 'macOS'
-        run: brew install postgresql@14
+        run: brew install libpq
 
       - name: Install PostgreSQL (Windows)
         if: runner.os == 'Windows'
