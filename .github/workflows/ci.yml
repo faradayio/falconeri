@@ -71,6 +71,14 @@ jobs:
       - name: Run clippy
         run: cargo clippy --verbose -- -D warnings
 
+  deny:
+    name: Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+
   build:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}

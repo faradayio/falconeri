@@ -8,6 +8,5 @@ ENV CARGO_ARGS=
 
 # Build all binaries.
 CMD if [ -d target ]; then chown -R rust:rust /volume/.cargo/git /volume/.cargo/registry /volume/target; fi && \
-    cargo deny check && \
     cargo build --all ${CARGO_ARGS} --target x86_64-unknown-linux-musl && \
     cd guide && mdbook build
