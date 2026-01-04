@@ -11,10 +11,18 @@ We've had good luck with the following:
 
 If you're running Kubernetes on Google's cloud, you will need:
 
-- `gsutil` for accessing Google Cloud Storage.
 - `gcloud` for working with your cluster.
 
 For other clouds, you will need to check your vendor's documentation.
+
+### Google Cloud Storage authentication
+
+Falconeri uses the native Google Cloud Storage SDK for Rust and supports two authentication methods:
+
+1. **`GCLOUD_SERVICE_ACCOUNT_KEY`** environment variable containing service account JSON credentials (recommended for containerized deployments).
+2. **Application Default Credentials (ADC)** via the `GOOGLE_APPLICATION_CREDENTIALS` environment variable or GKE/GCE metadata service.
+
+No separate `gsutil` installation is required.
 
 For all setups, you will also need:
 

@@ -2,13 +2,20 @@
 #
 # These policies can be enforced using `cargo deny check`.
 
+[sources]
+# Allow git dependencies from the official Google Cloud Rust SDK
+allow-git = [
+    "https://github.com/googleapis/google-cloud-rust",
+]
+
 [advisories]
 
 [licenses]
 # Allow common non-restrictive licenses. ISC is used for various DNS and crypto
 # things, and it's a minimally restrictive open source license. Everything not
 # in this list (including AGPL, unlicensed, and copyleft) is denied by default.
-allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "CC0-1.0", "ISC", "OpenSSL", "Zlib", "Unicode-3.0", "Unicode-DFS-2016"]
+# CDLA-Permissive-2.0 is used by webpki-roots, a permissive license for root certificates.
+allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "CC0-1.0", "ISC", "OpenSSL", "Zlib", "Unicode-3.0", "Unicode-DFS-2016", "CDLA-Permissive-2.0"]
 
 [[licenses.clarify]]
 # Ring has a messy license.

@@ -3,7 +3,7 @@
 # Standard paranoia.
 set -euo pipefail
 
-for F in /pfs/texts/*.txt; do
+for F in /pfs/input/*.txt; do
     outfile="/pfs/out/$(basename "$F")"
     cat "$F" |
         tr '[:upper:]' '[:lower:]' |
