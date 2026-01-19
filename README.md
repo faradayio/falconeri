@@ -1,3 +1,7 @@
+# RETIRED 
+
+See https://github.com/dbcrossbar/falconeri instead for a modernized version.
+
 # `falconeri`: Run batch data-processing jobs on Kubernetes
 
 Falconeri runs on a pre-existing Kubernetes cluster, and it allows you to use Docker images to transform large data files stored in cloud buckets.
