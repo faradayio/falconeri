@@ -117,16 +117,25 @@ pub struct NewOutputFile {
 }
 
 impl NewOutputFile {
-    /// Insert new output files into the database.
+    /// Insert new output files into the database. If a (job_id, uri) pair
+    /// already exists, return the existing record instead of erroring. This
+    /// makes the operation idempotent, which is important because the retry
+    /// logic may re-attempt an insert after a successful insert where the
+    /// response was lost.
     #[tracing::instrument(skip(conn), level = "trace")]
     pub fn insert_all(
         output_files: &[Self],
         conn: &mut PgConnection,
     ) -> Result<Vec<OutputFile>> {
+        use diesel::upsert::excluded;
+
         let output_files = diesel::insert_into(output_files::table)
             .values(output_files)
+            .on_conflict((output_files::job_id, output_files::uri))
+            .do_update()
+            .set(output_files::updated_at.eq(excluded(output_files::updated_at)))
             .get_results::<OutputFile>(conn)
-            .context("error inserting datums")?;
+            .context("error inserting output files")?;
         Ok(output_files)
     }
 }
