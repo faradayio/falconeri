@@ -113,6 +113,11 @@ spec:
           value: "/app/Rocket.toml"
         - name: RUST_LOG
           value: "{{config.falconerid_log_level}}"
+        - name: GCLOUD_SERVICE_ACCOUNT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gcs-credentials
+              key: GCLOUD_SERVICE_ACCOUNT_KEY
         resources:
           requests:
             cpu: "{{config.falconerid_cpu}}"

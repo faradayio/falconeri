@@ -3,3 +3,4 @@
 **/*.rs.bk
 /bin/
 /examples/word-frequencies/falconeri-worker
+*.pyc

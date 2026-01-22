@@ -113,7 +113,7 @@ pub fn run_pending_migrations(conn: &mut PgConnection) -> Result<()> {
     conn.transaction(|conn| -> Result<()> {
         // Take an advisory lock before running the migration. It's safe to
         // generate this SQL by hand because MIGRATION_LOCK_ID is an integer.
-        let lock_sql = sql_query("SELECT pg_advisory_xact_lock(?)");
+        let lock_sql = sql_query("SELECT pg_advisory_xact_lock($1)");
         lock_sql
             .bind::<BigInt, _>(MIGRATION_LOCK_ID)
             .execute(conn)

@@ -1,17 +1,17 @@
 //! `db` subcommand for interaction with the database.
 
+use clap::Parser;
 use falconeri_common::{db, prelude::*};
 use std::process;
-use structopt::StructOpt;
 
 /// Commands for interacting with the database.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub enum Opt {
     /// Access the database console.
-    #[structopt(name = "console")]
+    #[command(name = "console")]
     Console,
     /// Print our a URL for connecting to the database.
-    #[structopt(name = "url")]
+    #[command(name = "url")]
     Url,
 }
 

@@ -2,7 +2,6 @@
 
 use reqwest::blocking as reqwest;
 use serde::de::DeserializeOwned;
-use std::usize;
 use url::Url;
 
 use crate::db;

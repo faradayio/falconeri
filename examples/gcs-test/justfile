@@ -1,0 +1,25 @@
+# GCS integration test justfile
+#
+# Required environment variables:
+# - GOOGLE_APPLICATION_CREDENTIALS: Path to service account JSON file
+# - GCS_BUCKET: Name of existing GCS bucket (without gs:// prefix)
+
+# Run the GCS integration test
+run:
+    python3 test_gcs.py
+
+# Quick check that environment variables are set
+check-env:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
+        echo "Error: GOOGLE_APPLICATION_CREDENTIALS not set"
+        exit 1
+    fi
+    if [ -z "${GCS_BUCKET:-}" ]; then
+        echo "Error: GCS_BUCKET not set"
+        exit 1
+    fi
+    echo "✓ GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}"
+    echo "✓ GCS_BUCKET=${GCS_BUCKET}"
+

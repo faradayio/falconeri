@@ -1,47 +1,124 @@
 //! Support for Google Cloud Storage.
 
-use std::{collections::HashSet, fs, io::BufRead, process};
+use std::future::Future;
+use std::io::Write;
+use std::path::Path;
+
+use google_cloud_auth::credentials::service_account;
+use google_cloud_storage::client::{Storage, StorageControl};
 
 use super::CloudStorage;
 use crate::prelude::*;
 use crate::secret::Secret;
 
-/// Backend for talking to Google Cloud Storage, currently based on `gsutil`.
+/// Run an async function, either using the current Tokio runtime if available,
+/// or creating a new one if not.
+fn run_async<F, T>(future: F) -> Result<T>
+where
+    F: Future<Output = Result<T>>,
+{
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) => tokio::task::block_in_place(|| handle.block_on(future)),
+        Err(_) => {
+            let rt = tokio::runtime::Runtime::new()
+                .context("failed to create Tokio runtime")?;
+            rt.block_on(future)
+        }
+    }
+}
+
+/// Backend for talking to Google Cloud Storage using the native GCS SDK.
 #[derive(Debug)]
-pub struct GoogleCloudStorage {}
+pub struct GoogleCloudStorage {
+    client: Storage,
+    control: StorageControl,
+}
 
 impl GoogleCloudStorage {
     /// Create a new `GoogleCloudStorage` backend.
     #[allow(clippy::new_ret_no_self)]
     #[tracing::instrument(level = "trace")]
     pub fn new(_secrets: &[Secret]) -> Result<Self> {
-        // We don't yet know how to authenticate using secrets.
-        Ok(GoogleCloudStorage {})
+        let (client, control) = run_async(async {
+            let mut storage_builder = Storage::builder();
+            let mut control_builder = StorageControl::builder();
+
+            // Support GCLOUD_SERVICE_ACCOUNT_KEY (falconeri's current env var)
+            if let Ok(key_json) = std::env::var("GCLOUD_SERVICE_ACCOUNT_KEY") {
+                let json: serde_json::Value = serde_json::from_str(&key_json)
+                    .context("failed to parse GCLOUD_SERVICE_ACCOUNT_KEY as JSON")?;
+                let credentials = service_account::Builder::new(json)
+                    .build()
+                    .context("failed to build service account credentials")?;
+                storage_builder =
+                    storage_builder.with_credentials(credentials.clone());
+                control_builder = control_builder.with_credentials(credentials);
+            }
+            // Otherwise falls back to standard ADC (GOOGLE_APPLICATION_CREDENTIALS or metadata service)
+
+            let client = storage_builder.build().await?;
+            let control = control_builder.build().await?;
+            Ok::<_, anyhow::Error>((client, control))
+        })?;
+
+        Ok(GoogleCloudStorage { client, control })
     }
+}
+
+/// Parse a `gs://bucket/object` URI into bucket and object components.
+fn parse_gs_uri(uri: &str) -> Result<(String, String)> {
+    let url = url::Url::parse(uri)?;
+    if url.scheme() != "gs" {
+        return Err(format_err!("expected gs:// URL, got {}", uri));
+    }
+    let bucket = url
+        .host_str()
+        .ok_or_else(|| format_err!("no bucket in {}", uri))?
+        .to_string();
+    let object = url.path().trim_start_matches('/').to_string();
+    Ok((bucket, object))
 }
 
 impl CloudStorage for GoogleCloudStorage {
     #[tracing::instrument(level = "trace")]
     fn list(&self, uri: &str) -> Result<Vec<String>> {
         trace!("listing {}", uri);
-        // Shell out to gsutil to list the files we want to process.
-        let output = process::Command::new("gsutil")
-            .arg("ls")
-            .arg(uri)
-            .stderr(process::Stdio::inherit())
-            .output()
-            .context("error running gsutil")?;
-        if !output.status.success() {
-            return Err(format_err!("could not list {:?}: {}", uri, output.status));
-        }
-        // `gsutil ls` is "eventually consistent", and seems to occasionally retun
-        // duplicate entries.
-        let mut paths = HashSet::new();
-        for line in output.stdout.lines() {
-            let line = line?;
-            paths.insert(line.trim_end().to_owned());
-        }
-        Ok(paths.into_iter().collect())
+
+        let (bucket, prefix) = parse_gs_uri(uri)?;
+
+        run_async(async {
+            let mut results = Vec::new();
+            let mut page_token: Option<String> = None;
+
+            loop {
+                let mut request = self
+                    .control
+                    .list_objects()
+                    .set_parent(format!("projects/_/buckets/{}", bucket))
+                    .set_prefix(prefix.clone());
+
+                if let Some(token) = page_token {
+                    request = request.set_page_token(token);
+                }
+
+                let response = request.send().await?;
+
+                for object in response.objects {
+                    results.push(format!("gs://{}/{}", bucket, object.name));
+                }
+
+                page_token = if response.next_page_token.is_empty() {
+                    None
+                } else {
+                    Some(response.next_page_token)
+                };
+                if page_token.is_none() {
+                    break;
+                }
+            }
+
+            Ok(results)
+        })
     }
 
     #[tracing::instrument(level = "trace")]
@@ -54,53 +131,139 @@ impl CloudStorage for GoogleCloudStorage {
                 .expect("path should be UTF-8")
                 .ends_with('/'));
             trace!("syncing {} to {}", uri, local_path.display());
-            fs::create_dir_all(local_path)
-                .context("cannot create local download directory")?;
-            let status = process::Command::new("gsutil")
-                .args(["-m", "rsync"])
-                .arg(uri)
-                .arg(local_path)
-                .status()
-                .context("could not run gsutil rsync")?;
-            if !status.success() {
-                return Err(format_err!("could not download {:?}: {}", uri, status));
+
+            // List all files with this prefix and download each
+            let files = self.list(uri)?;
+            for file_uri in files {
+                let (bucket, object) = parse_gs_uri(&file_uri)?;
+
+                // Construct local path
+                let relative = object.trim_start_matches(&parse_gs_uri(uri)?.1);
+                let file_local_path = local_path.join(relative);
+
+                // Download the file
+                self.download_file(&bucket, &object, &file_local_path)?;
             }
+            Ok(())
         } else {
-            // We have a file. We can't use `gsutil rsync` for this case.
+            // We have a single file
             trace!("downloading {} to {}", uri, local_path.display());
-            if let Some(parent) = local_path.parent() {
-                fs::create_dir_all(parent)
-                    .context("cannot create local download directory")?;
-            }
-            let status = process::Command::new("gsutil")
-                .args(["-m", "cp", "-r"])
-                .arg(uri)
-                .arg(local_path)
-                .status()
-                .context("could not run gsutil cp")?;
-            if !status.success() {
-                return Err(format_err!("could not download {:?}: {}", uri, status));
-            }
+            let (bucket, object) = parse_gs_uri(uri)?;
+            self.download_file(&bucket, &object, local_path)
         }
-        Ok(())
     }
 
     #[tracing::instrument(level = "trace")]
     fn sync_up(&self, local_path: &Path, uri: &str) -> Result<()> {
         trace!("uploading {} to {}", local_path.display(), uri);
-        let status = process::Command::new("gsutil")
-            .args(["-m", "rsync", "-r"])
-            .arg(local_path)
-            .arg(uri)
-            .status()
-            .context("could not run gsutil")?;
-        if !status.success() {
-            return Err(format_err!(
-                "could not upload {}: {}",
-                local_path.display(),
-                status,
-            ));
+
+        let (bucket, prefix) = parse_gs_uri(uri)?;
+
+        // Walk the directory and upload each file
+        let entries = glob::glob(&format!("{}**/*", local_path.display()))
+            .context("failed to read directory pattern")?;
+
+        for entry in entries {
+            let entry = entry?;
+            if !entry.is_file() {
+                continue;
+            }
+
+            // Calculate relative path and object name
+            let relative = entry
+                .strip_prefix(local_path)
+                .context("failed to strip prefix")?;
+            let object_name = if prefix.is_empty() {
+                relative.to_str().unwrap().to_string()
+            } else {
+                format!(
+                    "{}/{}",
+                    prefix.trim_end_matches('/'),
+                    relative.to_str().unwrap()
+                )
+            };
+
+            // Upload the file with gzip compression
+            self.upload_file_compressed(&bucket, &object_name, &entry)?;
         }
+
         Ok(())
+    }
+}
+
+impl GoogleCloudStorage {
+    /// Download a single file from GCS to local disk.
+    fn download_file(
+        &self,
+        bucket: &str,
+        object: &str,
+        local_path: &Path,
+    ) -> Result<()> {
+        run_async(async {
+            // Create parent directory if needed
+            if let Some(parent) = local_path.parent() {
+                tokio::fs::create_dir_all(parent)
+                    .await
+                    .context("cannot create local download directory")?;
+            }
+
+            // Format bucket name with projects/_/buckets/ prefix
+            let bucket_path = format!("projects/_/buckets/{}", bucket);
+
+            // Download with automatic decompression enabled
+            let mut reader = self
+                .client
+                .read_object(&bucket_path, object)
+                .with_automatic_decompression(true)
+                .send()
+                .await?;
+
+            // Write to file
+            let mut file = tokio::fs::File::create(local_path).await?;
+            while let Some(chunk) = reader.next().await {
+                let chunk = chunk?;
+                tokio::io::AsyncWriteExt::write_all(&mut file, &chunk).await?;
+            }
+
+            Ok(())
+        })
+    }
+
+    /// Upload a single file to GCS with gzip compression.
+    fn upload_file_compressed(
+        &self,
+        bucket: &str,
+        object: &str,
+        local_path: &Path,
+    ) -> Result<()> {
+        use flate2::Compression;
+
+        run_async(async {
+            // Read entire file into memory
+            let data = std::fs::read(local_path)
+                .with_context(|| format!("failed to read {}", local_path.display()))?;
+
+            // Compress with gzip
+            let mut encoder =
+                flate2::write::GzEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(&data)?;
+            let compressed_data = encoder.finish()?;
+
+            // Format bucket name with projects/_/buckets/ prefix
+            let bucket_path = format!("projects/_/buckets/{}", bucket);
+
+            // Upload with Content-Encoding: gzip
+            self.client
+                .write_object(
+                    &bucket_path,
+                    object,
+                    bytes::Bytes::from(compressed_data),
+                )
+                .set_content_encoding("gzip")
+                .send_buffered()
+                .await?;
+
+            Ok(())
+        })
     }
 }

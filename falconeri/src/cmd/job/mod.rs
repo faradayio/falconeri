@@ -1,8 +1,8 @@
 //! The `job` subcommand.
 
+use clap::Parser;
 use falconeri_common::{pipeline::PipelineSpec, prelude::*};
 use serde_json;
-use structopt::StructOpt;
 
 mod describe;
 mod list;
@@ -14,41 +14,40 @@ mod run;
 mod wait;
 
 /// The `job` subcommand.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub enum Opt {
     /// Describe a specific job.
-    #[structopt(name = "describe")]
+    #[command(name = "describe")]
     Describe {
         /// The Kubernetes name of the job to describe.
         job_name: String,
     },
 
     /// List all jobs.
-    #[structopt(name = "list")]
+    #[command(name = "list")]
     List,
 
     /// Retry failed datums.
-    #[structopt(name = "retry")]
+    #[command(name = "retry")]
     Retry {
         /// The name of the job for which to retry failed datums.
         job_name: String,
     },
 
     /// Run the specified pipeline as a one-off job.
-    #[structopt(name = "run")]
+    #[command(name = "run")]
     Run {
         /// Path to a JSON pipeline spec.
-        #[structopt(parse(from_os_str))]
         pipeline_json: PathBuf,
     },
     // Disabled because `BsonSchema` doesn't handle recursive types.
     //
     // /// Output a JSON schema for a falconeri job.
-    // #[structopt(name = "schema")]
+    // #[command(name = "schema")]
     // Schema,
     /// Wait for the specified job to finish, either successfully or with an
     /// error.
-    #[structopt(name = "wait")]
+    #[command(name = "wait")]
     Wait {
         /// The name of the job to wait for.
         job_name: String,
@@ -59,7 +58,7 @@ pub enum Opt {
 pub fn run(opt: &Opt) -> Result<()> {
     match opt {
         Opt::Describe { job_name } => describe::run(job_name),
-        Opt::List {} => list::run(),
+        Opt::List => list::run(),
         Opt::Retry { job_name } => retry::run(job_name),
         Opt::Run { pipeline_json } => {
             let f =

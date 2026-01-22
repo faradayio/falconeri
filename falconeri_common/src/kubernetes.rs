@@ -1,7 +1,7 @@
 //! Tools for talking to Kubernetes.
 
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
+use rand::distr::Alphanumeric;
+use rand::{rng, Rng};
 use serde::de::{Deserialize, DeserializeOwned};
 use serde_json;
 use std::collections::HashSet;
@@ -242,12 +242,8 @@ pub fn delete(resource_id: &str) -> Result<()> {
 /// Kubernetes happy, this must be a legal DNS name component (but we have a
 /// database constraint to enforce that).
 pub fn resource_tag() -> String {
-    let mut rng = thread_rng();
-    let bytes = iter::repeat(())
-        // Note that this random distribution is biased, because we generate
-        // both upper and lowercase letters and then convert to lowercase
-        // later. This isn't a big deal for now.
-        .map(|()| rng.sample(Alphanumeric))
+    let mut rng = rng();
+    let bytes = iter::repeat_with(|| rng.sample(Alphanumeric))
         // This needs to be large enough to avoid getting bit by
         // https://en.wikipedia.org/wiki/Birthday_problem.
         .take(10)
